@@ -12,6 +12,7 @@ Where the facts in this knowledgebase come from, so claims can be re-checked and
 | **GRB install directory listing** | The forge inventory, sizes, base/patch pairing, non-forge blobs, backup folders, presence of Oodle DLL. | High — direct observation. [`reference/forge-inventory.md`](../reference/forge-inventory.md). |
 | **Hex dumps** of `DataPC_patch_01.forge` and a `.BuildTable` | Forge magic/version; BuildTable structure (64-bit references). | High for the bytes shown; interpretation beyond the header is flagged inferred. |
 | **Mod folders** (`Sheva_resources`, `Sheva_buildtables`, `USP Tactical + Burris FF3`, + 150-folder `GRBMods` corpus) | The three-forge model, layer split, naming conventions, `77777`, LOD/Mip/variant patterns. | High for the observed mods; generalizations flagged. [`examples/`](../examples/). |
+| **Decompiled `AnvilToolkit.dll`** (v1.3.1, via `ilspycmd`) | The **exact** forge format (`ForgeFile`/`ForgeEntry`), the `.cloth`/MotionCloth format (`MotionCloth.*`), cloth tunables, the `Game` enum / version-27 family. | **Highest** — it is the reference implementation's actual source. Backbone of [`docs/11`](../docs/11-cloth-and-physics.md) and the verified parts of [`docs/02`](../docs/02-forge-file-format.md). |
 
 ## Secondary / community sources (referenced, not yet independently verified here)
 
@@ -22,10 +23,13 @@ Where the facts in this knowledgebase come from, so claims can be re-checked and
 | **Nexus Mods** | Distribution platform; mod folder naming (`<name>-<id>-<ver>-<timestamp>`) originates here. |
 | General **Anvil/Scimitar forge** reverse-engineering (QuickBMS scripts, AC modding wikis, "Gibbed"-style tools) | The broader community has documented older Anvil forges; useful for cross-checking the binary layout. Not yet cited specifically — a TODO to gather concrete references. |
 
+## How to reproduce the decompilation
+ATK is a .NET assembly. With the .NET SDK installed: `dotnet tool install -g ilspycmd`, then `ilspycmd -p -o <outdir> AnvilToolkit.dll` dumps a full C# project; or `ilspycmd -t <FullTypeName> AnvilToolkit.dll` for one class. (Note: ilspycmd's project output is UTF-8; PowerShell `>` redirection writes UTF-16 — read accordingly.) The `Read`/`Write`/`Serialize`/`Deserialize` methods are the format.
+
 ## What is NOT yet a source (gaps)
-- **ATK source / decompiled `AnvilToolkit.dll`** — the single best source for exact binary schemas and mount/priority logic. Not yet inspected. (See [`meta/research-log.md`](research-log.md) next steps.)
-- **Engine-level documentation** of GRB's forge mount/load order — none consulted; the load model in [`docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md) is inferred.
-- **Empirical in-game tests** of conflict/override behavior — none run yet.
+- **Engine-level documentation** of GRB's forge mount/load order — none consulted; the load model in [`docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md) is inferred (though the flat-ID-archive basis is now verified from ATK).
+- **Empirical in-game tests** of conflict/override behavior and XML-tuned cloth — none run yet.
+- **`DataFile` / file-type registry** (the per-`.data` compression descriptor and `Extension`-id→type map) — identified but not yet read.
 
 ## Citation style used in the docs
 - `> **Verified:**` — observed directly this session (with the artifact noted).

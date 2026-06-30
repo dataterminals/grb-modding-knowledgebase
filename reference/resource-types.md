@@ -10,8 +10,8 @@ Typed resources are what live inside `.data` containers (see [`docs/03-data-and-
 | --- | --- | --- | --- |
 | **Mesh** | 3D geometry; primitives, vertex buffers (pos/normal/tangent/binormal/UVx5/color/weights), index buffer, material refs. | Mesh Viewer; export/import **glTF/GLB** | ✅ all GRB vertex formats |
 | **Skeleton** | Bone hierarchy + bind transforms for skinned meshes. | Mesh Viewer; GLB / XML / BuildTable export | ✅ |
-| **Cloth** | Physics cloth simulation data. | Mesh Viewer load; GLB export; XML | ✅ (load/export) |
-| **SoftBody** / **MotionSoftBody** | Soft-body physics deformables. | Mesh Viewer load; GLB export; BuildTable gen | ✅ |
+| **Cloth** (MotionCloth / `ClothPackage`) | Physics cloth simulation data (capes, coats, straps). **Format reverse-engineered** — see [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md) and [`cloth-section-types.md`](cloth-section-types.md). | Mesh Viewer load; GLB export; **XML** (tune gravity/stiffness/wind) | ✅ |
+| **SoftBody** / **MotionSoftBody** | Soft-body physics deformables; `SoftBody` carries `ClothGenerationSettings` (generate cloth from a mesh). | Mesh Viewer load; GLB export; BuildTable gen | ✅ |
 | **FacialSolverData** | Facial-animation solver data. | supported (1.3.0) | ✅ |
 | **HairMesh** | Hair geometry (preview re-added in 1.3.1). | Mesh Viewer preview | ✅ |
 

@@ -22,8 +22,44 @@ What we can read directly:
 | `0x09` | `1B 00 00 00` | **Version = 27** (`0x1B`), little-endian int32. (GRB / Origins-Odyssey-era forges.) |
 | `0x0D` | `1A 04 00 00 00 00 00 00` | A 64-bit little-endian offset = **0x41A (1050)** — points into the forge's table region. |
 
-> **Verified:** magic = `scimitar`, version = 27, little-endian, 64-bit offsets/IDs.
-> **Inferred (needs confirmation against ATK source):** the exact field that 0x41A indexes (data-header vs. file-table), and the layout of the index entries.
+> **Verified (now from ATK source, not just the hex):** magic = `scimitar`, version = 27, little-endian, 64-bit offsets/IDs. The `0x41A`/`1050` value is the **header size field**; ATK reads the header as `ReadBytes((int)headerSize - 21)`.
+
+### Verified header layout (from `ForgeFile.Serialize27` / `Deserialize27`)
+
+ATK's own reader/writer for GRB (version 27) lays the header out exactly like this:
+
+| Field | Type | Value (GRB) | Notes |
+| --- | --- | --- | --- |
+| Magic | null-terminated string | `scimitar\0` | 9 bytes |
+| Version | uint32 | **27** | (Origins/Odyssey=28, Mirage/Valhalla=29, Ezio/AC1=25) |
+| HeaderSize | int64 | **1050** | the `0x41A` we saw in the hex |
+| (constant) | int64 | 16 | |
+| (constant) | int32 | 1 | |
+| *padding* | — | skip 1017 bytes | header is mostly reserved/zeroed |
+| EntriesCount | int32 | N | total entries in the forge |
+| (constant) | int32 | 2 | |
+| *padding* | — | skip 12 bytes | |
+| (index hints) | int32 ×3 | -1 / N / N | entry-count bookkeeping |
+| FileSetCount | int32 | M | number of "FileSets" (see below) |
+| FirstFileSetOffset | int64 | **1094** | where the index begins |
+
+After the header at offset **1094** comes the **FileSet table**. GRB splits entries into **FileSets of up to 5000 entries each** (a historical limit; ATK chains them via offsets). Each FileSet contains an array of **ForgeEntry** records.
+
+### Verified entry record (`ForgeEntry`)
+
+Each entry has two parts in two parallel tables:
+
+**Offset-table record** (what locates the data):
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| Offset | int64 | byte offset of the entry's data in the forge |
+| ID | **uint64** | the 64-bit file ID (uint32 for old Ezio games) |
+| LengthOnDisk | int32 | compressed/stored size |
+
+Record size is **192 bytes** for GRB-era forges (188 for older). The second, **info/metadata table** record (`ForgeEntry.ReadInfo`) carries: `LengthOnDisk`, `UMACHash` (uint64), `EngineVersion`, **`Extension` (uint32 — the resource *type* id)**, revision numbers, `Parent`, `TimeStamp`, **`Name`** (null-terminated, padded to 127 bytes), SCC status fields, `MetaFileKey` (class id), and `IsHidden`. When `Name` is empty, ATK falls back to the file ID — this is the `<ID>_-_<Name>` you see on unpack.
+
+> **Key takeaway for modding:** a forge entry is *nothing but* `{ID, offset, size, type, name, timestamp}`. There is **no field tying an entry to a particular forge or to siblings** — identity is the ID alone. This is the technical basis for the load-time merge and for why the "three-forge split" is a convention, not a requirement (see [`05-three-forge-model.md`](05-three-forge-model.md) and [`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)).
 
 ## The conceptual structure
 
@@ -75,11 +111,12 @@ ATK treats `.forge` **and** `.data` as unpackable containers — "To unpack/repa
 
 ## Open binary-format questions
 
-These are tracked in [`meta/research-log.md`](../meta/research-log.md):
+Items 1–2 below were **resolved** by decompiling ATK (2026-06-30) — see the verified layout above. Remaining:
 
-1. Exact header layout past offset `0x0D` (table offsets, counts, flags).
-2. Index record layout (field order/sizes for ID, offset, sizes, name hash, type).
-3. Per-entry compression descriptor (how the codec + chunking is recorded).
-4. The precise GlobalMetaFile and PrefetchingFileInfos schemas.
+1. ~~Exact header layout~~ — **resolved** (`ForgeFile.Serialize27`).
+2. ~~Index/entry record layout~~ — **resolved** (`ForgeEntry`).
+3. Per-entry **compression descriptor** — how the codec + chunking is recorded inside each `.data` payload (the `DataFile` class is the next read).
+4. The full **`Extension` (resource-type) id → type** table, including which id marks a `.cloth`/ClothPackage.
+5. The precise **GlobalMetaFile** and **PrefetchingFileInfos** schemas.
 
-The fastest path to answering these is to inspect ATK's reader/writer code (it is the ground truth). See [`04-anvil-toolkit.md`](04-anvil-toolkit.md) for the binaries involved.
+The ground truth for all of these is ATK's source. See [`04-anvil-toolkit.md`](04-anvil-toolkit.md) for how it was decompiled.
