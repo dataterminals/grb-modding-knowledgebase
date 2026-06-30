@@ -132,20 +132,59 @@ These flags must **agree with the sections present**: e.g. `UseWind=true` implie
 2. **Mesh Viewer (GLB).** ATK can load Cloth/SoftBody/MotionSoftBody into the Mesh Viewer and export to GLB to see/edit the cloth mesh geometry; it can also generate a SoftBody BuildTable from the Mesh Viewer.
 3. **SoftBody → cloth generation.** The `SoftBody` class has `ClothGenerationSettings` (and `SimVertexDistance`) — ATK can generate cloth simulation data from a softbody/mesh, which is the likely path for *new* cloth rather than hand-writing every buffer section.
 
-## A practical approach to cloth modding (working theory)
+## The binding problem — why a vanilla `.cloth` "refuses to take on" a new mesh
 
-Grounded in the format above; treat as the current best workflow, to be confirmed empirically with the community:
+This is the question the Tier 1 Imports community is stuck on (SamiPuma): *"we can reference [a `.cloth`] in buildtables, but it refuses to take on."* His test case was **Walker's coat** — weight-paint a new coat mesh, point the BuildTable at the vanilla cloth like the original does, and it simply doesn't simulate.
 
-1. **Tune existing cloth (safest):** export the `.cloth` to XML, edit `ClothProperties` (gravity, damping, friction, stiffness, wind, maxspeed) and/or toggle `ClothDefinition` flags, re-import. No topology change → low risk. Great for "this cape is too stiff / too floppy / clips too much."
-2. **Re-mesh cloth (harder):** changing the cloth mesh means regenerating the dependent buffers (vertices, constraints, mesh constraints, per-vertex data, AABB trees). Prefer the **SoftBody/cloth-generation** path or porting a known-good cloth onto your geometry rather than editing buffer sections by hand.
-3. **Attach cloth to a new garment:** the cloth must be wired to the mesh/skeleton via `ClothDefinition.MeshMappingsCount` + `ClothPropertiesMeshMappings` (4395) and the editor data (cloth ID, 4658). This binding is the least-understood part — see open questions.
+### Real example (verified on-disk)
+
+Walker's coat is **three coupled resources** in `DataPC.forge` (note: cloth lives in the **main `DataPC` forge, not Resources**):
+
+| File ID | Name | What it is |
+| --- | --- | --- |
+| `34223` | `TP_Tacvest_Walker_Coat` | small (~0.5 KB) definition — references the render mesh |
+| `34224` | `TP_WalkerCoat_Cloth` | a **MotionCloth** resource — **72** sections (0xECD7 magic), ~101 KB |
+| `35720` | `Cloth_WalkerCoat` | a **MotionCloth** resource — **102** sections, ~188 KB |
+
+(Naming patterns across the game: `Cloth_<Name>` and `<Name>_Cloth`; many ghillie/coat/dress/strap items have them — `Cloth_HunterCoat`, `IanBlake_TrenchCoat_Cloth`, `FTciv_Dress_MontionCloth` (sic), etc.)
+
+### Why the BuildTable reference isn't enough
+
+**A `.cloth` is welded to one specific mesh's vertex layout.** A BuildTable reference just *names* which cloth to attach; the actual binding lives **inside the cloth data**, baked for the vanilla mesh's exact geometry:
+
+- `ClothUserData.UserVerticesCount` (4354) — a fixed simulation-vertex count.
+- `ClothVerticesCurrentPosition` (4363) — those sim vertices' rest positions, in the **vanilla** mesh's space.
+- `ClothConstraints` / `ClothStretchingConstraints` / `ClothMeshConstraints` / `ClothMeshIndexBuffer` — the spring network and sim topology, addressed **by vertex index**.
+- `ClothAdditionalVerticesBarycentricCoordinatesData` (4565) — a `ushort[]` mapping **render-mesh vertices onto sim-mesh triangles by barycentric coordinates**. This is the render↔sim binding, and it is computed for the vanilla render mesh's exact vertex order.
+- `ClothPerVertexData*` (4529–4532) — per-vertex sim attributes indexed to those same vertices.
+
+When you swap in a **new** coat mesh (different vertex count/order/positions — even if it looks similar), every one of those bakes now points at vertices that don't correspond to your mesh. The engine can't map the sim onto your render geometry, so the cloth **fails to bind and is dropped** → "refuses to take on." The `Mesh` class even carries an `IsGeneratedFromCloth` flag, underscoring that the render mesh and the cloth sim mesh are produced together, not independently.
+
+### The "weight paint" is `MaxDistance`, stored as a vertex color
+
+A key clarification for anyone weight-painting cloth: the value that controls cloth behavior per vertex is **`VertexMaxDistance`** — how far a vertex may move from the skinned/animated pose (**0 = fully pinned** to the body, **higher = free to swing**). When ATK exports a GRB cloth/softbody to **GLB it bakes `VertexMaxDistance` into vertex color `Color1`** (verified in `SoftBody`/`MotionSoftBodyLOD` → GLB conversion). So the cloth "paint" you see/edit in Blender is a **vertex-color channel**, *not* an ordinary skin weight. Painting skin weights alone will not produce cloth motion.
+
+### The tooling gap (why it "can't be used right now")
+
+ATK's cloth **generation** path — `SoftBody.ClothGenerationSettings` (build sim data from a mesh) — has `SupportedGames = AC2 … Syndicate` and **does not include Ghost Recon: Breakpoint**. So ATK can **read, export (GLB/XML), edit, and repack** GRB cloth, but it **cannot regenerate** a GRB cloth's sim mesh + constraints + barycentric mapping for new geometry. That missing "rebind cloth to my mesh" step is exactly what blocks new-garment cloth on GRB today.
+
+## A practical approach to cloth modding (current best guidance)
+
+Ordered by reliability with today's tools:
+
+1. **Tune existing cloth (works now, low risk):** export the `.cloth` to **XML**, edit `ClothProperties` (gravity, damping, friction, stiffness, wind, maxspeed) and/or `ClothDefinition` flags, re-import. No topology change. Great for "this cape is too stiff/floppy/clips."
+2. **Reshape, don't re-topologize (works now, with care):** edit the **vanilla** garment mesh **keeping the same vertex count and order** (move/reskin/retexture, don't add/remove/reorder vertices). The vanilla cloth's barycentric + per-vertex mappings still line up, so the cloth should still take on. This is the cloth analogue of "preserve topology when replacing a mesh." Silhouette changes are limited.
+3. **Edit the cloth's `MaxDistance` paint (works now):** export the cloth/softbody to GLB, adjust the **`Color1` vertex colors** (MaxDistance) in Blender to change what's pinned vs. free, re-import. Tunes drape/pinning without re-topology.
+4. **New garment with brand-new topology (blocked):** requires regenerating the cloth sim + render↔sim mapping for your mesh. ATK has no GRB cloth-generation, so this isn't reliably doable in-tool yet. Workarounds to explore: conform your mesh to the vanilla sim surface and reuse vanilla counts; or build the missing remap step. **This is the frontier.**
+
+> **Bottom line for Sami:** the cloth didn't take on because `Cloth_WalkerCoat` is bound to the *vanilla* coat's vertices, not to a name — your new mesh has different vertices, so the baked mapping is invalid. Until there's a GRB cloth-generation/remap tool, the achievable wins are: **tune** vanilla cloth, **reshape vanilla topology** rather than replace it, and **repaint the MaxDistance (Color1) vertex colors**. Adding cloth to a genuinely new mesh needs the regeneration step ATK doesn't yet do for GRB.
 
 ## Open questions (cloth-specific)
 
 Tracked in [`meta/research-log.md`](../meta/research-log.md):
 
-1. **Mesh/skeleton binding:** exactly how `ClothPropertiesMeshMappings` + `ClothEditorDataClothID` tie a cloth body to a garment mesh and its bones.
-2. **New-cloth authoring:** the reliable end-to-end path to add cloth to a garment that has none (SoftBody generation vs. transplanting an existing cloth).
-3. **Which resource/`Extension` ID** a `.cloth`/ClothPackage carries in the forge entry table (so it can be found by type) — cross-reference [`02-forge-file-format.md`](02-forge-file-format.md).
-4. **Buffer-section internals** (constraints, per-vertex SIMD data) for anyone wanting full re-meshing rather than property tuning.
-5. **Empirical validation:** confirm in-game that XML-tuned `ClothProperties` behave as the field names suggest (e.g. `Damping`, `StripsUntwistingStiffness`).
+1. **The render↔sim remap algorithm:** how to recompute `ClothAdditionalVerticesBarycentricCoordinatesData` (4565) + per-vertex data for a new mesh. Building this would unblock new-garment cloth — the single highest-value cloth task.
+2. **Two cloth resources per garment** (`<Name>_Cloth` vs `Cloth_<Name>`): what distinguishes them (LOD? body vs. variant? definition vs. sim)? Unpack the Walker pair and diff their sections.
+3. **BuildTable side:** the exact property/node a BuildTable uses to reference a cloth, and whether the mesh must also carry a cloth link (the `IsGeneratedFromCloth` mesh + a matching `ClothEditorDataClothID`).
+4. **`Extension` (resource-type) id** for a ClothPackage in the forge entry table — see [`02-forge-file-format.md`](02-forge-file-format.md).
+5. **Empirical validation:** confirm in-game that XML-tuned `ClothProperties` and repainted `MaxDistance` behave as expected.
