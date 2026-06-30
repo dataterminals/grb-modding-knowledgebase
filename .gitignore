@@ -1,0 +1,40 @@
+# This is a documentation/knowledgebase repo. Game data and tool binaries must
+# NEVER be committed — they are huge, copyrighted, and machine-specific.
+
+# Ubisoft Anvil game data (original or unpacked)
+*.forge
+*.data
+*.tbf
+*.wmap
+*.wmp2
+*.tgt
+*.MetaFile
+*.PrefetchInfo
+*.dependency
+
+# Asset working files generated during modding
+*.dds
+*.glb
+*.gltf
+*.obj
+*.fbx
+*.tga
+*.bak
+
+# ATK distribution / binaries
+AnvilToolkit*/
+*.dll
+*.exe
+
+# OS / editor cruft
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+.vscode/
+.idea/
+
+# Allow images we intentionally add for docs
+!assets/**/*.png
+!assets/**/*.svg
+!assets/**/*.jpg
