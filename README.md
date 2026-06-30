@@ -61,6 +61,9 @@ assets/      Diagrams and supporting images
 | [`docs/08-naming-conventions.md`](docs/08-naming-conventions.md) | Prefixes, LOD/Mip suffixes, the `77777` convention, ID formats |
 | [`docs/09-textures.md`](docs/09-textures.md) | DDS, pixel formats, swizzling, mips, gamma |
 | [`docs/10-meshes-and-skeletons.md`](docs/10-meshes-and-skeletons.md) | Vertex formats, LODs, the glTF pipeline, skeletons |
+| [`docs/11-cloth-and-physics.md`](docs/11-cloth-and-physics.md) | The `.cloth` / MotionCloth format, reverse-engineered from ATK source — sections, tunable properties, how to mod cloth |
+
+Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventory.md) · [`reference/resource-types.md`](reference/resource-types.md) · [`reference/cloth-section-types.md`](reference/cloth-section-types.md) · [`reference/glossary.md`](reference/glossary.md)
 
 ## Community
 

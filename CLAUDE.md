@@ -31,8 +31,11 @@ A structured knowledgebase about modding GRB via the Ubisoft *Anvil* engine, its
 | Which forge holds what | `docs/05-three-forge-model.md`, `reference/forge-inventory.md` |
 | What a resource type is | `reference/resource-types.md` |
 | Naming patterns (`FTP_`, `WG_`, `LOD0`, `Mip0`, `77777`) | `docs/08-naming-conventions.md` |
+| **Cloth / `.cloth` / MotionCloth** (capes, coats, straps) | `docs/11-cloth-and-physics.md`, `reference/cloth-section-types.md` |
 | A real worked mod | `examples/case-study-usp-tactical.md` |
 | What's proven vs. guessed, open questions | `meta/research-log.md` |
+
+**Ground truth = ATK's source.** `AnvilToolkit.dll` is a .NET assembly; decompile it (`ilspycmd -p -o <dir> AnvilToolkit.dll`, or `-t <Type>` for one class) and read the `Read`/`Write`/`Serialize`/`Deserialize` methods to resolve *any* binary-format question definitively. Much of this KB (the forge format, the entire cloth format) was derived this way. The community's active focus is **cloth** — prioritize accuracy there.
 
 ## House style for edits
 

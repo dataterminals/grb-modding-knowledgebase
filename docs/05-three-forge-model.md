@@ -17,6 +17,8 @@ This is why you almost never repack the giant base forges. You build small patch
 
 ## The three forges a cosmetic mod touches
 
+> **⚠️ Important nuance — the split is a *convention*, not a hard requirement.** Community feedback from **SamiPuma (Tier 1 Imports)**, a very active cosmetic mod creator: *"I don't think that forge split is even necessary — if someone just puts all those in `extras patch 01`, it should still work."* This is consistent with the verified forge format: a forge entry is identified by its **file ID alone**, with no field binding it to a particular forge (see [`02-forge-file-format.md`](02-forge-file-format.md)). The engine merges **all mounted forges** into one ID-keyed index, so an entry resolves by ID regardless of *which* mounted forge holds it. The practical caveats: (a) the forge you use must be one the game **already mounts** (the `DataPC*_patch_01` set qualifies), and (b) the heavy mesh/texture resources still want to live in a *Resources* forge for streaming/size reasons. So treat the three-forge layout below as the **organizing convention the community follows** (mirroring how Ubisoft ships the data), not a law the engine enforces. Confirming the exact limits of this is an open question in [`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md).
+
 A complete asset-replacement mod usually coordinates **three** patch forges. Observed directly in the `USP Tactical + Burris FF3` mod, which ships exactly these three folders to repack:
 
 ```

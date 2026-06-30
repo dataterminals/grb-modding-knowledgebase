@@ -22,7 +22,9 @@ At startup (and during streaming) the engine **mounts every forge it's told to l
    effective index: fileID 30091 → meshA''
 ```
 
-> **Why we believe this:** (1) the base/patch file pairing is real and universal on disk; (2) every studied mod works by placing entries into a `*_patch_01.forge`, never by editing the base; (3) the Anvil/Scimitar engine references resources by stable 64-bit ID, which only makes sense if IDs resolve through a merged index. The exact priority algorithm (filename ordering? a manifest? newest mount wins?) is **inferred**, not yet confirmed from engine internals.
+> **Why we believe this:** (1) the base/patch file pairing is real and universal on disk; (2) every studied mod works by placing entries into a `*_patch_01.forge`, never by editing the base; (3) **verified from ATK source** — a forge entry (`ForgeEntry`) is identified by its 64-bit `ID` alone, with no field tying it to a forge or to sibling entries (see [`02-forge-file-format.md`](02-forge-file-format.md)). A flat ID→data archive only "works" as game data if IDs resolve through a merged, cross-forge index. The exact priority algorithm (filename ordering? a manifest? newest mount wins?) is still **inferred**, not yet confirmed from engine internals.
+
+> **Community corroboration:** SamiPuma (Tier 1 Imports) reports that the item/gameplay/resource split isn't required — putting everything into `DataPC_extra_patch_01.forge` "should still work." That is exactly what the flat-ID-archive model predicts: any **mounted** forge can host an entry, and the ID resolves regardless. The untested edge is whether an arbitrary *new* forge filename would be auto-mounted, or whether only the known `DataPC*` patch slots are. See open question 1.
 
 ## Evidence on disk
 

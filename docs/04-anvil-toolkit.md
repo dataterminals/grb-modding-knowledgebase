@@ -87,6 +87,25 @@ The default `AnvilToolkit.dll.config` reveals behaviors a modder/AI should expec
 
 ATK also auto-detects installed games from the registry and Steam library (1.3.0), so it can usually find a GRB install on its own.
 
+## Internal architecture (from decompilation)
+
+`AnvilToolkit.dll` is a .NET assembly and decompiles cleanly. On 2026-06-30 it was decompiled with **`ilspycmd`** (ILSpy's CLI: `ilspycmd -p -o <dir> AnvilToolkit.dll`) to read the exact file formats. This is the authoritative way to resolve any format question. Notable namespaces/classes:
+
+| Namespace / class | Role |
+| --- | --- |
+| `AnvilToolkit.FileTypes.AnvilNext.Containers.ForgeFile` | Forge reader/writer — `Serialize27`/`Deserialize27` is the GRB forge format (see [`02-forge-file-format.md`](02-forge-file-format.md)). |
+| `…Containers.ForgeEntry` | A forge index entry (`ID`, `Offset`, `LengthOnDisk`, `Extension` type, `Name`, …). |
+| `…Containers.DataFile` | The `.data` container reader/writer (`CreateForgeEntry`, compression). |
+| `…AnvilNext.ScimitarClassReader` | The core engine-object ("Scimitar class") deserializer. |
+| `AnvilToolkit.BiendianBinaryReader/Writer` | Endian-aware binary IO (supports the `ForceBigEndianReader` console option). |
+| `…AnvilNext.Physics.MotionCloth.*` | The **MotionCloth / `.cloth` format** (see [`11-cloth-and-physics.md`](11-cloth-and-physics.md)). |
+| `…AnvilNext.Models.*` | Mesh, Skeleton, vertex formats, bone modifiers. |
+| `…AnvilNext.Common.DynamicProperties.*` | The dynamic-property system used throughout BuildTables/Materials. |
+
+The `Game` enum drives per-title behavior: GRB (`GhostReconBreakpoint`) shares the **version-27 forge serializer** with Black Flag/AC3/Unity/Syndicate/Origins/Odyssey/Steep, which is why those games' tooling transfers. Many format methods branch on this enum (e.g. cloth fields truncate for Unity/Syndicate).
+
+> **For AI agents:** if you need a definitive answer about any GRB binary format, the fastest path is to decompile `AnvilToolkit.dll` and read the relevant `Read`/`Write`/`Serialize`/`Deserialize` method. The decompiled source is the ground truth this knowledgebase is built from.
+
 ## How an AI should treat ATK
 
 - **It is authoritative for the format.** If you need the exact binary truth of a forge/mesh/texture, the answer is "what ATK does."
