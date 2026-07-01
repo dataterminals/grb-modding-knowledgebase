@@ -9,10 +9,10 @@ A structured knowledgebase about modding GRB via the Ubisoft *Anvil* engine, its
 ## The mental model (load this first)
 
 - **`.forge`** = a Ubisoft Anvil archive. Magic string at byte 0 is `scimitar` (the engine's internal codename). It is essentially a virtual filesystem: an index mapping 64-bit **file IDs** to compressed data entries.
-- **`.data`** = one entry inside a forge, *also* a container. It holds one or more **typed resources** (Mesh, TextureMap, Material, BuildTable, Skeleton, …). Unpacked names look like `<decimalID>_-_<Name>.data`.
+- **`.data`** = one entry inside a forge, *also* a container. It holds one or more **typed resources** (Mesh, TextureMap, Material, BuildTable, Skeleton, …). Unpacked names look like `<N>_-_<Name>.data`, where `<N>` is a **positional index, not the file ID** (the real 64-bit ID is embedded in the resource — see `docs/03-data-and-resources.md`).
 - **ATK** = a `.NET`/WPF Windows app that behaves like a **file explorer for forges**: unpack → browse `.data` → view/export/replace resources → repack. It is the community's reference implementation of the forge format; when docs and ATK disagree, **ATK is authoritative.**
-- A **mod** = patch forges (`*_patch_01.forge`) dropped into the game directory that override base entries by ID. Most cosmetic mods coordinate **three** forges: `DataPC_patch_01` (items), `DataPC_extra_patch_01` (gameplay), `DataPC_Resources_patch_01` (meshes + textures).
-- The **authoring pipeline**: Blender → glTF/GLB (meshes) + DDS (textures) → import into the forge with ATK → repack → install.
+- A **mod** = new/replacement entries **repacked into the install's forges** (usually the `*_patch_01` set) that override base entries by ID. Modders point ATK at their real install and repack in place, so an install accumulates mods in its forges over time. Most cosmetic mods coordinate **three** forges: `DataPC_patch_01` (items), `DataPC_extra_patch_01` (gameplay), `DataPC_Resources_patch_01` (meshes + textures).
+- The **authoring pipeline**: Blender → glTF/GLB (meshes) + DDS (textures) → import into the forge with ATK → repack in place in your install.
 
 ## Safety rules — non-negotiable
 

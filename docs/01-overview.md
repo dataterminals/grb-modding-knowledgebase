@@ -16,7 +16,7 @@ The practical upshot: GRB shares its data architecture with AC: Origins / Odysse
 
 There is **no official mod SDK** for GRB. The game ships as a set of `.forge` archives plus executables and a few loose data blobs. Modding is therefore **data modding**: you reach into the forges, replace or add resources (a weapon mesh, a face texture, a piece of gear), and let the game load your changes through its normal patch-loading mechanism.
 
-Because of how the engine loads data (see [`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)), you almost never edit the giant base forges directly. Instead you produce small **patch forges** named `*_patch_01.forge` that the game layers on top of the base data, overriding specific entries by their file ID. Distributing a mod usually means shipping a few of these patch forges that the user drops into their game folder.
+Because of how the engine loads data (see [`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)), you almost never edit the giant base forges directly. Instead you work in the smaller **patch forges** named `*_patch_01.forge` that the game layers on top of the base data, overriding specific entries by their file ID. In practice you point ATK at your own install and **repack these patch forges in place**, so your changes are live immediately — a modded install just accumulates changes in its forges over time. When mods are shared (e.g. on Nexus), it's usually the mod's **entries** (an unpacked folder), which you import into your own patch forges with ATK and repack — not whole forge files.
 
 The overwhelming majority of GRB mods are **cosmetic asset replacements**: new outfits, gear, weapons, faces, hairstyles, camos, attachments, and UI. The corpus studied for this repo (150+ community mods — see [`examples/mod-catalog.md`](../examples/mod-catalog.md)) is almost entirely of this kind.
 
@@ -47,10 +47,9 @@ This concentration is *why* this knowledgebase exists: the expertise is real but
    │   │    └─ typed resource: TextureMap │
    │   └─ … index maps 64-bit ID → entry  │
    └─────────────────────────────────────┘
-                 │  repack via ATK
+                 │  repack via ATK (in place, in your install)
                  ▼
-        DataPC_*_patch_01.forge
-                 │  copy into game dir
+        DataPC_*_patch_01.forge  (rewritten in the install)
                  ▼
    GRB loads base forges + patch forges,
    merges by file ID (patch overrides base)

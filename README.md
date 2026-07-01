@@ -29,7 +29,7 @@ A finished asset-replacement mod is, in practice, a small set of **patch forges*
 | `DataPC_extra_patch_01.forge` | Gameplay definitions (`WG_…`) |
 | `DataPC_Resources_patch_01.forge` | The heavy resources: meshes (`…_LOD0–3`) and textures (`…_Mip0–N`) |
 
-The authoring loop is: **model/texture in Blender → export to glTF/DDS → import into the forge with ATK → repack → drop the patch forges into the game directory.** See [`docs/07-modding-workflow.md`](docs/07-modding-workflow.md).
+The authoring loop is: **model/texture in Blender → export to glTF/DDS → import into the forge with ATK → repack the forge in place in your install.** (You point ATK at your GRB install and repack its forges directly — there's no separate "drop a file in" step; a modded install just accumulates mods in its forges over time.) See [`docs/07-modding-workflow.md`](docs/07-modding-workflow.md).
 
 ## How to use this repo
 
