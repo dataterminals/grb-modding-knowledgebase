@@ -101,3 +101,23 @@ download the `ClothInspector.exe` artifact.
 
 *Files here:* `cloth_inspect.py` (the engine), `cloth_inspect_gui.py` (the window),
 and the two `.bat` launchers. All read-only, all documented.
+
+---
+
+## 🔎 `data_inspect.py` — what's inside any `.data`?
+
+A companion command-line tool that opens **any** GRB `.data` container and lists the
+typed resources inside it — each resource's **name**, **type** (Mesh, TextureMap,
+BuildTable, Cloth, …), 64-bit **ClassID**, and size.
+
+```
+python data_inspect.py  30091_-_WI_HDG_P12_Main.data
+python data_inspect.py  *.data                       # several at once
+python data_inspect.py  foo.data --oodle "D:\...\Ghost Recon Breakpoint\oo2core_7_win64.dll"
+```
+
+GRB `.data` payloads are Oodle-compressed (Mermaid, 32 KB blocks). The tool loads the
+game's `oo2core_7_win64.dll` to decompress — it **auto-searches** up from the file's
+path and common spots, or pass `--oodle`. It's **read-only**. Background:
+[`../reference/resource-type-ids.md`](../reference/resource-type-ids.md),
+[`../docs/02-forge-file-format.md`](../docs/02-forge-file-format.md).

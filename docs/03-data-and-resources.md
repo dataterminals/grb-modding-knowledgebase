@@ -35,6 +35,13 @@ Here the `.data` named `TEAMMATE_Template` contains a `BuildTable` resource. A s
 
 > **Mental model:** `forge → many .data entries → each .data → one-or-more typed resources`. The forge is the shipping container; the `.data` is a box; the typed resources are the contents.
 
+### Verified: how a `.data` is stored, and how each resource's type is tagged
+
+Decompiling ATK's `DataFile` (v1.3.1), verified by parsing real files:
+
+- A `.data` payload is a **compressed container**: two `CompressedFileData` blocks (a metadata/index block, then the file-payloads block). For GRB the blocks are **Oodle Mermaid in 32 KB chunks** with a per-block adler32 — full layout in [`02-forge-file-format.md`](02-forge-file-format.md). You cannot read the inner resources without decompressing (unless a block happens to be stored raw). [`tools/data_inspect.py`](../tools/data_inspect.py) does this with the game's Oodle DLL.
+- Inside (decompressed), each resource record is `uint32 TypeId · int32 Length · string Name · Payload`, where the payload begins `[FileHeader][uint64 ClassID][uint32 Extension]…`. **`Extension` == `TypeId`**, and it is the resource's type — a `CRC32` of the type-name string (e.g. `CRC32("BuildTable") = 585940579`, `CRC32("Mesh") = 1096652136`). ATK reverse-resolves it to the extension you see on unpack. Full id↔type table: [`reference/resource-type-ids.md`](../reference/resource-type-ids.md).
+
 ## Typed resource files
 
 The typed resources are where modding actually happens. ATK recognizes a long list of them and, for many, can export to an editable format (XML, glTF, DDS) and re-import. The most relevant for GRB cosmetic modding:

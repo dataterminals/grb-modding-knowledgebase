@@ -64,11 +64,12 @@ assets/      Diagrams and supporting images
 | [`docs/10-meshes-and-skeletons.md`](docs/10-meshes-and-skeletons.md) | Vertex formats, LODs, the glTF pipeline, skeletons |
 | [`docs/11-cloth-and-physics.md`](docs/11-cloth-and-physics.md) | The `.cloth` / MotionCloth format, reverse-engineered from ATK source — sections, tunable properties, how to mod cloth |
 
-Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventory.md) · [`reference/resource-types.md`](reference/resource-types.md) · [`reference/cloth-section-types.md`](reference/cloth-section-types.md) · [`reference/glossary.md`](reference/glossary.md)
+Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventory.md) · [`reference/resource-types.md`](reference/resource-types.md) · [`reference/resource-type-ids.md`](reference/resource-type-ids.md) · [`reference/cloth-section-types.md`](reference/cloth-section-types.md) · [`reference/glossary.md`](reference/glossary.md)
 
 ## Tools
 
 - **🧵 Cloth Inspector** ([`tools/`](tools/README.md)) — a click-to-run tool (window, drag-and-drop, or a standalone `.exe`) that reads a GRB `.cloth` file and tells you, in plain language, what it is: its simulated bodies, the exact **mesh + LOD** each is bound to, and its cloth features. **No coding needed.** See [`tools/README.md`](tools/README.md).
+- **🔎 Data Inspector** ([`tools/data_inspect.py`](tools/data_inspect.py)) — lists the typed resources inside any GRB `.data` (name, **type**, ClassID, size), Oodle-decompressing via the game's DLL. See [`tools/README.md`](tools/README.md).
 
 ## Community
 
