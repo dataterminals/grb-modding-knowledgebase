@@ -317,6 +317,29 @@ Characterized 4565 statistically on Walker (both LODs) without the render mesh. 
 
 ---
 
+## Entry — 2026-07-01 — GRB Mesh parser DISPROVES the "4561–4565 is the render binding" model
+
+### What I did
+Built a minimal GRB render-`Mesh` position reader to pin the cloth binding's slot convention (the one open detail from the previous entry). It ended up **disproving the binding model** instead. Read the GRB mesh path in ATK (`Mesh.ReadFromFile` → `CompiledMesh.ReadFromFile` → `ClusteredMeshData`/`MeshData`, `MeshPrimitive`, `VertexFormatsMap`) — note `Mesh.SupportedGames` **includes** GRB, so meshes (unlike cloth) are game-enabled. Then extracted `TP_Tacvest_Walker_Coat_LOD0/LOD1.Mesh` from `DataPC_Resources.forge` and parsed vertex positions + skinning.
+
+### VERIFIED (new)
+- **GRB render mesh format.** `Mesh` (wrapper: flags, SubMeshes, Bones, extents) → `CompiledMesh` → **`ClusteredMeshData`** (GRB uses clustered; `MeshData`'s own buffers are empty). Layout reached by scanning the `ClusteredMeshData` class hash (3276926531): `DataVersion, formatByte, VertexStride(int32), ClusterCount, Center(v3), HalfExtend(v3), DrawPrimsCount, ClusterCountPerDrawPrim[], VertexOffsetPerDrawPrim[], IsFixedClusterSize, <u32>, VertexBufferData, IndexBufferData, PrimitiveDescData`. Vertex format = `Pos3s_Norm4ub_Col4ub_Tex2s_Tex2s_Color4ub_Joint`, **stride 36**: position = 3×int16 at offset 0, `world = int16 × QuantizationFactor` (≈6.10e-5 here, ≈ mesh extent / int16 range; no center offset). Last 4 bytes = **two-bone skinning** `[idx0, w0, idx1, w1]`, `w0+w1 = 255`.
+- **Walker LOD0 render mesh = 1816 verts / 3263 tris** (verified 3 ways: `vlen 65376 / stride 36`, `max index = 1815`, `MeshPrimitive.NumVertices = 1816`). LOD1 = 956 / 1631.
+- **The render mesh is an ordinary skeleton-skinned mesh.** Two-bone weights sum to 255 for **all 1816** verts; bone indices span only **0..23** — a skeleton, not the 170 sim vertices. So the render mesh carries **no per-vertex binding to the sim mesh**.
+
+### CORRECTION (supersedes the two prior 2026-07-01 entries' conclusion)
+- **`render ≠ sim + additional`.** 1816 render verts ≠ 170 sim + 62 additional (=232). The `ClothAdditionalVertices*` (4561–4565) sections describe only **62** (LOD0) / 114 (LOD1) points — a small per-triangle set — **not** the render mesh. So **"4561–4565 is the render↔sim binding" is WRONG.** (The byte-exact section *format/decode* from the prior entry still stands as facts about those sections; only the interpretation is wrong.)
+- The 62 additional points reconstruct (barycentric on sim triangles) onto the **sim surface** but do **not** coincide with render vertices (nearest render vert ≈ 2% of mesh scale away, same offset as the sim verts). Consistent with ATK's literal class name *"additional **collision** vertices."* Role unconfirmed.
+- Prior claims withdrawn: "render mesh = sim verts + A additional verts (sim first)"; "the encoder is fully specified / un-blocked"; the "direct vs barycentric render↔sim binding" framing.
+
+### OPEN (the real blocker, reopened)
+**How does a GRB MotionCloth drive its 1816-vertex render mesh?** The render mesh is skeleton-skinned with no sim binding; the cloth stores only the sim mesh + 62 additional points. So the sim→render map is either (a) **runtime-computed by proximity** (render vert → nearest sim triangle, nothing authored — which would make 4561–4565 genuinely just collision points), or (b) **stored somewhere not yet located** (a wrap/skin section, or in the mesh's SubMesh/Bone data I skipped). Settle this before any reskin encoder. Next probes: decode the render mesh's `Bones`/`MeshBones` names (skeleton vs cloth), and look for a per-render-vertex sim-wrap in the mesh or a cloth section not yet mapped.
+
+### Deliverables / state
+Docs corrected (doc-11 render↔sim section carries a prominent correction note; `reference/cloth-section-types.md` reframed; open-question #1 reopened). No repo tool yet from the mesh parser (scratchpad `mesh_parse.py`/`subset_test.py`, session-temporary). `tools/motioncloth.py` unaffected.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
