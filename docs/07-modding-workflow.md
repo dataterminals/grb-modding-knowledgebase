@@ -7,9 +7,9 @@ This is the practical loop a GRB modder runs: from an idea in Blender to patch f
 ## Overview
 
 ```
- (1) AUTHOR            (2) EXPORT            (3) IMPORT                (4) REPACK            (5) INSTALL
- Blender model    →    glTF/GLB + DDS   →   import into the forge →  forge → patch_01.forge → drop into
- / texture edit        (standard formats)    via ATK (replace/add)    via ATK                 GRB game dir
+ (1) AUTHOR            (2) EXPORT            (3) IMPORT                (4) REPACK            (5) LIVE
+ Blender model    →    glTF/GLB + DDS   →   import into the forge →  repack the forge   →  already in your
+ / texture edit        (standard formats)    via ATK (replace/add)    in place via ATK      GRB install
 ```
 
 ## 1. Author the asset (Blender)
@@ -41,19 +41,21 @@ Import your authored asset into the game's data via ATK. Mechanically:
 
 ## 4. Repack ⚠️
 
-Repack the unpacked folder back into a `.forge`. ATK notes for GRB:
+Repack the unpacked folder back into its `.forge` — **in your actual game install**. In the normal workflow ATK is pointed straight at the GRB install and rewrites the forge *in place*, so for your own machine repacking **is** installing (see step 5). Notes for GRB:
 - GRB data historically serialized **uncompressed**; **compression is now a setting** (`EnableCompression` defaults `True` in the shipped config). If a repacked mod misbehaves in-game, compression settings are a thing to check.
 - ATK won't unpack over an existing unpacked folder (prevents clobbering); manage your working folders accordingly.
-- Repacking produces a `*_patch_01.forge` you can distribute.
+- You repack the forge that holds the target entries — usually the `*_patch_01` set for gear/weapons (see [`05-three-forge-model.md`](05-three-forge-model.md)).
 
-Backups: ATK writes `.bak` files and/or `Backups` folders (`CreateBackups`, `CreateDataBackups`, `CreateFileBackups` default `True`). Note `OverwriteFileBackups` also defaults `True`, and `AddDateToBackups` defaults `False` — so backups overwrite rather than accumulate by date unless you change that. For anything irreplaceable, keep your own copy.
+Backups: ATK writes `.bak` files and/or `Backups` folders (`CreateBackups`, `CreateDataBackups`, `CreateFileBackups` default `True`). Note `OverwriteFileBackups` also defaults `True`, and `AddDateToBackups` defaults `False` — so backups overwrite rather than accumulate by date unless you change that. Forges are multi-GB original game data; keep your own clean copy of anything irreplaceable.
 
-## 5. Install ⚠️
+## 5. Install ⚠️ (usually already done)
 
-Place the repacked `DataPC_*_patch_01.forge` file(s) into the GRB install directory alongside the base forges. The game loads them as a patch layer and your overrides take effect (see [`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)).
+In practice there's **no separate install step**: modders point ATK at their real GRB install and unpack/repack its forges directly, so a mod is live the moment you repack (step 4). Over time a working install just **accumulates many mods repacked into the same forge files** — that's what a "modded install" *is* (e.g. a long-running live install has had dozens of mods repacked into its forges).
 
-- **Always back up the original** `*_patch_01.forge` files you're replacing (the install ships a `Backups\` and `_GRBbackups\` folder pattern for exactly this reason).
-- **Combining multiple mods** that each ship `DataPC_Resources_patch_01.forge` requires *merging* their `.data` entries into one patch forge — you can't just drop two files with the same name. Conflicting IDs are true conflicts.
+- **You edit the install's forges in place**, not a standalone file. Whole forge files are rarely passed around — they're huge and represent your machine's accumulated state.
+- **Sharing a mod** means sharing its **`.data` entries** (often as an unpacked mod folder, like the Nexus corpus). Whoever installs it imports those entries into *their* forges with ATK and repacks — the same in-place flow.
+- **Combining mods is the normal, cumulative case**, not an edge case: you keep adding entries to the same forge and repacking. Because everything lands in one forge, **two mods that change the same file ID truly conflict** — only one can win. Check for that up front by diffing the two mods' forges with the **Forge Inspector** ([`tools/`](../tools/README.md)).
+- **Always keep a clean backup** of each forge before you start repacking into it (the install's `Backups\` / `_GRBbackups\` folders exist for exactly this) — a bad repack otherwise means re-downloading multi-GB files.
 
 ## 6. Test in-game
 
@@ -61,4 +63,4 @@ Launch GRB and verify the asset appears correctly at all LODs/distances and unde
 
 ## The loop, compressed
 
-> Unpack → find by ID → export reference → edit in Blender → export glTF/DDS → import/replace in ATK → fix BuildTable + IDs across the three forges → repack → back up originals → install → test → repeat.
+> Unpack the forge in your install → find by ID → export reference → edit in Blender → export glTF/DDS → import/replace in ATK → fix BuildTable + IDs (keep the layers consistent) → back up the forge → repack in place → test → repeat.
