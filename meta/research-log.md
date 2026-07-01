@@ -427,6 +427,28 @@ Run the in-game diagnostic. If confirmed, extend `clothwrap.py` with the weight-
 
 ---
 
+## Entry — 2026-07-01 — IN-GAME TEST: editing the wrap records had NO visible effect (wrap-as-driver NOT confirmed)
+
+### What I did
+Ran the first live in-game test of the render↔sim "wrap" hypothesis. Used `tools/clothwrap.py` + a raw-block `.data` repacker to produce modified ghillie cloths (which have wraps on player-equippable gear), staged them into `DataPC.forge`, and had Sylvia repack and observe on female Nomad. Two edits tested: **twist** (shift every record's 3 sim indices by +40) and **collapse** (all indices → sim vertex 0). Verified the modified cloth was actually present in the live forge each time (e.g. `Cloth_Shoulder_Sniper_GhillieThreads1` record0 idx = (0,0,0) after collapse), and confirmed no patch forge overrides these cloth IDs.
+
+### RESULT (verified in-game)
+- **Editing the 20-byte wrap records produced NO visible change** — not in the loadout/bivouac menus, and not in live gameplay with full movement (sprint/roll/jump), across all equippable ghillie items. Even a full **collapse** of a **100%-LOD0-bound** wrap (`Cloth_Shoulder_Sniper_GhillieThreads1`, 2996/2996) left the shoulder tufts looking completely normal.
+
+### What this means (honest downgrade)
+- **The "20-byte wrap records drive the visible mesh at runtime" conclusion is NOT confirmed and is now doubtful.** The static evidence that these records are *geometrically* a render→sim binding still stands (per-render-vertex → 3 local sim verts, reconstructs onto render vertices), but a binding that the runtime renderer actually uses would visibly break when collapsed. It didn't. So the records are more likely **editor/build/derived data** (an authoring-side or precompute representation the runtime doesn't consult) than the live render driver — OR the runtime uses a *baked* form not affected by editing this source.
+- **Caveat (why this isn't a clean disproof for coats):** only **ghillie** cloths were tested (they were the equippable, viewable option). Ghillie strands may be **skeleton-skinned** rather than cloth-render-driven, which would make any ghillie cloth edit invisible regardless. So this disproves "wrap drives the ghillie render mesh" but leaves the **coat** case (the original Walker/Sami question) formally untested in-game.
+- **Methodological lesson:** the extensive static analysis produced a self-consistent geometric story that a single in-game test overturned. Weight this: static "it looks like a render→sim binding" ≠ "the runtime renders from it."
+
+### Deliverables / state
+Forge reverted to the pre-test backup (`Backups/DataPC.forge.pre-clothtest-20260701`), install clean. `tools/clothwrap.py` still valid as a wrap *locator/inspector*; its framing as "the render↔sim binding" is downgraded pending a coat test. doc-11 flagged.
+
+### Next (candidates, no more speculative offline decoding)
+1. One clean **coat** test: collapse an equippable, viewable *coat* cloth with a wrapped LOD0 (e.g. `Cloth_HunterCoat` if equippable) — coats are more likely genuinely cloth-render-driven than ghillie strands. This is the real disambiguator.
+2. If coats also show nothing → the runtime render→sim path is elsewhere (a baked/compiled buffer, possibly in the render `Mesh` or a compiled cloth form); the 20-byte records are authoring data. Re-open "how does a GRB cloth drive its render mesh" accordingly.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
