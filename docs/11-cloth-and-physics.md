@@ -148,6 +148,28 @@ Walker's coat is **three coupled resources** in `DataPC.forge` (note: cloth live
 
 (Naming patterns across the game: `Cloth_<Name>` and `<Name>_Cloth`; many ghillie/coat/dress/strap items have them — `Cloth_HunterCoat`, `IanBlake_TrenchCoat_Cloth`, `FTciv_Dress_MontionCloth` (sic), etc.)
 
+### Diffing the two Walker cloths — they are different-purpose, not redundant
+
+Parsing both resources ([`tools/cloth_inspect.py`](../tools/cloth_inspect.py)) decodes the **body names**, which settle what each is for:
+
+| Resource | Bodies (decoded names) | Purpose |
+| --- | --- | --- |
+| `34224 TP_WalkerCoat_Cloth` | 1 body: **`Sim_TP_Tacvest_Walker_Coat_LOD1`** | the **gameplay / player-wearable** coat cloth |
+| `35720 Cloth_WalkerCoat` | 2 bodies: **`Sim_TPri_CIN__LOD0`** + **`Sim_TPri_CIN_Walker_Coat_LOD1`** | the **cinematic** ("CIN") cloth for cutscene Walker |
+
+So the pair isn't "two takes on the same cloth" — one drives the **wearable gear item** (`TP_Tacvest_Walker_Coat`), the other the **cinematic NPC** (`TPri` = third-person primary character, `CIN` = cinematic), at higher fidelity. The section makeup matches that split (approximate counts):
+
+- **Wearable (`34224`)** carries the full **constraint solver buffers** — `ClothConstraintsSizes`, `ClothConstraints`, `ClothStretchingConstraints(+Count)`, `ClothMeshConstraintsSizes`, `ClothPresets` — and a **ragdoll bone-collider list** embedded in its editor data (`Ragdoll_Head…;LeftArm…Fore…Hand…Shoulder…Neck…Right…`), i.e. the skeleton bones the cloth collides against.
+- **Cinematic (`35720`)** adds **wind** (`ClothPropWind` ×4), `ClothEngineLoop`, `BodyTransform`/`BodyColor`, and `ClothAABox` — richer, wind-driven motion for cutscenes — and ships **two LODs** (LOD0 + LOD1).
+
+### The key lead: a cloth body name encodes its target mesh + LOD
+
+Every body is named **`Sim_<TargetMeshName>_LOD<n>`** (e.g. `Sim_TP_Tacvest_Walker_Coat_LOD1`). That is the human-readable trace of the cloth↔mesh binding: a cloth body is authored *for one specific mesh at one specific LOD*. Practical consequences for modding:
+
+- When modding the **wearable** coat, the cloth to study/reuse is **`TP_WalkerCoat_Cloth`** (the `TP_Tacvest_…` gameplay one), **not** the cinematic `Cloth_WalkerCoat`.
+- Cloth is **per-LOD**: a garment that simulates at multiple LODs needs a cloth body per mesh LOD, each bound to that LOD's geometry.
+- This is why a name-only BuildTable reference is insufficient (see below): the binding is per-mesh-per-LOD, baked into the body.
+
 ### Why the BuildTable reference isn't enough
 
 **A `.cloth` is welded to one specific mesh's vertex layout.** A BuildTable reference just *names* which cloth to attach; the actual binding lives **inside the cloth data**, baked for the vanilla mesh's exact geometry:
@@ -184,7 +206,9 @@ Ordered by reliability with today's tools:
 Tracked in [`meta/research-log.md`](../meta/research-log.md):
 
 1. **The render↔sim remap algorithm:** how to recompute `ClothAdditionalVerticesBarycentricCoordinatesData` (4565) + per-vertex data for a new mesh. Building this would unblock new-garment cloth — the single highest-value cloth task.
-2. **Two cloth resources per garment** (`<Name>_Cloth` vs `Cloth_<Name>`): what distinguishes them (LOD? body vs. variant? definition vs. sim)? Unpack the Walker pair and diff their sections.
-3. **BuildTable side:** the exact property/node a BuildTable uses to reference a cloth, and whether the mesh must also carry a cloth link (the `IsGeneratedFromCloth` mesh + a matching `ClothEditorDataClothID`).
-4. **`Extension` (resource-type) id** for a ClothPackage in the forge entry table — see [`02-forge-file-format.md`](02-forge-file-format.md).
-5. **Empirical validation:** confirm in-game that XML-tuned `ClothProperties` and repainted `MaxDistance` behave as expected.
+2. ~~**Two cloth resources per garment**~~ — **answered** (see the Walker diff above): they are different-purpose (gameplay-wearable vs. cinematic), each with per-LOD bodies named `Sim_<Mesh>_LOD<n>`.
+3. **A fully accurate MotionCloth parser.** [`tools/cloth_inspect.py`](../tools/cloth_inspect.py) is *approximate* — it scans for the `0xECD7` magic and can over/under-count buffer sections (a `0xECD7` can occur by chance inside vertex/index data). A correct parser must implement `MotionSectionFactory`'s counter→buffer size dependencies (buffer lengths come from earlier counter sections). Worth building for exact `ClothProperties` value diffs.
+4. **The ragdoll bone-collider list** found in the wearable cloth's editor data (`Ragdoll_Head…;LeftArm…` bone+hash string) — decode its exact structure; it names the skeleton bones the cloth collides against, and is likely part of binding cloth to a character.
+5. **BuildTable side:** the exact property/node a BuildTable uses to reference a cloth, and whether the mesh must also carry a cloth link (the `IsGeneratedFromCloth` mesh + a matching `ClothEditorDataClothID`).
+6. **`Extension` (resource-type) id** for a ClothPackage in the forge entry table — see [`02-forge-file-format.md`](02-forge-file-format.md).
+7. **Empirical validation:** confirm in-game that XML-tuned `ClothProperties` and repainted `MaxDistance` behave as expected.

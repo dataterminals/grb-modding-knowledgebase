@@ -43,8 +43,9 @@ Read [`CLAUDE.md`](CLAUDE.md) first — it is the orientation file written for y
 
 ```
 docs/        Conceptual documentation, numbered in reading order
-reference/   Lookup tables: forge inventory, resource types, glossary
+reference/   Lookup tables: forge inventory, resource types, glossary, cloth section types
 examples/    Worked case studies of real mods, plus the studied mod corpus
+tools/       Scripts (e.g. cloth_inspect.py — inspect/diff MotionCloth .cloth resources)
 meta/        Research provenance, verification status, sources, open questions
 assets/      Diagrams and supporting images
 ```
