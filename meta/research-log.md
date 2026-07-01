@@ -340,6 +340,28 @@ Docs corrected (doc-11 render↔sim section carries a prominent correction note;
 
 ---
 
+## Entry — 2026-07-01 — Hunt the wrap: the render↔sim binding IS STORED in the cloth
+
+### What I did
+Followed up the mesh-parser correction by hunting for how the cloth actually drives its render mesh. Examined the cloth's per-LOD bytes **after** the sim `ClothPackage` (the region `motioncloth.py` treats as opaque, and where the old hand-walk desynced), using the render mesh facts (1816 verts, sim 170) as anchors.
+
+### VERIFIED (new — answers the reopened blocker)
+- **The render↔sim wrap is STORED in the cloth, not runtime-computed.** Each cloth LOD carries a large per-LOD block after its sim `ClothPackage` (Walker LOD0: ~35 KB between package0@[2945–40358] and package1@[83290–105475]). Layout after the sim package parses cleanly: `TriQuadIndex(288)`, sim `VertexPos(170)`, sim `VertexNormals(170)`, sim `Indices(864)`, an **empty list (count 0)** — *this is the "VisualVertexMappings empty" the earlier entry saw* — then a **count = 1816 (render vertex count)** followed by per-render-vertex data.
+- **That per-render-vertex data binds each render vert to ~3 nearby sim vertices.** The region holds **~5833 sim-valued u16 indices ≈ 1816 × 3**. Parsing at a **20-byte stride**, 1361/1816 records carry 3 valid sim indices that (a) **track render order** (render200→sim(0,2,3), render1000→(92,114,113), render1400→(163,164,150)) and (b) form **tight local triangles**: median 3-vertex spread **0.131 ≈ 1.5 sim-edge-lengths** (sim edge 0.085), vs. mesh-scale 0.56 for random triples. Random data cannot produce spatially-local, order-correlated sim triples, so this is a genuine stored wrap (render vert → local sim triangle + weights). The `4561–4565` "additional vertices" are a separate small (62) collision set, consistent with ATK's class name.
+- **GRB render `Mesh` decode** (built this session, reused here): `Mesh`→`CompiledMesh`→`ClusteredMeshData`; vertex `Pos3s_Norm4ub_…` stride 36; position = int16 × QuantizationFactor (≈6.10e-5); two-bone **skeleton** skinning (bone idx 0..23) — i.e. the mesh's own skinning is to the skeleton; its cloth-following comes from the stored wrap in the cloth.
+
+### INFERRED / still to decode
+- Exact wrap record layout: the ~20-byte record appears to be `[flag/count][6× u16 weight data][3× u16 sim index]`; weight encoding not yet cracked (a first float-weight reconstruction failed). ~25% of records don't parse at the fixed 20-byte stride → the buffer may be **variable-length** (0xFFFF-delimited runs seen elsewhere in the block), not a flat array.
+- A **render-vertex-order remap** between the cloth's ordering and the render `Mesh`'s vertex-buffer order: index-matched position reconstruction was poor (median 0.39) even though per-record sim triples are local — i.e. the binding is real but cloth-render-vert *i* ≠ mesh-vert *i*.
+
+### Why it matters (modding)
+The reskin path is now correctly scoped: to put a new render mesh on a cloth garment, **regenerate this wrap** (for each new render vert: nearest sim triangle + barycentric weights — exactly ATK's `computeTriBarycentricCoords`), keep the sim mesh, and write the records. So the mechanism is both **understood and regenerable in principle** — the remaining work is cracking the record encoding + the vertex-order remap, then an encoder + in-game test.
+
+### Deliverables / state
+Docs updated (doc-11 "Net" note now says the wrap is stored + located; open-question #1 reframed to "mechanism found, format to decode"). Scratchpad probes (`wrap_test.py`, `wrap_test2.py`) session-temporary. `tools/motioncloth.py` unaffected (this wrap lives in the LOD bytes *outside* the ClothPackage it parses).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
