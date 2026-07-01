@@ -215,13 +215,58 @@ Ordered by reliability with today's tools:
 
 > **Bottom line for Sami:** the cloth didn't take on because `Cloth_WalkerCoat` is bound to the *vanilla* coat's vertices, not to a name — your new mesh has different vertices, so the baked mapping is invalid. Until there's a GRB cloth-generation/remap tool, the achievable wins are: **tune** vanilla cloth, **reshape vanilla topology** rather than replace it, and **repaint the MaxDistance (Color1) vertex colors**. Adding cloth to a genuinely new mesh needs the regeneration step ATK doesn't yet do for GRB.
 
+## The render↔sim remap — design, and what ATK already gives us
+
+This is the frontier task (bind a vanilla `.cloth` to a *new* garment mesh). Decompiling the MotionCloth binding path and surveying every GRB cloth turns it from a mystery into a concrete, scoped engineering problem.
+
+### Survey: two binding schemes exist (verified)
+
+Extracting and scanning **all 56 `Cloth`-typed resources in `DataPC.forge`** (via the forge index + Oodle; see [`tools/`](../tools/README.md)) shows GRB garment cloths split into two render↔sim binding schemes:
+
+- **Direct (majority)** — no `ClothAdditionalVertices*` (4561–4565) sections. The simulated mesh vertices *are* the render vertices (1:1), or the render mesh shares the sim vertices. Examples: `IanBlake_TrenchCoat_Cloth` (186 sim verts / 305 tris), `JaceSkell_Jacket_Cloth`, most ghillies.
+- **Barycentric (subset)** — carries the `ClothAdditionalVertices*` sections. A low-res **sim mesh** drives extra **render ("additional") vertices** via a per-vertex *triangle + barycentric* binding. Examples: **`TP_WalkerCoat_Cloth`** (the wearable coat — 170 sim verts / 288 tris), `Cloth_HunterCoat`, `Tsec_Madera_Coat_Cloth`, `Cloth_Hunter_Hood`.
+
+> Which scheme a garment uses decides your reskin strategy. **Direct** cloths demand your new mesh keep the sim vertex count *and* index order (constraints are addressed by vertex index). **Barycentric** cloths let the render mesh differ from the sim mesh — but the binding is baked for the vanilla render mesh, which is the remap problem below. You can tell them apart by checking whether the cloth's sections include `ClothAdditionalVertices*` (4561–4565); surfacing that in the cloth tooling is part of the next build.
+
+### The exact binding data (verified from `MotionSectionFactory`)
+
+The sim mesh:
+- `ClothUserData.UserVerticesCount` (4354) — sim vertex count `V`.
+- `ClothVerticesCurrentPosition` (4363) — `Vector4[(V+15)&~15]`, sim vertex rest positions.
+- `ClothMeshIndexBufferSize` (4370) → `ClothMeshIndexBuffer` (4371) — `Triangle[]`, sim topology.
+
+The render↔sim binding (barycentric scheme), sized off `ClothAdditionalVerticesCounters` (4561 = `{AdditionalVerticesBufferSize N, AdditionalVerticesSIMDSize}`):
+- `ClothAdditionalVerticesTriangleVerticesCount` (4562) — `byte[N]`, sim verts per binding (typically 3).
+- `ClothAdditionalVerticesTriangleFirstVertexIndex` (4563) — `ushort[N]`, start index into the sim index buffer of the bound triangle → the 3 sim verts are `IndexBuffer[first..first+2]`.
+- `ClothAdditionalVerticesBarycentricCoordinatesParameters` (4564) — a `SIMDF8` dequant scale/offset.
+- `ClothAdditionalVerticesBarycentricCoordinatesData` (4565) — `ushort[]` quantized barycentric weights (SIMD-packed, 8-wide).
+
+### ATK already implements the algorithm — it's just GRB-gated
+
+`Cloth.FromMeshSet(visualMesh, simMesh, settings)` builds a cloth by calling, **per render vertex**, `GenerateVisualMapping` → `FindNearestTriangleWithIndices(simPositions, visualPos)` then `computeTriBarycentricCoords(...)`. That is exactly the remap: for each new render vertex, find the nearest sim triangle and compute its barycentric coordinates. The math (plane projection + area-ratio barycentrics) is in [`Cloth.cs`] `computeTriBarycentricCoords`.
+
+The catch: this generator is **disabled for GRB** — `SoftBody.SupportedGames` is `AC2…Syndicate` only, checked in `FileHandler` before the Mesh-Viewer cloth path — and it emits the **`SoftBodyVertexMapping`** (legacy `ClothLOD`) representation, whereas GRB writes the **packed `ClothAdditionalVertices*` sections** (`MotionClothLOD` → `ClothPackage`). So two gaps remain: (a) the GRB gate, and (b) a converter from the computed mapping to GRB's packed section encoding.
+
+### The remap recipe (to build)
+
+For the **barycentric** scheme, keeping the vanilla sim mesh:
+1. Parse the target cloth → sim vertices (4363) + sim triangles (4371) + existing binding sections.
+2. Author the new render mesh **in the vanilla mesh's space** (conform it roughly to the vanilla garment surface).
+3. For each new render vertex: `FindNearestTriangle` in the sim mesh → `computeTriBarycentricCoords` (ATK's exact method) → `(triangleFirstVertexIndex, verticesCount=3, barycentric)`.
+4. Re-encode `ClothAdditionalVerticesCounters/…VerticesCount/…FirstVertexIndex/…BarycentricParameters/…BarycentricData` for the new render-vertex set; leave the sim mesh, constraints, and per-vertex data untouched.
+5. Re-serialize the ClothPackage → resource → `.data` → forge.
+
+For the **direct** scheme, there's no barycentric layer to recompute: the new mesh must reuse the vanilla sim vertex count and index order (the "reshape, don't retopologize" path already documented).
+
+**Still to finish (next build):** an accurate section parser/writer (the `MotionSectionFactory` sizing is now known), the mapping→packed-section encoder, and **in-game validation**. The geometry itself is solved (ATK's code).
+
 ## Open questions (cloth-specific)
 
 Tracked in [`meta/research-log.md`](../meta/research-log.md):
 
-1. **The render↔sim remap algorithm:** how to recompute `ClothAdditionalVerticesBarycentricCoordinatesData` (4565) + per-vertex data for a new mesh. Building this would unblock new-garment cloth — the single highest-value cloth task.
+1. **The render↔sim remap — characterized, build pending.** The algorithm is ATK's own `GenerateVisualMapping` (nearest sim triangle + `computeTriBarycentricCoords`); the encoding target is the packed `ClothAdditionalVertices*` (4561–4565) sections; two binding schemes exist (direct vs barycentric). Remaining: an accurate section writer + mapping encoder + in-game test. See "The render↔sim remap" above.
 2. ~~**Two cloth resources per garment**~~ — **answered** (see the Walker diff above): they are different-purpose (gameplay-wearable vs. cinematic), each with per-LOD bodies named `Sim_<Mesh>_LOD<n>`.
-3. **A fully accurate MotionCloth parser.** [`tools/cloth_inspect.py`](../tools/cloth_inspect.py) is *approximate* — it scans for the `0xECD7` magic and can over/under-count buffer sections (a `0xECD7` can occur by chance inside vertex/index data). A correct parser must implement `MotionSectionFactory`'s counter→buffer size dependencies (buffer lengths come from earlier counter sections). Worth building for exact `ClothProperties` value diffs.
+3. **A fully accurate MotionCloth parser — sizing rules now known.** [`tools/cloth_inspect.py`](../tools/cloth_inspect.py) is still *approximate* (it magic-scans `0xECD7`). But the exact counter→buffer dependencies are now transcribed from `MotionSectionFactory` (e.g. 4363 sized by `(UserVerticesCount+15)&~15`; 4371 by `ClothMeshIndexBufferSize`; 4562/4563 by `AdditionalVerticesBufferSize`; 4565 by `AdditionalVerticesSIMDSize`; 4531 by `PerVertexDataBufferSize*16`) — see [`reference/cloth-section-types.md`](../reference/cloth-section-types.md). Building the accurate walker (needed for the remap encoder) is now a transcription job, not a research one.
 4. **The ragdoll bone-collider list** found in the wearable cloth's editor data (`Ragdoll_Head…;LeftArm…` bone+hash string) — decode its exact structure; it names the skeleton bones the cloth collides against, and is likely part of binding cloth to a character.
 5. **BuildTable side:** the exact property/node a BuildTable uses to reference a cloth, and whether the mesh must also carry a cloth link (the `IsGeneratedFromCloth` mesh + a matching `ClothEditorDataClothID`).
 6. ~~**`Extension` (resource-type) id** for a ClothPackage in the forge entry table~~ — **answered**: the forge resource is typed **`Cloth`** (`3811591354`); `ClothPackage` is nested and has no id. See the hierarchy above and [`reference/resource-type-ids.md`](../reference/resource-type-ids.md).
