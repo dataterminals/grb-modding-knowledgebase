@@ -449,6 +449,29 @@ Forge reverted to the pre-test backup (`Backups/DataPC.forge.pre-clothtest-20260
 
 ---
 
+## Entry — 2026-07-01 — Ghillie strands are SKINNED, not simulated → the ghillie tests were an invalid subject (wrap model UNTESTED, not disproven)
+
+### What I did
+Ran a control test to check whether the ghillie cloth is even physics-simulated at render time: set `ClothProperties.Gravity` (section 4357) from the default `(0,0,-15)` to **`(120,0,150)`** (reversed + ~10× magnitude) on all 11 equippable ghillie cloths, staged into `DataPC.forge`. Verified the flipped gravity was present in the *running* forge (`Cloth_Shoulder_Sniper_GhillieThreads1` 4357 gravity = (120,0,150) live).
+
+### RESULT (verified in-game)
+- **Reversing + amplifying gravity 10× produced NO visible change** on the ghillie strands in gameplay. Gravity is the most fundamental simulation input, so no response means the visible ghillie strands are **not driven by live cloth simulation** — they are **skinned** (or `VertexMaxDistance`-pinned so tightly they never deviate from the skinned pose). Either way, **a ghillie's visible strands don't move via cloth sim.**
+
+### CORRECTION (supersedes the prior "IN-GAME TEST … wrap NOT confirmed" entry's implication)
+- The ghillie was an **invalid test subject.** Since ghillie strands aren't cloth-simulated, *no* cloth edit (wrap twist, wrap collapse, gravity flip) could ever show — which fully explains the earlier null results **without bearing on the wrap hypothesis at all.**
+- So the earlier downgrade ("wrap-as-driver is doubtful") is itself corrected: the ghillie negatives are **uninformative**, not disconfirming. The wrap model (static: the 20-byte records are geometrically a render→sim binding) is **neither confirmed nor disproven — it remains IN-GAME UNTESTED**, because no *equippable + viewable + genuinely cloth-simulated* garment was available this session (ghillies skinned; Walker/named-character coats not player-viewable; female Nomad has no other cloth garment).
+- **New verified fact (useful in its own right):** GRB **ghillie suits render their strands via skinning, not live cloth**, at the LODs/poses the player sees. Good to know for modders — reskinning a ghillie is a mesh/skin-weight job, not a cloth job.
+- **Meta:** two layers of misread here (static self-consistency ≠ runtime; and a null in-game result can mean "invalid subject," not "hypothesis false"). Both worth remembering.
+
+### Next (for a future session — no more ghillie tests)
+1. Find/obtain a **player-equippable, close-up-viewable, genuinely cloth-simulated** garment (a coat/cape whose strands visibly sway in gameplay), then re-run the wrap collapse on it — the only clean in-game validator.
+2. Or accept in-game is blocked and pursue the runtime path in data: check whether the render `Mesh`/`CompiledMesh` carries a baked cloth-skinning buffer (the actual runtime render→sim link) that the 20-byte records feed at build time.
+
+### Deliverables / state
+`tools/clothwrap.py` + the scratchpad raw-`.data` repacker + a `ClothProperties.Gravity` editor all work (verified end-to-end: edits reach the running game). Forge revert pending (GRB was still holding the file open) — restore `Backups/DataPC.forge.pre-clothtest-20260701` once the game is closed.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
