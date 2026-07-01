@@ -307,7 +307,13 @@ For a barycentric reskin, keep the vanilla sim mesh + triangles; the new render 
 - No repo tool changes yet; findings only. doc-11's remap section updated (the "under revision" doubt is resolved; CSR semantics + quantization corrected). Scratchpad verification scripts (`verify_binding.py`, `probe_quant.py`) are session-temporary.
 
 ### Next
-Confirm the vertex-order/drop-max convention against the render `Mesh` (parse `TP_Tacvest_Walker_Coat_LOD*.Mesh` vertex count + positions; expect 232/180), then build the mapping→section encoder in `motioncloth.py` and validate in-game on the Walker coat.
+Confirm the vertex-slot convention against the render `Mesh` (positions of `TP_Tacvest_Walker_Coat_LOD*.Mesh`), then build the mapping→section encoder in `motioncloth.py` and validate in-game on the Walker coat. Note: GRB `Mesh` *is* game-enabled in ATK (`Mesh.SupportedGames` includes GRB, unlike cloth), so a render-mesh parser is feasible — but it's a real sub-project (Mesh→CompiledMesh→MeshData vertex streams).
+
+### Refinement (same session, corrects the quantization detail above)
+Characterized 4565 statistically on Walker (both LODs) without the render mesh. Corrections to the "two smaller weights" wording above:
+- **`Scale` is a per-LOD normalization** (`Scale = maxStoredWeight/255`, so `Magic = Scale·255` = that max), **not** a fixed ½ bound. Walker LOD0 `Magic` = 0.524, **LOD1 `Magic` = 0.751** — a stored weight can exceed ½, so the two stored are **not** "the two smaller."
+- Verified instead: **every stored weight ≤ `Magic`** (0/62 and 0/114 exceed), the **tail is all `0xFFFF`**, and **all** reconstructed additional-vertex rest positions (from sim positions 4363 + index buffer 4371 + decoded barycentric) fall **inside the sim-mesh bbox**.
+- The derived third (`1−u−v`) is **not** consistently the largest weight (LOD0: 40 max / 14 mid / 8 min of 62) → the encoding stores two weights at **fixed per-triangle vertex slots** (index-buffer order), not magnitude-sorted. The remaining unknown is just that slot permutation (~6 candidates), which needs render-mesh positions or an in-game trial — everything else about the encoding is pinned.
 
 ---
 
