@@ -41,7 +41,7 @@ The `_patch_01` suffix strongly implies a numbered patch chain (`_patch_02`, etc
 ## Consequences for modding (these are the practical rules)
 
 1. **You override by ID, in a patch forge.** Put an entry with an existing file ID into `DataPC_*_patch_01.forge` and it replaces the base entry everywhere that ID is referenced. This is the entire basis of replacement mods.
-2. **You add new content by minting new IDs** and referencing them from BuildTables/entities you also patch in. (Authoring often uses placeholder IDs like `77777` first — see [`08-naming-conventions.md`](08-naming-conventions.md).)
+2. **You add new content by minting new IDs** (the embedded `ClassID` of each new resource) and referencing them from BuildTables/entities you also patch in. (New files are often *labeled* `77777` in the filename — a sort tag, not the ID; see [`08-naming-conventions.md`](08-naming-conventions.md).)
 3. **Two mods that write the same patch forge collide.** Because everyone targets `*_patch_01.forge`, combining mods means **merging their `.data` entries into one patch forge**, not stacking files. If two mods change the *same* ID, only one can win — a true conflict.
 4. **Keep cross-forge references consistent.** A patched BuildTable in the item forge must reference resource IDs that actually exist (with the right contents) in the resources forge. The merged index only "works" if the IDs line up.
 5. **Render-backend variants exist.** `_dx11` vs `_vulkan` forges mean some data is duplicated per backend; a mod that touches such data may need to account for the backend the user runs. (Most cosmetic mods touch backend-agnostic resource forges and don't hit this.)

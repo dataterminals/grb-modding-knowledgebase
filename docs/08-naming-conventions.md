@@ -7,11 +7,11 @@ GRB resources carry highly structured names. ATK resolves many of them from its 
 ## The unpacked filename shape
 
 ```
-<decimalFileID> _-_ <ResourceName> . <ext>
+<leadingNumber> _-_ <ResourceName> . <ext>
         │          │        │          └─ .data (container) or typed ext (.BuildTable, .Mesh, …)
         │          │        └─ resolved human name (or numeric if hash unknown)
         │          └─ the literal separator "_-_"
-        └─ 64-bit file ID in decimal (the real identity)
+        └─ positional index / sort label — NOT the file ID (see below)
 ```
 
 ## Name body grammar
@@ -76,20 +76,29 @@ Face heads similarly split into sub-meshes: `…_eyebrow`, `…_eyeShadow`, `…
 
 Weapons decompose into named components, each a separate resource: `_Main`, `_Receiver`, `_Barrel`, `_Muzzle`, `_Magazine`, etc. The item/gameplay definitions (`WI_`/`WG_`) reference these parts; the resources forge holds their meshes. (See the USP case study: [`examples/case-study-usp-tactical.md`](../examples/case-study-usp-tactical.md).)
 
-## The `77777` placeholder-ID convention (inferred, strong)
+## The leading number is a label, not the file ID (verified)
 
-In the USP mod, **every new mesh resource in the resources forge shares the file ID `77777`**:
+A crucial correction to a widespread assumption: the number before `_-_` in an unpacked filename is **not** the resource's file ID. Verified from ATK's source and against real files:
+
+- On a **forge** unpack, ATK writes `SetIndex*5000 + i` — a **positional index** (`FileSet.cs`; forges split into FileSets of ≤5000). That's why a clean `DataPC_Resources.forge` unpack is numbered `0,1,2,…` in order.
+- Inside a **`.data`**, typed resources get a sequential counter `k` (`DataFile.cs`).
+- In **hand-assembled mod folders**, it's whatever label the modder typed.
+
+The **real 64-bit file ID is embedded in each resource** (its `ClassID`). ATK reads it from the bytes at repack (`DataFile.CreateForgeEntry` → `ReadClassID`); the leading number is used only to **sort** entries (`OrderBy(GetUntilOrEmptyInt("_-_"))`). Inspect the real ID with [`tools/data_inspect.py`](../tools/data_inspect.py).
+
+## The `77777` convention — a filename label, not a shared ID (resolved)
+
+In many weapon mods, **every new mesh file is *named* `77777_-_…`**:
 
 ```
 77777_-_WG_HK_USP45_Receiver_LOD0
-77777_-_WG_HK_USP45_Magazine_LOD0
 77777_-_WI_HK_USP45_Receiver_LOD0
 …
 ```
 
-Real game IDs are unique, so `77777` is clearly a **modder placeholder/sentinel** used while authoring new (non-replacement) content — a recognizable "this is mine / assign me a real ID" marker. The corresponding *definition* entries use normal-looking IDs (`30091`, `28580`, `26`, `3950`), suggesting the placeholder is used on the bulk resource side and reconciled with real references via the BuildTable/definition layer.
+It looks like they "share the file ID `77777`," but they don't — `77777` is just the **leading label** (above). **Verified:** two real `77777_-_…_LVAW_40R_LOD0.data` files carry *different* embedded ClassIDs (`77444146123331` and `183219380011`). So `77777` is a modder convention for "this is my new (non-replacement) resource" that also conveniently sorts these files together; the actual, distinct IDs live inside the files.
 
-> **Open question:** exactly how `77777` resources get resolved to real IDs at repack/load — whether ATK reassigns them, whether the BuildTable references resolve them by name, or whether the game tolerates duplicate IDs in a patch context. Flagged in [`meta/research-log.md`](../meta/research-log.md). Treat `77777` as a known idiom, not a fully-understood mechanism, until confirmed.
+> **Resolved (was an open question):** there is no "77777 → real ID" reassignment step to worry about. On repack ATK derives each entry's ID from the resource's **embedded `ClassID`**, ignoring the filename number entirely. So a modder can label new files `77777` freely — what matters is that each file's embedded ClassID (and the BuildTable references to it) are correct. See [`meta/research-log.md`](../meta/research-log.md).
 
 ## Mod folder naming (community / Nexus)
 

@@ -153,6 +153,10 @@ def inspect(path, oodle):
 
 
 def main(argv):
+    try:  # resource names can contain bytes the console codec can't encode
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
     override = None
     if "--oodle" in argv:
         i = argv.index("--oodle"); override = argv[i + 1]; del argv[i:i + 2]

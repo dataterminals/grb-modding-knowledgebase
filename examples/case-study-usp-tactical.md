@@ -40,7 +40,7 @@ USP Tactical + Burris FF3/
 
 **4. The replacement targets the P12 slot but supplies USP45 geometry.** The *definitions* keep the GRB slot name (`HDG_P12` — the handgun the game already has), while the *meshes* are named for what they actually are (`HK_USP45`). So in-game, selecting the P12 pistol now shows a USP45. The definition layer is the indirection that makes the swap appear under an existing weapon.
 
-**5. Every new mesh uses the `77777` placeholder ID.** All eight mesh resources share file ID `77777` (see [`docs/08-naming-conventions.md`](../docs/08-naming-conventions.md) → the `77777` convention). The definition entries use ordinary IDs (`30091`, `28580`, `26`, `3950`, …). The `77777` resources are the modder's new content; how they reconcile to real references at repack/load is an open question (logged in [`meta/research-log.md`](../meta/research-log.md)) — but the pattern itself is a reliable tell that "these are injected new meshes."
+**5. Every new mesh is *labeled* `77777` — a filename tag, not a shared ID.** All eight mesh files are *named* `77777_-_…`, but they do **not** share a file ID: the leading number in an unpacked filename is a positional index / sort label, and each file's **real 64-bit ID is its embedded `ClassID`** (all distinct — verified on comparable mod files). The definition-layer numbers (`30091`, `28580`, `26`, `3950`, …) are likewise filename labels — for a *replacement* they're chosen to match the base entry the mod overrides. On repack ATK derives every entry's ID from its embedded `ClassID`, ignoring these numbers (see [`docs/08-naming-conventions.md`](../docs/08-naming-conventions.md)). The `77777` tag is simply a reliable tell that "these are injected new meshes."
 
 **6. The UI icon is part of the mod.** `79779_-_UI_HDG_P12_Map` is the inventory thumbnail for the weapon — a mod that changes a weapon's look also updates how it appears in menus.
 
@@ -56,5 +56,5 @@ Miss one layer (e.g. update the world model but not the inventory model) and the
 ## Open threads from this example
 
 - Only `LOD0` meshes are shipped here — does the game fall back to base LODs for distance, or does this mod simply not provide lower LODs (and is that visible at range)? (See [`docs/10-meshes-and-skeletons.md`](../docs/10-meshes-and-skeletons.md).)
-- The exact resolution of duplicate `77777` IDs at repack/install.
+- ~~The exact resolution of duplicate `77777` IDs at repack/install.~~ **Resolved:** `77777` is a filename label, not an ID; real IDs are the files' distinct embedded `ClassID`s, which ATK reads on repack. See [`docs/08-naming-conventions.md`](../docs/08-naming-conventions.md).
 - Whether `WG_` vs `WI_` always means world-model vs inventory-model, or something subtler.
