@@ -94,7 +94,7 @@ Full ID → class map is in [`reference/cloth-section-types.md`](../reference/cl
 | `4394–4415` | Stretching constraints, **mesh mappings**, **LOD**, **Wind**, **Gravity**, azimuth/inclination/radius animation, constraint scale factor |
 | `4433–4465` | **Presets** (named tuning presets), registered colliders count |
 | `4529–4532` | Per-vertex data (definition, counters, buffer, SIMD) |
-| `4561–4565` | Additional collision vertices (counters, triangle indices, barycentric coords) |
+| `4561–4565` | **Additional render vertices** = the render↔sim binding (per-triangle CSR + quantized barycentric coords) |
 | `4657–4662` | **Editor data** (cloth ID, visibility, enabled colliders, **preset names**) — authoring metadata |
 | `4833–4834` | Strips-untwisting indices |
 
@@ -191,7 +191,7 @@ Every body is named **`Sim_<TargetMeshName>_LOD<n>`** (e.g. `Sim_TP_Tacvest_Walk
 - `ClothUserData.UserVerticesCount` (4354) — a fixed simulation-vertex count.
 - `ClothVerticesCurrentPosition` (4363) — those sim vertices' rest positions, in the **vanilla** mesh's space.
 - `ClothConstraints` / `ClothStretchingConstraints` / `ClothMeshConstraints` / `ClothMeshIndexBuffer` — the spring network and sim topology, addressed **by vertex index**.
-- `ClothAdditionalVerticesBarycentricCoordinatesData` (4565) — a `ushort[]` mapping **render-mesh vertices onto sim-mesh triangles by barycentric coordinates**. This is the render↔sim binding, and it is computed for the vanilla render mesh's exact vertex order.
+- `ClothAdditionalVertices*` (4561–4565) — the render↔sim binding for the extra render vertices: each is pinned onto a sim **triangle** by barycentric coordinates, baked for the vanilla render mesh's exact vertex order (details + decode in "The exact binding data" below).
 - `ClothPerVertexData*` (4529–4532) — per-vertex sim attributes indexed to those same vertices.
 
 When you swap in a **new** coat mesh (different vertex count/order/positions — even if it looks similar), every one of those bakes now points at vertices that don't correspond to your mesh. The engine can't map the sim onto your render geometry, so the cloth **fails to bind and is dropped** → "refuses to take on." The `Mesh` class even carries an `IsGeneratedFromCloth` flag, underscoring that the render mesh and the cloth sim mesh are produced together, not independently.
@@ -202,7 +202,9 @@ A key clarification for anyone weight-painting cloth: the value that controls cl
 
 ### The tooling gap (why it "can't be used right now")
 
-ATK's cloth **generation** path — `SoftBody.ClothGenerationSettings` (build sim data from a mesh) — has `SupportedGames = AC2 … Syndicate` and **does not include Ghost Recon: Breakpoint**. So ATK can **read, export (GLB/XML), edit, and repack** GRB cloth, but it **cannot regenerate** a GRB cloth's sim mesh + constraints + barycentric mapping for new geometry. That missing "rebind cloth to my mesh" step is exactly what blocks new-garment cloth on GRB today.
+**ATK v1.3.1's hardcoded cloth reader is gated off for GRB** — so the Mesh-Viewer, GLB export, `ToMesh`, and cloth **generation** never run on GRB cloth. `Cloth : SoftBody` uses `SoftBody.Read`, whose very first line throws unless the game is in `SoftBody.SupportedGames` = {AC2, Brotherhood, Revelations, AC3, AC3Remastered, BlackFlag, Rogue, Unity, Syndicate} — **`GhostReconBreakpoint` is not in it**. The exception is caught and the resource is marked `Failed`, so its states/LODs/ClothPackage are never parsed by that path; `FileHandler`'s Mesh-Viewer cloth action checks `SoftBody.SupportedGames` directly and returns empty for GRB. (This is also why the `MotionClothLOD`/`ClothLOD` LOD schemas don't describe GRB's bytes — both LOD families exclude GRB too; see the render↔sim section below.)
+
+> **Two separate ATK paths — don't conflate them.** Beyond the hardcoded reader, ATK has a **schema-driven** XML export/import path (`FileHandler.HandleSchemaXML` → `DataStorage.ActiveSchema.ExportXml`/`ImportXml`) that serializes any typed resource generically from a data schema, **independent of `SoftBody.SupportedGames`**. So XML **tuning** of cloth sections (`ClothProperties`, `ClothDefinition`, …) can still work for GRB via the schema even though the hardcoded reader is gated — that is the likely route for the "tune via XML" workflow below. *(Inferred: confirmed the path exists and bypasses the gate; not yet confirmed a loaded GRB schema covers `Cloth` end-to-end.)* What the schema path does **not** give you is the mesh-viewer/GLB/**generation** — so the missing "rebind cloth to my mesh" step (regenerate a GRB cloth's render↔sim mapping for new geometry) is still what blocks new-garment cloth on GRB today. For structured section-level work, the raw-byte tools in [`tools/`](../tools/README.md) (e.g. `motioncloth.py`) parse GRB cloth directly, which ATK's hardcoded reader cannot.
 
 ## A practical approach to cloth modding (current best guidance)
 
@@ -217,13 +219,11 @@ Ordered by reliability with today's tools:
 
 ## The render↔sim remap — design, and what ATK already gives us
 
-> **⚠️ Update (2026-07-01) — this section's binding model is under revision.** Building the encoder surfaced that the picture below is **incomplete and partly wrong**, so the encoder is **paused** pending confirmation. What newer decompilation of `MotionSoftBodyLOD`/`MotionClothLOD` established (verified):
-> - A cloth LOD stores much more than the ClothPackage: per-**sim**-vertex paint arrays (`VertexMaxDistance`, `…BackStopDistance`, `…GravityScale`, `…Damping`, `…SkinWidthScale`, `…Friction`), the sim mesh (`VertexPos`/`VertexNormals`/`Indices`) **skinned to the skeleton** (`BoneIndices`/`BoneWeights` + `MeshBones`), and separate **visual-mesh** fields.
-> - The simple render→sim binding form ATK's own generator produces — `VisualVertexMappings` (a list of `SoftBodyVertexMapping` = 3 sim indices + 3 weights) — is **empty (count 0)** in real GRB cloths. So GRB does **not** use that representation.
-> - `ClothAdditionalVertices*` (4561–4565): for the Walker coat LOD0 the count **equals the sim *triangle* count** (288), which points to these being **per-triangle "additional collision vertices"**, *not* the per-render-vertex binding claimed below.
-> - ATK's cloth→GLB export emits only the **sim** mesh (with `VertexMaxDistance`→vertex-color `Color1`), flagged `IsGeneratedFromCloth`.
+> **✅ Update (2026-07-01) — binding model RESOLVED (the earlier "under revision" doubt is withdrawn).** The doubt came from reading the **wrong game family's** LOD class. Both hardcoded LOD readers exclude GRB: `MotionSoftBodyLOD`/`MotionClothLOD` are gated to {Unity, Syndicate}; `SoftBodyLOD`/`ClothLOD` to {AC2…Rogue}. GRB is in **neither**, so ATK never runs either LOD reader on GRB — and the hand-reconstructed "GRB LOD = `MotionClothLOD`" walk desynced past `Indices` precisely because it was the wrong schema. Two consequences of that mistake, now corrected:
+> - **`VisualVertexMappings` being "empty" means nothing** — it's a field of `MotionClothLOD`/`ClothLOD`, classes that don't run for GRB. GRB simply doesn't serialize its cloth through them.
+> - **`ClothAdditionalVertices*` (4561–4565) IS the render↔sim binding.** The "count == sim triangle count (288)" was the per-triangle **CSR adjacency** (4562/4563), not the binding payload. The actual per-vertex barycentric data is the separate `4565` array.
 >
-> **Net:** the claim below (and in "Why the BuildTable reference isn't enough") that **4565 is the render↔sim binding** is **doubtful** — treat it as unverified. The real open question is *how a GRB MotionCloth drives its render mesh* given `VisualVertexMappings` is empty. Resolving that is the prerequisite for the encoder. See [`meta/research-log.md`](../meta/research-log.md) (2026-07-01 entry). The `tools/motioncloth.py` reader/writer (accurate, round-trips) is unaffected and stands.
+> Verified byte-exact on the real Walker (barycentric) and IanBlake (direct) cloths from `DataPC.forge`; the corrected structure, sizing, and the **decoded quantization** are in the sections below. The encoder is **un-blocked**. `tools/motioncloth.py` (accurate reader/writer, round-trips) is unaffected and is the substrate for it. See [`meta/research-log.md`](../meta/research-log.md) (2026-07-01 "Cracked the LOD-walk desync" entry).
 
 This is the frontier task (bind a vanilla `.cloth` to a *new* garment mesh). Decompiling the MotionCloth binding path and surveying every GRB cloth turns it from a mystery into a concrete, scoped engineering problem.
 
@@ -243,36 +243,36 @@ The sim mesh:
 - `ClothVerticesCurrentPosition` (4363) — `Vector4[(V+15)&~15]`, sim vertex rest positions.
 - `ClothMeshIndexBufferSize` (4370) → `ClothMeshIndexBuffer` (4371) — `Triangle[]`, sim topology.
 
-The render↔sim binding (barycentric scheme), sized off `ClothAdditionalVerticesCounters` (4561 = `{AdditionalVerticesBufferSize N, AdditionalVerticesSIMDSize}`):
-- `ClothAdditionalVerticesTriangleVerticesCount` (4562) — `byte[N]`, sim verts per binding (typically 3).
-- `ClothAdditionalVerticesTriangleFirstVertexIndex` (4563) — `ushort[N]`, start index into the sim index buffer of the bound triangle → the 3 sim verts are `IndexBuffer[first..first+2]`.
-- `ClothAdditionalVerticesBarycentricCoordinatesParameters` (4564) — a `SIMDF8` dequant scale/offset.
-- `ClothAdditionalVerticesBarycentricCoordinatesData` (4565) — `ushort[]` quantized barycentric weights (SIMD-packed, 8-wide).
+**The binding attaches only the "additional" render vertices** — the render (visual) mesh = the sim vertices (shared, driven directly) **+ `A` extra vertices**, each pinned onto a sim *triangle* by barycentric coordinates. It's a compact per-triangle (CSR) layout, sized off `ClothAdditionalVerticesCounters` (4561 = `{AdditionalVerticesBufferSize N, AdditionalVerticesSIMDSize M}`). Verified on Walker LOD0 (170 sim verts, 288 sim tris): `N = 288 = triangle count`, `A = 62 additional verts`, `M = 64`.
+- `ClothAdditionalVerticesTriangleVerticesCount` (4562) — `byte[N]`, indexed **per sim triangle**: how many additional render verts sit on triangle *t*. `sum = A`.
+- `ClothAdditionalVerticesTriangleFirstVertexIndex` (4563) — `ushort[N]`, indexed **per sim triangle**: the first additional-vertex index for triangle *t* (CSR offset into the `A`-length additional-vertex list). `4563[last] + 4562[last] = A`. Triangle *t*'s 3 sim verts are `IndexBuffer(4371)[3t .. 3t+2]`.
+- `ClothAdditionalVerticesBarycentricCoordinatesParameters` (4564) — a `SIMDF8` = 3 floats `{Scale, Offset, Magic}` (Walker LOD0: `{0.0020564, ≈0, 0.52335}`; note `Magic ≈ Scale·255`).
+- `ClothAdditionalVerticesBarycentricCoordinatesData` (4565) — `ushort[M]`, **one ushort per additional vertex** (M = `A` padded up to a multiple of 8; tail padded with `0xFFFF`). **Decode:** split each ushort into two bytes; `coord = byte·Scale + Offset` gives the **two smaller** barycentric weights (each ≤ `Magic` ≈ 0.523, since the two non-dominant weights of any interior point are ≤ ½), and the dominant weight = `1 − u − v`. Verified: this decode yields **62/62 valid barycentrics** (all in [0,1]) for Walker LOD0. *(Inferred, to confirm against the render mesh: the byte→triangle-vertex order, i.e. which weight is `u` vs `v` and that the dropped one is the max.)*
 
 ### ATK already implements the algorithm — it's just GRB-gated
 
 `Cloth.FromMeshSet(visualMesh, simMesh, settings)` builds a cloth by calling, **per render vertex**, `GenerateVisualMapping` → `FindNearestTriangleWithIndices(simPositions, visualPos)` then `computeTriBarycentricCoords(...)`. That is exactly the remap: for each new render vertex, find the nearest sim triangle and compute its barycentric coordinates. The math (plane projection + area-ratio barycentrics) is in [`Cloth.cs`] `computeTriBarycentricCoords`.
 
-The catch: this generator is **disabled for GRB** — `SoftBody.SupportedGames` is `AC2…Syndicate` only, checked in `FileHandler` before the Mesh-Viewer cloth path — and it emits the **`SoftBodyVertexMapping`** (legacy `ClothLOD`) representation, whereas GRB writes the **packed `ClothAdditionalVertices*` sections** (`MotionClothLOD` → `ClothPackage`). So two gaps remain: (a) the GRB gate, and (b) a converter from the computed mapping to GRB's packed section encoding.
+The catch: this generator is **disabled for GRB** (the whole `SoftBody`/`Cloth` reader is, per "The tooling gap" above) — and it emits the **`SoftBodyVertexMapping`** representation (a per-render-vertex `{3 sim indices, 3 weights}` list on `MotionClothLOD`/`ClothLOD`, classes that don't run for GRB), whereas GRB natively writes the **packed `ClothAdditionalVertices*` sections** inside the `ClothPackage`. So we reuse ATK's *math* (`FindNearestTriangleWithIndices` + `computeTriBarycentricCoords`) but must re-encode its output into GRB's packed CSR + quantized-barycentric form. That encoding is now fully specified (see the decode above): the only geometry work is nearest-sim-triangle + barycentric per additional render vertex.
 
 ### The remap recipe (to build)
 
-For the **barycentric** scheme, keeping the vanilla sim mesh:
+For the **barycentric** scheme, keeping the vanilla sim mesh. Note the render mesh = **sim verts (unchanged, in their original order) + additional verts**, so you only recompute the additional-vertex binding:
 1. Parse the target cloth → sim vertices (4363) + sim triangles (4371) + existing binding sections.
-2. Author the new render mesh **in the vanilla mesh's space** (conform it roughly to the vanilla garment surface).
-3. For each new render vertex: `FindNearestTriangle` in the sim mesh → `computeTriBarycentricCoords` (ATK's exact method) → `(triangleFirstVertexIndex, verticesCount=3, barycentric)`.
-4. Re-encode `ClothAdditionalVerticesCounters/…VerticesCount/…FirstVertexIndex/…BarycentricParameters/…BarycentricData` for the new render-vertex set; leave the sim mesh, constraints, and per-vertex data untouched.
+2. Author the new render mesh **in the vanilla mesh's space**, keeping the sim vertices as the first `V` render verts; your changes live in the **additional** verts.
+3. For each additional render vertex: `FindNearestTriangle` in the sim mesh → `computeTriBarycentricCoords` (ATK's exact method) → `(triangleIndex t, barycentric (b0,b1,b2))`.
+4. Re-encode the sections: group additional verts **by their sim triangle** to build the CSR `TriangleVerticesCount` (4562, `byte[tri]`) + `TriangleFirstVertexIndex` (4563, `ushort[tri]`); for each additional vert quantize its two smaller weights `byte = round((w − Offset)/Scale)` and pack hi/lo into one `4565` ushort; set `4561 {N = tri count, M = A padded to ×8}` and pad `4565` with `0xFFFF`; write `4564 {Scale = maxWeight/255, Offset ≈ 0}`. Leave the sim mesh, constraints, and per-vertex data untouched.
 5. Re-serialize the ClothPackage → resource → `.data` → forge.
 
 For the **direct** scheme, there's no barycentric layer to recompute: the new mesh must reuse the vanilla sim vertex count and index order (the "reshape, don't retopologize" path already documented).
 
-**Progress:** the accurate section parser/writer is **built** — [`tools/motioncloth.py`](../tools/motioncloth.py) locates every ClothPackage, walks its sections by their real sizes, decodes the sim mesh + binding, and **re-serializes byte-for-byte** (verified on direct, barycentric, and multi-LOD cloths). **Still to finish:** the mapping→packed-section encoder (apply new barycentric bindings for a new render mesh) and **in-game validation**. The geometry itself is solved (ATK's `computeTriBarycentricCoords`).
+**Progress:** the accurate section parser/writer is **built** — [`tools/motioncloth.py`](../tools/motioncloth.py) locates every ClothPackage, walks its sections by their real sizes, decodes the sim mesh + binding, and **re-serializes byte-for-byte** (verified on direct, barycentric, and multi-LOD cloths). Both the **geometry** (ATK's `computeTriBarycentricCoords`) and the **encoding** (CSR layout + the `4565` hi/lo-byte × `Scale` + `Offset` quantization) are now solved. **Still to finish:** wire the mapping→packed-section encoder into `motioncloth.py`, pin the byte→triangle-vertex order against the render `Mesh`, and **validate in-game** on the Walker coat.
 
 ## Open questions (cloth-specific)
 
 Tracked in [`meta/research-log.md`](../meta/research-log.md):
 
-1. **The render↔sim remap — characterized, build pending.** The algorithm is ATK's own `GenerateVisualMapping` (nearest sim triangle + `computeTriBarycentricCoords`); the encoding target is the packed `ClothAdditionalVertices*` (4561–4565) sections; two binding schemes exist (direct vs barycentric). Remaining: an accurate section writer + mapping encoder + in-game test. See "The render↔sim remap" above.
+1. **The render↔sim remap — SOLVED on paper, build + in-game test pending.** The binding is the packed `ClothAdditionalVertices*` (4561–4565) sections (CSR by sim triangle + one quantized-barycentric ushort per additional vert; decode confirmed on Walker). The geometry is ATK's `computeTriBarycentricCoords`; two schemes exist (direct vs barycentric). Remaining: wire the encoder into `motioncloth.py`, pin the byte→triangle-vertex order against the render `Mesh`, and validate in-game. See "The render↔sim remap" above.
 2. ~~**Two cloth resources per garment**~~ — **answered** (see the Walker diff above): they are different-purpose (gameplay-wearable vs. cinematic), each with per-LOD bodies named `Sim_<Mesh>_LOD<n>`.
 3. ~~**A fully accurate MotionCloth parser.**~~ — **built.** [`tools/motioncloth.py`](../tools/motioncloth.py) walks sections by their self-declared sizes (validated against `MotionSectionFactory`'s counter→buffer rules in [`reference/cloth-section-types.md`](../reference/cloth-section-types.md)) and round-trips byte-for-byte. The Cloth Inspector uses it (accurate counts + direct/barycentric detection). Remaining cloth-tool work is the *write/encode* side for the remap, not parsing.
 4. **The ragdoll bone-collider list** found in the wearable cloth's editor data (`Ragdoll_Head…;LeftArm…` bone+hash string) — decode its exact structure; it names the skeleton bones the cloth collides against, and is likely part of binding cloth to a character.

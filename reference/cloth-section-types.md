@@ -91,17 +91,19 @@ Complete `SectionTypeID → class` map for GRB's MotionCloth format, transcribed
 | 4531 | `ClothPerVertexDataBuffer` | `byte[]`, sized by 4530 (`PerVertexDataBufferSize × 16`) |
 | 4532 | `ClothPerVertexDataSIMDF8` | sized by 4530 (`PerVertexDataSIMDSize`) |
 
-## Additional collision vertices
+## Additional render vertices — the render↔sim binding
+
+The render (visual) mesh = the sim vertices (driven directly) **+ `A` "additional" vertices**, each pinned onto a sim **triangle** by barycentric coords. Stored as a CSR layout indexed **per sim triangle** (`N` = triangle count), not per additional vertex. Verified on Walker LOD0 (170 sim verts, 288 tris, `A`=62, `M`=64).
 
 | ID | Class | Notes |
 | ---: | --- | --- |
-| 4561 | `ClothAdditionalVerticesCounters` | `{int32 AdditionalVerticesBufferSize N, int32 AdditionalVerticesSIMDSize}`; sizes 4562/4563/4565 |
-| 4562 | `ClothAdditionalVerticesTriangleVerticesCount` | `byte[N]` (sim verts per binding; 3 = triangle) |
-| 4563 | `ClothAdditionalVerticesTriangleFirstVertexIndex` | `ushort[N]` (start index into the sim index buffer) |
-| 4564 | `ClothAdditionalVerticesBarycentricCoordinatesParameters` | `SIMDF8` dequant params for 4565 |
-| 4565 | `ClothAdditionalVerticesBarycentricCoordinatesData` | `ushort[AdditionalVerticesSIMDSize]` (SIMD-packed barycentrics) |
+| 4561 | `ClothAdditionalVerticesCounters` | `{int32 AdditionalVerticesBufferSize N, int32 AdditionalVerticesSIMDSize M}`; `N` = sim triangle count, `M` = `A` padded to ×8; sizes 4562/4563/4565 |
+| 4562 | `ClothAdditionalVerticesTriangleVerticesCount` | `byte[N]`, **per sim triangle**: # additional verts on it (`sum = A`) |
+| 4563 | `ClothAdditionalVerticesTriangleFirstVertexIndex` | `ushort[N]`, **per sim triangle**: first additional-vertex index (CSR offset into the `A`-list); `4563[last]+4562[last]=A` |
+| 4564 | `ClothAdditionalVerticesBarycentricCoordinatesParameters` | `SIMDF8` = `{Scale, Offset, Magic}` dequant params for 4565 (`Magic ≈ Scale·255`) |
+| 4565 | `ClothAdditionalVerticesBarycentricCoordinatesData` | `ushort[M]`, one per additional vert (tail padded `0xFFFF`); decode = split into hi/lo bytes, `coord = byte·Scale + Offset` → the two smaller barycentric weights, third = `1−u−v` |
 
-> **Render↔sim binding (barycentric scheme):** present only in some cloths (e.g. `TP_WalkerCoat_Cloth`); many GRB cloths omit 4561–4565 and simulate the render mesh directly. When present, each of the `N` "additional" render vertices binds to a sim triangle (`4563` first-index + `4562` count) with barycentric weights (`4565` dequantized via `4564`). Recomputing these for a new render mesh is the render↔sim remap — see [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md).
+> **Render↔sim binding (barycentric scheme):** present only in some cloths (e.g. `TP_WalkerCoat_Cloth`); many GRB cloths omit 4561–4565 and the render mesh *is* the sim mesh (direct). Triangle `t`'s 3 sim verts are `ClothMeshIndexBuffer(4371)[3t..3t+2]`. Recomputing these for a new render mesh is the render↔sim remap — see [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md).
 
 ## Editor metadata (authoring)
 

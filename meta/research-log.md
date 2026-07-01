@@ -279,6 +279,38 @@ Resolve the nested-`BaseObject`/`ClassReader` serialization to finish the LOD wa
 
 ---
 
+## Entry — 2026-07-01 — Cracked the LOD-walk desync: ATK has NO GRB cloth reader; the binding IS 4561–4565 (with quantization decoded)
+
+### What I did
+Re-decompiled `AnvilToolkit.dll` v1.3.1 and read the **whole** cloth class family to settle "how does a GRB MotionCloth drive its render mesh" (the blocker from the prior encoder-dig). Traced the reader dispatch (`ScimitarClassReader.Read` → `ScimitarClass.Deserialize` → `ReadClassID`/`ReadClassHash`), the LOD classes (`SoftBodyLOD`/`ClothLOD` "old" family; `MotionSoftBodyLOD`/`MotionClothLOD` "next" family), their `SupportedGames` guards, `SoftBody`/`Cloth` (the resource class), and `FileHandler`. Then **verified empirically** by extracting the real Walker (`TP_WalkerCoat_Cloth`) and IanBlake (`IanBlake_TrenchCoat_Cloth`) cloths from `DataPC.forge` (index→offset/len→Oodle) and parsing them with `tools/motioncloth.py`.
+
+### VERIFIED (new — this is a correction)
+- **ATK v1.3.1 has no game-enabled structured reader for GRB cloth — it cannot parse a GRB `Cloth` at all.** `Cloth : SoftBody` (id `3811591354`, registry-confirmed → `typeof(Cloth)`) uses `SoftBody.Read`, whose first line throws unless the game is in `SoftBody.SupportedGames` = {AC2, Brotherhood, Revelations, AC3, AC3Remastered, BlackFlag, Rogue, Unity, Syndicate} — **`GhostReconBreakpoint` is not in it**. The exception is caught and `Failed = true` is set, so states/LODs/ClothPackage are never read. `FileHandler`'s cloth Mesh-Viewer (case 0, line 286) and XML-export (case 1, `if (Data.Failed) return ""`) both bail for GRB. So ATK's *structured* cloth features (viewer, XML/GLB export, generation) are all off for GRB; it only round-trips the cloth as **opaque container bytes** on repack. (Corrects the earlier "ATK can read/export/edit GRB cloth" and "ClothProperties round-trip to XML for GRB" claims — those hold for the games ATK supports, not GRB.)
+- **This is why the prior per-LOD walk desynced right after `Indices`.** That walk reconstructed the *wrong game family's* schema (`MotionSoftBodyLOD`/`MotionClothLOD`, gated to {Unity, Syndicate}) onto GRB bytes. GRB's on-disk cloth is the engine's native MotionCloth serialization, which ATK models for other games but not GRB; the field lists diverge past `Indices`, so the "`VisualVertexMappings` empty" reading is meaningless (that field belongs to a class that never runs for GRB). The nested `BaseObject` header assumption was fine: for GRB, `ReadClassID` = **u64 (8 bytes)**, `ReadClassHash` = **u32 (4 bytes)** that must equal the expected hash — so the desync was upstream, not in the header.
+- **The render↔sim binding IS the `ClothAdditionalVertices*` family (4561–4565), inside the ClothPackage.** Reverses the prior "doubtful/under revision" note. Verified byte-exact on real cloths:
+  - **DIRECT** (IanBlake, 186 sim/305 tri both LODs): no 4561–4565 → render mesh == sim mesh.
+  - **BARYCENTRIC** (Walker LOD0: 170 sim verts, 288 sim tris): render mesh = sim mesh **+ A extra ("additional") vertices**, each barycentric-bound to a sim triangle.
+    - `4561 Counters {AdditionalVerticesBufferSize N, AdditionalVerticesSIMDSize M}`: **N == sim-triangle count (288)**, M = 64.
+    - `4562 TriangleVerticesCount byte[N]` + `4563 TriangleFirstVertexIndex ushort[N]` = **per-sim-triangle CSR adjacency** (how many additional verts sit on triangle *t*, and the first index into the additional-vertex list). `A = sum(4562) = 62`, and `4563[last] + 4562[last] = 62` (exactly consistent). *(Corrects doc-11's earlier "byte[N] = sim verts per binding (typically 3)" / "start index into the sim index buffer" — the arrays are indexed per sim triangle, not per render vertex.)*
+    - `4565 BarycentricCoordinatesData ushort[M]` = **one quantized-barycentric ushort per additional vertex**, with **M = A padded up to a multiple of 8** (SIMD width; 62→64, 114→120). Tail padding = `0xFFFF`.
+  - So the "4561–4565 count == triangle count" the prior session flagged is just the CSR adjacency (4562/4563), **not** evidence against the binding.
+- **Quantization decoded (unblocks the encoder).** `4564 BarycentricCoordinatesParameters` = `SIMDF8` = 3 floats {Scale, Offset, Magic}; for Walker LOD0 = {0.0020564, ≈0, 0.52335}. Each 4565 ushort splits into two bytes; **coord = byte × Scale + Offset** gives the two smaller barycentric weights (each ≤ Magic ≈ Scale·255 ≈ 0.523; the dominant weight = `1 − u − v`). This decode yields **62/62 valid barycentrics** (all coords in [0,1]). The additional vertex → triangle → 3 sim verts chain resolves via the CSR arrays + the sim index buffer (4371, `ushort[3·tri]`).
+
+### Questions answered
+- ✅ "How does a GRB MotionCloth drive its render mesh, given the ATK LOD walk desyncs / `VisualVertexMappings` is empty?" — The premise was an artifact of reading the wrong game family. GRB drives its render mesh via the **direct** scheme (render == sim) or the **barycentric** `ClothAdditionalVertices*` sections (render = sim + additional verts bound to sim triangles). The encoder is **re-scoped and now fully specified** (below).
+- ✅ The nested-`BaseObject`/`ClassReader.Read` serialization (header = u64 ID + u32 hash for GRB).
+
+### Encoder — now fully specified (build pending)
+For a barycentric reskin, keep the vanilla sim mesh + triangles; the new render mesh = **sim verts (same order) + additional verts**. Per additional render vertex: find its sim triangle + barycentric (ATK's `computeTriBarycentricCoords`), take the two smaller weights, `byte = round((w − Offset)/Scale)` clamped [0,255], pack hi/lo → one ushort. Rebuild CSR (4562/4563) grouping additional verts by sim triangle, set 4561 `N = tri count`, `M = A padded to ×8` (pad 4565 with `0xFFFF`), and write 4564 `Scale = maxWeight/255, Offset ≈ 0`. Remaining unknowns before a **byte-exact** writer: the exact vertex-order convention (which of the 3 tri verts each byte maps to; u↔v order) and confirming the "two smaller weights, drop the max" rule — both settle by cross-decoding 4565 against the real render `Mesh` (`TP_Tacvest_Walker_Coat_LOD0.Mesh`, predicted **232** verts = 170 sim + 62 additional). `tools/motioncloth.py` (byte-exact ClothPackage reader/writer) is unaffected and is the substrate for the encoder.
+
+### Deliverables / state
+- No repo tool changes yet; findings only. doc-11's remap section updated (the "under revision" doubt is resolved; CSR semantics + quantization corrected). Scratchpad verification scripts (`verify_binding.py`, `probe_quant.py`) are session-temporary.
+
+### Next
+Confirm the vertex-order/drop-max convention against the render `Mesh` (parse `TP_Tacvest_Walker_Coat_LOD*.Mesh` vertex count + positions; expect 232/180), then build the mapping→section encoder in `motioncloth.py` and validate in-game on the Walker coat.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
