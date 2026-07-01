@@ -1,9 +1,14 @@
 # 🧵 GRB Cloth Inspector
 
 A little tool that reads a **Ghost Recon: Breakpoint cloth file** and tells you, in
-plain language, **what that cloth is** — which body parts it simulates, the exact
-**mesh + LOD** each piece is bound to, and which cloth features it uses (wind,
-constraints, presets…).
+plain language, **what that cloth is** — how many cloth pieces (LODs) it has, the exact
+**mesh + LOD** each is bound to, the size of the simulated mesh, and — the useful part —
+**how the garment is attached**, which decides how you're allowed to reskin it:
+
+- **DIRECT** — the visible mesh *is* the simulated mesh. Keep the same points (in the
+  same order) when you reskin.
+- **BARYCENTRIC** — the garment is pinned onto a separate low-res sim mesh; a brand-new
+  mesh needs its pinning recomputed (the render↔sim remap).
 
 It's aimed at modders — **you do not need to know any coding to use it.**
 
@@ -17,11 +22,11 @@ It's aimed at modders — **you do not need to know any coding to use it.**
 
 ## What you need first
 
-1. **A cloth file to look at.** Cloth resources are the unpacked `.data` files whose
-   names contain **`Cloth`** — e.g. `34224_-_TP_WalkerCoat_Cloth.data` or
-   `35720_-_Cloth_WalkerCoat.data`. You get them by unpacking a `.forge` with **ATK**
-   (they live in `DataPC.forge`). If you've unpacked a forge, look in its `Extracted`
-   folder for files with `Cloth` in the name.
+1. **A cloth file to look at.** Cloth resources are the entries whose names contain
+   **`Cloth`** — e.g. `TP_WalkerCoat_Cloth` or `Cloth_WalkerCoat` — living in
+   `DataPC.forge`. Unpack that `.forge` with **ATK** and look in its `Extracted` folder.
+   You can point this tool at either the cloth **`.data`** entry *or* (best) the
+   decompressed **`.Cloth`** file you get by unpacking that `.data` one level further.
 2. **A way to run the tool** — pick one:
    - **Easiest (no setup):** download **`ClothInspector.exe`** from this repo's
      [Releases](https://github.com/dataterminals/grb-modding-knowledgebase/releases)
@@ -56,31 +61,33 @@ python cloth_inspect.py  clothA.data  clothB.data
 ## What the report tells you
 
 ```
-FILE: 34224_-_TP_WalkerCoat_Cloth.data   (103,408 bytes)
-  Cloth bodies (simulated pieces): 1
-    - Sim_TP_Tacvest_Walker_Coat_LOD1   [gameplay / wearable cloth]
+FILE: TP_WalkerCoat_Cloth.Cloth
+  2 cloth LOD(s), 2 simulated piece(s).
 
-  A body name reads as  Sim_<TargetMesh>_LOD<n>  - it tells you the
-  exact mesh + LOD this cloth is bound to. Match your mod to that.
-  ...
-  Highlights: carries constraint buffers; has tuning presets
+  A piece named  Sim_<TargetMesh>_LOD<n>  is bound to that exact mesh + LOD -
+  match your mod to it (e.g. Sim_TP_... is the wearable one, not a cutscene).
+
+  - LOD0: Sim_TP_Tacvest_Walker_Coat_LOD0   [gameplay / wearable cloth]
+      simulated mesh: 170 points, 288 triangles
+      attachment: BARYCENTRIC - the visible garment is pinned onto the sim mesh...
 ```
 
-- **Cloth bodies** = the separate simulated pieces in the file.
-- **Body name** `Sim_<Mesh>_LOD<n>` = **the mesh and LOD this cloth is welded to.** This
-  is the big one: if it says `..._CIN_...` it's a **cinematic** (cutscene) cloth; if it
-  says `Sim_TP_<gear>` it's the **wearable** one you want for player gear.
-- **Section list / Highlights** = which cloth features are present (wind, constraint
-  buffers, presets, etc.), so you can compare two cloths' capabilities.
+- **Cloth pieces (LODs)** = the separate simulated pieces in the file.
+- **Piece name** `Sim_<Mesh>_LOD<n>` = **the mesh and LOD this cloth drives.** If it says
+  `..._CIN_...`/`TPri_...` it's a **cinematic** (cutscene) cloth; `Sim_TP_<gear>` is the
+  **wearable** one you want for player gear.
+- **attachment: DIRECT vs BARYCENTRIC** = tells you your reskin route (see the top of
+  this page). This is the practical takeaway.
 
-## Good to know / limits
+## Good to know
 
 - The tool is **read-only** — it never changes your files. Safe to point at anything.
-- Counts are **approximate**: a few section counts can be off by one or two (a
-  technical detail explained in [`../meta/research-log.md`](../meta/research-log.md)).
-  The **body names, LOD/mesh binding, and “which cloth is which”** are reliable — and
-  that's what you actually need it for.
-- It reads **uncompressed** GRB cloth `.data` (the normal unpacked form).
+- Counts are **exact now** — it uses the precise MotionCloth reader (`motioncloth.py`),
+  which walks each data section by its real size (the old version magic-scanned and could
+  miscount).
+- It reads both a decompressed **`*.Cloth`** file (what ATK writes when you unpack a cloth
+  `.data`) **and** a cloth **`.data`** directly — for a `.data` it auto-decompresses with
+  the game's `oo2core_7_win64.dll` (found next to your GRB install). `*.Cloth` needs no DLL.
 
 ## Build the standalone .exe yourself (optional)
 
@@ -99,8 +106,10 @@ download the `ClothInspector.exe` artifact.
 
 ---
 
-*Files here:* `cloth_inspect.py` (the engine), `cloth_inspect_gui.py` (the window),
-and the two `.bat` launchers. All read-only, all documented.
+*Files here:* `motioncloth.py` (the exact MotionCloth reader/writer engine — locates every
+ClothPackage, walks sections by their real sizes, round-trips byte-for-byte),
+`cloth_inspect.py` (the plain-language report on top of it), `cloth_inspect_gui.py` (the
+window), and the two `.bat` launchers. All read-only, all documented.
 
 ---
 

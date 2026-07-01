@@ -1,162 +1,132 @@
 #!/usr/bin/env python3
 """
-cloth_inspect.py — inspect / diff GRB MotionCloth (.cloth) resources.
+cloth_inspect.py - tell a modder, in plain language, what a GRB cloth file is.
 
-Reads a raw unpacked `<id>_-_<name>.data` cloth resource (uncompressed GRB data)
-and reports its MotionCloth structure: body names, ClothIDs, and a histogram of
-section types. Pass two files to diff them.
+It reads a GRB cloth resource and reports: how many cloth pieces (LODs) it has,
+the name/mesh each is bound to, how big the simulated mesh is, and - importantly -
+HOW the visible garment is attached, which decides how you can reskin it:
 
-    python cloth_inspect.py cloth_a.data [cloth_b.data]
+  * DIRECT      the visible mesh IS the simulated mesh. Your new mesh must keep
+                the same number of points, in the same order.
+  * BARYCENTRIC the visible garment is pinned onto a separate low-res sim mesh.
+                A brand-new mesh needs its pinning recomputed (the remap step).
 
-Prefer the friendly GUI (no command line needed): run cloth_inspect_gui.py,
-or the "Cloth Inspector (GUI).bat" launcher. See tools/README.md.
+    python cloth_inspect.py  yourcloth.Cloth          # or a cloth .data
+    python cloth_inspect.py  clothA.Cloth  clothB.Cloth   # compare two
 
-HOW IT WORKS / LIMITATIONS (read this):
-- MotionCloth sections are TLV chunks: [type u16][magic 0xECD7][size][payload].
-  See docs/11-cloth-and-physics.md.
-- This tool finds sections by scanning for the 0xECD7 magic and keeping matches
-  whose preceding u16 is a KNOWN section type. That is robust for enumerating
-  which bodies exist and for reading string fields (names, ClothIDs) — usually
-  exactly what you want.
-- It is APPROXIMATE for exact section counts: the byte 0xECD7 can occur by chance
-  inside a payload (float/index buffers), producing a few false positives. A
-  fully accurate parser must implement MotionSectionFactory's counter->buffer
-  size dependencies (buffer section lengths come from earlier counter sections),
-  tracked as future work in meta/research-log.md.
-- Cloth "weight" is VertexMaxDistance, exported by ATK to GLB vertex color Color1
-  (0 = pinned, higher = free). It is not shown as a section value here.
+Prefer the friendly window: run cloth_inspect_gui.py (or the "Cloth Inspector
+(GUI).bat" launcher). See tools/README.md.
+
+Accuracy: this now uses the exact MotionCloth reader (motioncloth.py) - it walks
+each section by its real size, so counts are correct (the old magic-scan was
+approximate). It reads both the decompressed `*.Cloth` file ATK produces AND a
+cloth `.data` directly (auto-decompressing with the game's Oodle DLL). Read-only.
+See docs/11-cloth-and-physics.md.
 """
-import struct, sys, os
+import os, sys, re
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import motioncloth as mc
 
-def u16(b, o): return struct.unpack_from('<H', b, o)[0]
-
-SECN = {
- 513:'NamedObjectName', 3073:'BodyType', 3074:'BodyIndexInIsland', 3076:'BodyUserData',
- 3077:'BodyBroadPhase', 3078:'BodyData', 3080:'BodyColor', 3083:'BodyTransform',
- 3085:'BodyIndexInIslandExtra', 4353:'ClothType', 4354:'ClothUserData', 4356:'ClothDefinition',
- 4357:'ClothProperties', 4359:'ClothPropConstraintsEnable', 4360:'ClothPropConstraintsStiffness',
- 4361:'ClothEngineLoopStepCount', 4362:'ClothEngineLoop', 4363:'ClothVerticesCurrentPosition',
- 4364:'ClothConstraintsSizes', 4365:'ClothConstraints', 4366:'ClothConstraintsSIMDF8',
- 4369:'ClothMeshConstraintsOptCount', 4370:'ClothMeshIndexBufferSize', 4371:'ClothMeshIndexBuffer',
- 4373:'ClothAABox', 4378:'ClothPropCorrectionFactors', 4381:'ClothStretchConstraintsCount',
- 4382:'ClothMeshAABBTree', 4384:'ClothMeshHasVertexAABBTree', 4385:'ClothMeshHasTriangleAABBTree',
- 4387:'ClothMeshConstraintsSizes', 4388:'ClothMeshConstraints', 4394:'ClothStretchingConstraints',
- 4395:'ClothPropMeshMappings', 4396:'ClothPropLod', 4397:'ClothPropWind', 4398:'ClothPropGravity',
- 4399:'ClothPropAzimuthAnim', 4400:'ClothPropInclinationAnim', 4401:'ClothPropRadiusAnim',
- 4415:'ClothConstraintsScaleFactor', 4433:'ClothPresets', 4434:'ClothPresetsCount',
- 4435:'ClothPresetDefinition', 4436:'ClothPresetBufferSize', 4443:'ClothPresetDefPerVertexData',
- 4444:'ClothPresetPerVertexDataSize', 4465:'ClothRegisteredCollidersCount',
- 4529:'ClothPerVertexDataDefinition', 4530:'ClothPerVertexDataCounters', 4531:'ClothPerVertexDataBuffer',
- 4532:'ClothPerVertexDataSIMDF8', 4561:'ClothAddVertsCounters', 4562:'ClothAddVertsTriVertCount',
- 4563:'ClothAddVertsTriFirstVertIdx', 4564:'ClothAddVertsBaryParams', 4565:'ClothAddVertsBaryData',
- 4657:'ClothEditorData', 4658:'ClothEditorDataClothID', 4659:'ClothEditorDataVisibility',
- 4661:'ClothEditorDataCollisionEnabledColliders', 4662:'ClothEditorDataPresetsNames',
- 4833:'ClothStripsUntwistIdxCount', 4834:'ClothStripsUntwistIdx',
-}
-SEC = set(SECN)
-
-# What plain-English lesson each body-name pattern hints at.
-def read_body_purpose(name):
-    n = name.lower()
-    if '_cin' in n or 'cinematic' in n: return 'cinematic (cutscene) cloth'
-    if n.startswith('sim_tp') or '_tp_' in n or n.startswith('sim_ftp'): return 'gameplay / wearable cloth'
-    return ''
-
-def cstr(b, o):
-    e = o
-    while e < len(b) and b[e] != 0: e += 1
-    return b[o:e].decode('latin-1', 'replace')
-
-def scan(b):
-    """Yield (type, payload_offset) for magics preceded by a known section type."""
-    for q in range(2, len(b) - 1):
-        if b[q] == 0xD7 and b[q + 1] == 0xEC and u16(b, q - 2) in SEC:
-            yield u16(b, q - 2), q + 4     # payload starts 4 bytes past the magic byte
-
-def parse(path):
-    """Return a dict describing the cloth resource. Raises on read errors."""
-    b = open(path, 'rb').read()
-    hist, names, ids = {}, [], []
-    for t, po in scan(b):
-        hist[t] = hist.get(t, 0) + 1
-        if t == 513:  names.append(cstr(b, po))
-        if t == 4658:
-            s = cstr(b, po).strip('\x00\x01\x02\x03\x04\x05 ')
-            if s: ids.append(s)
-    return dict(path=path, size=len(b), names=names, ids=ids, hist=hist)
 
 def _clean_name(n):
-    # body names look like Sim_<Mesh>_LOD<n>_0x<hash>_<i>; trim the trailing hash/index
-    import re
-    m = re.match(r'(.*?_LOD\d+)', n)
+    if not n:
+        return "(unnamed)"
+    m = re.match(r"(.*?_LOD\d+)", n)   # trim the trailing _0x<hash>_<i>
     return m.group(1) if m else n
 
+
+def _purpose(name):
+    n = (name or "").lower()
+    if "_cin" in n or "cinematic" in n or "tpri" in n:
+        return "cinematic / cutscene cloth"
+    if n.startswith("sim_tp") or "_tp_" in n or n.startswith("sim_ftp"):
+        return "gameplay / wearable cloth"
+    return ""
+
+
+def _describe_body(body, lod_index):
+    L = []
+    raw = mc.body_name(body)
+    name = _clean_name(raw)
+    purpose = _purpose(raw)
+    sv = mc.sim_vertex_count(body)
+    tr = mc.sim_triangle_count(body)
+    tag = f"   [{purpose}]" if purpose else ""
+    L.append(f"  - LOD{lod_index}: {name}{tag}")
+    L.append(f"      simulated mesh: {sv} points, {tr} triangles")
+    if mc.uses_barycentric(body):
+        L.append("      attachment: BARYCENTRIC - the visible garment is pinned onto the")
+        L.append("      sim mesh. A brand-new mesh (different shape/points) needs its pinning")
+        L.append("      recomputed, or the cloth won't take on. Reshaping the vanilla garment")
+        L.append("      (same points) is the safe route today.")
+    else:
+        L.append(f"      attachment: DIRECT - the visible mesh IS the sim mesh. To reskin,")
+        L.append(f"      keep the same {sv} points in the same order (reshape, don't retopo).")
+    return L
+
+
 def report(path):
-    """Human-readable single-file report as a string."""
+    """Human-readable single-file report as a string (used by the GUI too)."""
     try:
-        d = parse(path)
+        payload = mc.load_resource_payload(path)
+        pkgs = mc.locate_clothpackages(payload)
     except Exception as e:
         return f"Could not read:\n  {path}\n  {e}\n"
-    L = []
-    L.append("=" * 70)
-    L.append(f"FILE: {os.path.basename(path)}   ({d['size']:,} bytes)")
-    if not d['names'] and not d['hist']:
-        L.append("  No MotionCloth sections found.")
-        L.append("  Is this actually a .cloth resource? (It should be a GRB")
-        L.append("  cloth .data, e.g. a file named like *_Cloth or Cloth_*.)")
+    L = ["=" * 70, f"FILE: {os.path.basename(path)}"]
+    if not pkgs:
+        L += ["  No cloth data found here.",
+              "  Is this a GRB cloth resource? (a *.Cloth file from unpacking a cloth",
+              "  .data in ATK, or a cloth .data named like *_Cloth / Cloth_*.)"]
         return "\n".join(L) + "\n"
-    L.append(f"  Cloth bodies (simulated pieces): {len(d['names'])}")
-    for n in d['names']:
-        clean = _clean_name(n)
-        purpose = read_body_purpose(n)
-        tail = f"   [{purpose}]" if purpose else ""
-        L.append(f"    - {clean}{tail}")
-        if clean != n:
-            L.append(f"        (full name: {n})")
+    total_bodies = sum(len(p.bodies) for p in pkgs)
+    L.append(f"  {len(pkgs)} cloth LOD(s), {total_bodies} simulated piece(s).")
     L.append("")
-    L.append("  A body name reads as  Sim_<TargetMesh>_LOD<n>  - it tells you the")
-    L.append("  exact mesh + LOD this cloth is bound to. Match your mod to that.")
-    if d['ids']:
-        L.append("")
-        L.append("  ClothID / collider data:")
-        for s in d['ids']:
-            L.append(f"    - {s[:120]}")
-    L.append("")
-    L.append(f"  Section types present (approximate counts):")
-    for t in sorted(d['hist']):
-        L.append(f"    {SECN[t]:40} x{d['hist'][t]}")
-    # a couple of friendly highlights
-    hl = []
-    if 4397 in d['hist']: hl.append("has WIND response (ClothPropWind)")
-    if 4365 in d['hist'] or 4364 in d['hist']: hl.append("carries constraint buffers")
-    if 4433 in d['hist']: hl.append("has tuning presets")
-    if hl:
-        L.append("")
-        L.append("  Highlights: " + "; ".join(hl))
+    L.append("  A piece named  Sim_<TargetMesh>_LOD<n>  is bound to that exact mesh + LOD -")
+    L.append("  match your mod to it (e.g. Sim_TP_... is the wearable one, not a cutscene).")
+    for i, pkg in enumerate(pkgs):
+        for body in pkg.bodies:
+            L.append("")
+            L += _describe_body(body, i)
     return "\n".join(L) + "\n"
 
+
+def _fingerprint(path):
+    payload = mc.load_resource_payload(path)
+    pkgs = mc.locate_clothpackages(payload)
+    rows = []
+    for i, pkg in enumerate(pkgs):
+        for body in pkg.bodies:
+            rows.append((i, _clean_name(mc.body_name(body)), mc.sim_vertex_count(body),
+                         mc.sim_triangle_count(body),
+                         "barycentric" if mc.uses_barycentric(body) else "direct"))
+    return rows
+
+
 def diff(path_a, path_b):
-    """Report for both files plus a section-type histogram diff."""
+    """Report both files plus a compact side-by-side of their cloth pieces."""
     out = [report(path_a), report(path_b)]
     try:
-        a, b = parse(path_a), parse(path_b)
+        ra, rb = _fingerprint(path_a), _fingerprint(path_b)
     except Exception as e:
-        return "\n".join(out) + f"\n(diff skipped: {e})\n"
-    ha, hb = a['hist'], b['hist']
+        return "\n".join(out) + f"\n(comparison skipped: {e})\n"
     out.append("=" * 70)
-    out.append("SIDE-BY-SIDE SECTION COMPARISON  (A = first file, B = second)")
-    out.append(f"  A = {os.path.basename(path_a)}")
-    out.append(f"  B = {os.path.basename(path_b)}")
+    out.append("SIDE-BY-SIDE  (A = first file, B = second)")
+    out.append(f"  A = {os.path.basename(path_a)}   pieces: {len(ra)}")
+    out.append(f"  B = {os.path.basename(path_b)}   pieces: {len(rb)}")
     out.append("")
-    out.append(f"  {'section type':40} {'A':>4} {'B':>4}")
-    out.append(f"  {'-'*40} {'-'*4} {'-'*4}")
-    for t in sorted(set(ha) | set(hb)):
-        ca, cb = ha.get(t, 0), hb.get(t, 0)
-        mark = "" if ca == cb else "   <- differs"
-        out.append(f"  {SECN[t]:40} {ca:>4} {cb:>4}{mark}")
+    out.append(f"  {'piece':40} {'points':>7} {'tris':>6} {'attachment':>12}")
+    out.append(f"  {'-'*40} {'-'*7} {'-'*6} {'-'*12}")
+    for tag, rows in (("A", ra), ("B", rb)):
+        for (i, nm, sv, tr, att) in rows:
+            out.append(f"  {tag}: {nm[:36]:37} {sv:>7} {tr:>6} {att:>12}")
     return "\n".join(out) + "\n"
 
+
 def main(argv):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
     if len(argv) == 2:
         print(report(argv[1]))
     elif len(argv) >= 3:
@@ -164,5 +134,6 @@ def main(argv):
     else:
         print(__doc__)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main(sys.argv)
