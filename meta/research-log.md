@@ -472,6 +472,25 @@ Ran a control test to check whether the ghillie cloth is even physics-simulated 
 
 ---
 
+## Entry — 2026-07-01 — RETRACTION: ghillie strands ARE simulated; the null tests only covered 11 of 33 ghillie cloths (inconclusive)
+
+### Correction (retracts the previous "ghillie strands are SKINNED" entry)
+The tester (who plays the game) reports the ghillie strands **visibly respond to character movement and environmental wind** — i.e. they **are** live cloth-simulated. So the prior conclusion "ghillie strands are skinned/pinned" is **WRONG and retracted.**
+
+### Why the tests still showed nothing (the actual gap)
+- The in-game edits (wrap twist/collapse, gravity flip) were applied to only **11 of the ~33 base ghillie cloths** — the subset that had *wraps*. The gravity test reused that same 11.
+- No patch/mod overrides the base ghillie cloths (checked all three patch forges: 0 Cloth-typed ghillie overrides), so the base files *are* what loads — but the tester's specific ghillie item very plausibly uses one of the **other 22 ghillie cloths that were never edited.** That produces a "no change" that is **wrong-file, not wrong-hypothesis.**
+- So all the ghillie null results are **INCONCLUSIVE**, not disconfirming — for *both* the wrap and the gravity. The wrap model is still **untested**, and the one thing we can say is confirmed is that GRB ghillie strands **are** cloth-simulated (contrary to the retracted entry).
+
+### Fix for next time (makes it a clean test)
+1. Edit **all ~33 ghillie cloths** (or, better, have the tester name the exact ghillie item so we target its cloth) — for both the gravity control and the wrap collapse. Then any equipped ghillie is guaranteed affected, and a single look is decisive.
+2. Gravity control first (does flipping gravity on the *right* cloth billow the strands? → confirms we're editing the live sim), then the wrap collapse (→ tests whether the 20-byte records are the render path).
+
+### Meta
+Third correction in this thread. Compounding lesson: a null in-game result can mean (a) hypothesis false, (b) invalid subject, or (c) **wrong file/subset edited** — rule out (c) by ensuring the edit demonstrably covers what's on screen (e.g. a gravity control that *must* move a working cloth).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
