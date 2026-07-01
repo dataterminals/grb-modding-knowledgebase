@@ -22,7 +22,6 @@ Short definitions of the terms used throughout this knowledgebase. Cross-referen
 | **Skeleton** | Bone hierarchy for skinned meshes. |
 | **LOD** (Level of Detail) | A mesh detail tier. `LOD0` = highest/closest, `LOD3` = lowest/distant. |
 | **Mip / Mipmap** | A precomputed half-resolution texture level. `Mip0` = full res. |
-| **Digest** | Community term for importing an authored asset (glTF/DDS) into the game's data via ATK — converting + embedding it into a forge. |
 | **Repack** | Writing an unpacked working folder back into a `.forge` (or `.data`). |
 | **Patch forge** | A `*_patch_01.forge` the game loads on top of base forges, overriding by ID. Mods ship these. See [`docs/05-three-forge-model.md`](../docs/05-three-forge-model.md). |
 | **Base forge** | The original `DataPC_<name>.forge` shipped with the game (no `_patch` suffix). |

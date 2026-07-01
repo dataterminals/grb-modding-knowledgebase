@@ -12,7 +12,7 @@ A structured knowledgebase about modding GRB via the Ubisoft *Anvil* engine, its
 - **`.data`** = one entry inside a forge, *also* a container. It holds one or more **typed resources** (Mesh, TextureMap, Material, BuildTable, Skeleton, …). Unpacked names look like `<decimalID>_-_<Name>.data`.
 - **ATK** = a `.NET`/WPF Windows app that behaves like a **file explorer for forges**: unpack → browse `.data` → view/export/replace resources → repack. It is the community's reference implementation of the forge format; when docs and ATK disagree, **ATK is authoritative.**
 - A **mod** = patch forges (`*_patch_01.forge`) dropped into the game directory that override base entries by ID. Most cosmetic mods coordinate **three** forges: `DataPC_patch_01` (items), `DataPC_extra_patch_01` (gameplay), `DataPC_Resources_patch_01` (meshes + textures).
-- The **authoring pipeline**: Blender → glTF/GLB (meshes) + DDS (textures) → import ("digest") into the forge with ATK → repack → install.
+- The **authoring pipeline**: Blender → glTF/GLB (meshes) + DDS (textures) → import into the forge with ATK → repack → install.
 
 ## Safety rules — non-negotiable
 
