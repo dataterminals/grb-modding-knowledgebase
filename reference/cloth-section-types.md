@@ -95,11 +95,13 @@ Complete `SectionTypeID → class` map for GRB's MotionCloth format, transcribed
 
 | ID | Class | Notes |
 | ---: | --- | --- |
-| 4561 | `ClothAdditionalVerticesCounters` | sizes 4562/4563/4565 |
-| 4562 | `ClothAdditionalVerticesTriangleVerticesCount` | `byte[]` |
-| 4563 | `ClothAdditionalVerticesTriangleFirstVertexIndex` | `ushort[]` |
-| 4564 | `ClothAdditionalVerticesBarycentricCoordinatesParameters` | |
-| 4565 | `ClothAdditionalVerticesBarycentricCoordinatesData` | `ushort[]` |
+| 4561 | `ClothAdditionalVerticesCounters` | `{int32 AdditionalVerticesBufferSize N, int32 AdditionalVerticesSIMDSize}`; sizes 4562/4563/4565 |
+| 4562 | `ClothAdditionalVerticesTriangleVerticesCount` | `byte[N]` (sim verts per binding; 3 = triangle) |
+| 4563 | `ClothAdditionalVerticesTriangleFirstVertexIndex` | `ushort[N]` (start index into the sim index buffer) |
+| 4564 | `ClothAdditionalVerticesBarycentricCoordinatesParameters` | `SIMDF8` dequant params for 4565 |
+| 4565 | `ClothAdditionalVerticesBarycentricCoordinatesData` | `ushort[AdditionalVerticesSIMDSize]` (SIMD-packed barycentrics) |
+
+> **Render↔sim binding (barycentric scheme):** present only in some cloths (e.g. `TP_WalkerCoat_Cloth`); many GRB cloths omit 4561–4565 and simulate the render mesh directly. When present, each of the `N` "additional" render vertices binds to a sim triangle (`4563` first-index + `4562` count) with barycentric weights (`4565` dequantized via `4564`). Recomputing these for a new render mesh is the render↔sim remap — see [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md).
 
 ## Editor metadata (authoring)
 
