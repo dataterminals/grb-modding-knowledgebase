@@ -29,7 +29,7 @@ A finished asset-replacement mod is, in practice, a small set of **patch forges*
 | `DataPC_extra_patch_01.forge` | Gameplay definitions (`WG_…`) |
 | `DataPC_Resources_patch_01.forge` | The heavy resources: meshes (`…_LOD0–3`) and textures (`…_Mip0–N`) |
 
-The authoring loop is: **model/texture in Blender → export to glTF/DDS → "digest" (import) into the forge with ATK → repack → drop the patch forges into the game directory.** See [`docs/07-modding-workflow.md`](docs/07-modding-workflow.md).
+The authoring loop is: **model/texture in Blender → export to glTF/DDS → import into the forge with ATK → repack → drop the patch forges into the game directory.** See [`docs/07-modding-workflow.md`](docs/07-modding-workflow.md).
 
 ## How to use this repo
 
@@ -58,7 +58,7 @@ assets/      Diagrams and supporting images
 | [`docs/04-anvil-toolkit.md`](docs/04-anvil-toolkit.md) | ATK deep dive: tech stack, features, the file-explorer model |
 | [`docs/05-three-forge-model.md`](docs/05-three-forge-model.md) | base vs. patch forges; the three-forge mod structure |
 | [`docs/06-game-load-and-reassembly.md`](docs/06-game-load-and-reassembly.md) | How GRB merges many forges into one index at load |
-| [`docs/07-modding-workflow.md`](docs/07-modding-workflow.md) | End-to-end: Blender → glTF/DDS → digest → repack → install |
+| [`docs/07-modding-workflow.md`](docs/07-modding-workflow.md) | End-to-end: Blender → glTF/DDS → import → repack → install |
 | [`docs/08-naming-conventions.md`](docs/08-naming-conventions.md) | Prefixes, LOD/Mip suffixes, the `77777` convention, ID formats |
 | [`docs/09-textures.md`](docs/09-textures.md) | DDS, pixel formats, swizzling, mips, gamma |
 | [`docs/10-meshes-and-skeletons.md`](docs/10-meshes-and-skeletons.md) | Vertex formats, LODs, the glTF pipeline, skeletons |

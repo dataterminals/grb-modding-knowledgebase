@@ -37,7 +37,7 @@ This concentration is *why* this knowledgebase exists: the expertise is real but
                  │  export
                  ▼
        glTF / GLB  +  DDS / PNG
-                 │  import ("digest") via ATK
+                 │  import via ATK
                  ▼
    ┌─────────────────────────────────────┐
    │  .forge archive  (magic: "scimitar") │

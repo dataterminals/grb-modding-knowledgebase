@@ -7,7 +7,7 @@ This is the practical loop a GRB modder runs: from an idea in Blender to patch f
 ## Overview
 
 ```
- (1) AUTHOR            (2) EXPORT            (3) DIGEST                (4) REPACK            (5) INSTALL
+ (1) AUTHOR            (2) EXPORT            (3) IMPORT                (4) REPACK            (5) INSTALL
  Blender model    →    glTF/GLB + DDS   →   import into the forge →  forge → patch_01.forge → drop into
  / texture edit        (standard formats)    via ATK (replace/add)    via ATK                 GRB game dir
 ```
@@ -27,9 +27,9 @@ Key constraints to respect (because the engine and ATK enforce them):
 - **Meshes → glTF / GLB.** GLB is ATK's default mesh format. This is the Blender↔ATK bridge (via SharpGLTF). Export with the conventions ATK expects (application-specific vertex-color accessor names for best round-tripping — ATK handles this on its side).
 - **Textures → DDS (recommended) / PNG / TGA / JPG.** DDS is preferred because it gives explicit control over **pixel format**, **mips**, and **gamma** (see [`09-textures.md`](09-textures.md)). ATK will accept any image format and can generate mips on import, but DDS is the controlled path.
 
-## 3. Digest (import) into the forge ⚠️
+## 3. Import into the forge ⚠️
 
-"Digesting" is the community term for importing your authored asset into the game's data via ATK. Mechanically:
+Import your authored asset into the game's data via ATK. Mechanically:
 
 1. **Unpack** the relevant base/working forge in ATK (or work in an existing unpacked mod folder).
 2. Find the target resource by name/ID in the Game Explorer.
@@ -37,7 +37,7 @@ Key constraints to respect (because the engine and ATK enforce them):
 4. For new content, **mint IDs** (Hash Converter) and create the entries; generate/patch the **BuildTable** so the game knows how to assemble your asset. The Mesh Viewer can export a BuildTable from a scene/mesh/skeleton.
 5. Keep the three layers consistent (item / gameplay / resources) — see [`05-three-forge-model.md`](05-three-forge-model.md).
 
-> **Why "digest"?** The raw Blender output isn't game data; ATK *converts and embeds* it — quantizing vertices into the game's vertex format, packing the DDS into a TextureMap with the right header/mips/gamma, and writing it into the container with a file ID. That conversion-and-embedding is the "digestion."
+> **Why it's more than a copy:** the raw Blender output isn't game data; ATK *converts and embeds* it — quantizing vertices into the game's vertex format, packing the DDS into a TextureMap with the right header/mips/gamma, and writing it into the container with a file ID. That conversion-and-embedding is what "import" means here.
 
 ## 4. Repack ⚠️
 
