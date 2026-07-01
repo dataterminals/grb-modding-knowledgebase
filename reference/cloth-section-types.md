@@ -91,9 +91,9 @@ Complete `SectionTypeID → class` map for GRB's MotionCloth format, transcribed
 | 4531 | `ClothPerVertexDataBuffer` | `byte[]`, sized by 4530 (`PerVertexDataBufferSize × 16`) |
 | 4532 | `ClothPerVertexDataSIMDF8` | sized by 4530 (`PerVertexDataSIMDSize`) |
 
-## Additional render vertices — the render↔sim binding
+## Additional vertices (4561–4565) — small per-triangle point set
 
-The render (visual) mesh = the sim vertices (driven directly) **+ `A` "additional" vertices**, each pinned onto a sim **triangle** by barycentric coords. Stored as a CSR layout indexed **per sim triangle** (`N` = triangle count), not per additional vertex. Verified on Walker LOD0 (170 sim verts, 288 tris, `A`=62, `M`=64).
+⚠️ **Not the render↔sim binding.** An earlier version claimed these bound the render mesh to the sim mesh; that's wrong — the render mesh is a separate, much larger, skeleton-skinned mesh (Walker LOD0: 1816 verts vs 170 sim), and these sections describe only **`A` extra points** (62 on Walker LOD0) bound per sim **triangle** by barycentric coords. Role likely collision (ATK's class name is *"additional collision vertices"*); unconfirmed. The **format** below is byte-exact and stands. Stored as a CSR layout indexed **per sim triangle** (`N` = triangle count). Verified on Walker LOD0 (170 sim verts, 288 tris, `A`=62, `M`=64).
 
 | ID | Class | Notes |
 | ---: | --- | --- |
@@ -103,7 +103,7 @@ The render (visual) mesh = the sim vertices (driven directly) **+ `A` "additiona
 | 4564 | `ClothAdditionalVerticesBarycentricCoordinatesParameters` | `SIMDF8` = `{Scale, Offset, Magic}`; `Scale` = per-LOD normalization (`maxStoredWeight/255`), `Magic = Scale·255` (Walker LOD0 0.524, LOD1 0.751 — not a fixed ½) |
 | 4565 | `ClothAdditionalVerticesBarycentricCoordinatesData` | `ushort[M]`, one per additional vert (tail padded `0xFFFF`); decode = split hi/lo bytes, `weight = byte·Scale + Offset` → two of the triangle's barycentric weights (fixed vertex slots, index-buffer order), third = `1−u−v`. Verified: stored ≤ Magic, reconstructed positions inside sim bbox. Open: the exact slot permutation (render mesh / in-game). |
 
-> **Render↔sim binding (barycentric scheme):** present only in some cloths (e.g. `TP_WalkerCoat_Cloth`); many GRB cloths omit 4561–4565 and the render mesh *is* the sim mesh (direct). Triangle `t`'s 3 sim verts are `ClothMeshIndexBuffer(4371)[3t..3t+2]`. Recomputing these for a new render mesh is the render↔sim remap — see [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md).
+> Present only in some cloths (e.g. `TP_WalkerCoat_Cloth`); many GRB cloths omit 4561–4565 entirely. Triangle `t`'s 3 sim verts are `ClothMeshIndexBuffer(4371)[3t..3t+2]`. These points are **not** the render-mesh binding (the render mesh is separately skeleton-skinned); how the cloth drives the render mesh is an open question — see [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md).
 
 ## Editor metadata (authoring)
 
