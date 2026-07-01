@@ -384,6 +384,28 @@ Record structure documented (doc-11). Scratchpad probes (`crack_weights.py` and 
 
 ---
 
+## Entry — 2026-07-01 — Wrap block sub-structure mapped; correspondence still needs in-game
+
+### What I did
+Attacked the record↔render-vertex correspondence (the wall from the previous entry) by decoding the rest of the LOD0 visual block — the goal being to unlock the weight encoding. Mapped the block into its sub-buffers.
+
+### VERIFIED (new — block layout)
+After the LOD0 sim `ClothPackage` + sim mesh fields, the visual block is: `[u16 flag / small header ~46766][reindex-grouping table 46894–50524][1268 wrap records 50524+]`.
+- **Wrap records:** exactly **1268 contiguous 20-byte records** at offset 50524, **all 1268 with valid sim indices** — i.e. one record per *bound* render vertex (not per render vertex; the render mesh has 1816, ~70% are cloth-bound).
+- **Reindex/grouping table (46894–50524):** a `0xFFFF`-delimited list whose values are a **clean permutation of 0..1267** (globally ascending → literally 0,1,2,…), partitioned into **547 buckets** (282 non-empty). So it groups the 1268 record indices into buckets. The buckets loosely relate to sim vertices — 169 non-empty buckets have all their records sharing a common sim vertex — but it is **not** a clean 1:1 (only 72 distinct shared verts across 282 buckets), so the exact bucket key isn't pinned.
+
+### STILL OPEN (unchanged blocker)
+- **Record ↔ render-mesh-vertex correspondence.** Records appear ordered by a sim-vertex-ish grouping (via the reindex table), which is why identity-to-mesh-order fails. Recovering the exact per-record mesh vertex would need either fully decoding the grouping-table semantics (a deep nested structure) or a bijection solve against render positions (ambiguous given the ~0.012 sim↔render surface offset ≈ 10% of a sim triangle).
+- **6-u16 weight encoding** — still entangled with the above.
+
+### Recommendation (revised next step)
+Offline decode of this nested structure has hit steeply diminishing returns. The efficient path to a working reskin encoder is now an **in-game round-trip**: build a best-effort encoder (per new render vert → nearest sim triangle + barycentric weights, written in the confirmed `[flag][weights][3 sim idx]` record form, weights as normalized u16 since the game likely renormalizes) and validate by loading the modified cloth in GRB. That empirically settles the weight scale and whether the game rebuilds the grouping table itself. Sylvia runs in-game tests, so this fits the workflow.
+
+### Deliverables / state
+Block layout documented (doc-11 already carries the "still to decode" caveat). Scratchpad probes session-temporary. No encoder yet.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
