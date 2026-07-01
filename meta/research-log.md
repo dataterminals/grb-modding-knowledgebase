@@ -406,6 +406,27 @@ Block layout documented (doc-11 already carries the "still to decode" caveat). S
 
 ---
 
+## Entry — 2026-07-01 — Built `clothwrap.py` (wrap locator + in-game diagnostic); designed the confirmation test
+
+### What I did
+Built a first tool on the wrap findings and designed the in-game test that settles the remaining unknowns (weight scale, whether the game rebuilds the grouping table).
+
+### Deliverable: `tools/clothwrap.py` (experimental / research-tier)
+- **Robust wrap locator** — forward-parses the sim fields after each LOD's `ClothPackage` (TriQuadIndex, VertexPos, VertexNormals, Indices, empty list, render-count), then detects the 20-byte record run (longest stretch whose last 3 u16 are valid sim indices). No hardcoded offsets. Verified it finds Walker **LOD0: 1268 records @50524** and **LOD1: 956 records @109921** (LOD1 is 100% bound; LOD0 ~70%).
+- **`inspect`** — plain-language summary (sim cage size, visible mesh size, % bound).
+- **Diagnostic generators** (`--diagnostic twist|collapse`) — deliberately mis-point every record's 3 sim indices (twist = shift by 40 mod V; collapse = all → cage vertex 0). Edits are **same-size, in-place**: verified byte-identical to vanilla except exactly the sim-index low-bytes (0 unintended changes across 133 336 bytes). Input/output a decompressed `.Cloth` (or `.data` via `--oodle`).
+
+### The in-game confirmation test (why it's decisive)
+Editing only the **sim indices** uses the one part of the record we're 100% sure of, so it's a clean test of the *mechanism* (independent of the still-unknown weight encoding). If a twisted/collapsed Walker coat visibly distorts in-game → the wrap **is** what drives the visible mesh (confirms the whole render↔sim finding live). If it looks normal → we're wrong and must reconsider. This gates any weight-encoder work.
+
+### Apply pipeline (for the tester)
+Back up the forge → unpack `TP_WalkerCoat_Cloth` in ATK → run `clothwrap.py … --diagnostic twist` → re-import the modified `.Cloth` and repack (ideally into a patch forge on a backed-up install) → load GRB and view the Walker coat. Open question for the tester: easiest way to see the Walker coat in-game (player outfit vs. NPC/cutscene); if awkward, retarget an easily-equippable garment (the locator is generic, though only verified on Walker).
+
+### Next
+Run the in-game diagnostic. If confirmed, extend `clothwrap.py` with the weight-writing encoder (new render mesh → nearest sim triangle + barycentric) and iterate the weight scale in-game.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
