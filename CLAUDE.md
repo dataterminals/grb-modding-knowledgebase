@@ -30,6 +30,7 @@ A structured knowledgebase about modding GRB via the Ubisoft *Anvil* engine, its
 | What ATK can do, version history | `docs/04-anvil-toolkit.md` (sourced from ATK's own `README.txt`) |
 | Which forge holds what | `docs/05-three-forge-model.md`, `reference/forge-inventory.md` |
 | What a resource type is | `reference/resource-types.md` |
+| Resource **type ids** (`Extension` = CRC32 of name) & `.data` compression | `reference/resource-type-ids.md`, `docs/02-forge-file-format.md` |
 | Naming patterns (`FTP_`, `WG_`, `LOD0`, `Mip0`, `77777`) | `docs/08-naming-conventions.md` |
 | **Cloth / `.cloth` / MotionCloth** (capes, coats, straps) | `docs/11-cloth-and-physics.md`, `reference/cloth-section-types.md` |
 | A real worked mod | `examples/case-study-usp-tactical.md` |

@@ -15,9 +15,23 @@ The Anvil engine has had two cloth systems, and ATK implements both:
 
 **GRB uses MotionCloth.** ATK added `ClothPackage` support in v1.3.0, can load Cloth/SoftBody/MotionSoftBody in the Mesh Viewer, export them to GLB, and (per its changelog) "port Unity+ cloth to the older games." The rest of this doc focuses on **MotionCloth**, the GRB-relevant one.
 
-## Top-level container: `ClothPackage`
+## The resource hierarchy: `Cloth` → … → `ClothPackage`
 
-A GRB cloth resource is a `ClothPackage`. Its binary layout (`ClothPackage.Read`/`Write`):
+The **top-level forge resource** for a GRB garment cloth is typed **`Cloth`** (resource-type id `3811591354` = `CRC32("Cloth")` — see [`reference/resource-type-ids.md`](../reference/resource-type-ids.md)), *not* `ClothPackage`. `ClothPackage` is a **nested sub-object**, three levels down. The full chain (verified from `Cloth`/`MotionClothState`/`MotionClothLOD` and confirmed empirically by parsing a real `_Cloth.data`):
+
+```
+Cloth                       (type id 3811591354 — the forge resource)
+  └─ MotionClothState        (1629082830)
+       └─ MotionClothLOD     (693470191)   ← one per LOD
+            └─ ClothPackage                 ← nested; no id of its own
+                 └─ MotionBody[] → MotionSection[]   ← the format below
+```
+
+(`SoftBody` `1263847064` and `MotionSoftBody` `2559966986` are sibling physics resource types for non-garment deformables. There is **no** `ClothPackage` resource-type id — it's always embedded in a LOD.) **Verified:** `1687_-_TP_Top_Bodark_Trench_Cloth.data` holds one resource whose embedded `Extension = 3811591354` (`Cloth`).
+
+### Nested container: `ClothPackage`
+
+Its binary layout (`ClothPackage.Read`/`Write`):
 
 ```
 ClothPackage
@@ -210,5 +224,5 @@ Tracked in [`meta/research-log.md`](../meta/research-log.md):
 3. **A fully accurate MotionCloth parser.** [`tools/cloth_inspect.py`](../tools/cloth_inspect.py) is *approximate* — it scans for the `0xECD7` magic and can over/under-count buffer sections (a `0xECD7` can occur by chance inside vertex/index data). A correct parser must implement `MotionSectionFactory`'s counter→buffer size dependencies (buffer lengths come from earlier counter sections). Worth building for exact `ClothProperties` value diffs.
 4. **The ragdoll bone-collider list** found in the wearable cloth's editor data (`Ragdoll_Head…;LeftArm…` bone+hash string) — decode its exact structure; it names the skeleton bones the cloth collides against, and is likely part of binding cloth to a character.
 5. **BuildTable side:** the exact property/node a BuildTable uses to reference a cloth, and whether the mesh must also carry a cloth link (the `IsGeneratedFromCloth` mesh + a matching `ClothEditorDataClothID`).
-6. **`Extension` (resource-type) id** for a ClothPackage in the forge entry table — see [`02-forge-file-format.md`](02-forge-file-format.md).
+6. ~~**`Extension` (resource-type) id** for a ClothPackage in the forge entry table~~ — **answered**: the forge resource is typed **`Cloth`** (`3811591354`); `ClothPackage` is nested and has no id. See the hierarchy above and [`reference/resource-type-ids.md`](../reference/resource-type-ids.md).
 7. **Empirical validation:** confirm in-game that XML-tuned `ClothProperties` and repainted `MaxDistance` behave as expected.

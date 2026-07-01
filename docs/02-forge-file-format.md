@@ -97,6 +97,28 @@ Forge data entries are compressed. The relevant facts:
 
 > **Inferred:** that the base-game GRB resource entries are Oodle-compressed. Confirmed indirectly by the presence of `oo2core_7_win64.dll` and `compressed_oodle_compression_state.bin` in the game directory and ATK's Oodle code path.
 
+### Verified: the `.data` block-compression container (`CompressedFileData` / `DataBlock`)
+
+Decompiling ATK's `DataFile`, `CompressedFileData`, `DataBlock`, `CompressionInfo` and `Manager` (v1.3.1) resolves exactly how a `.data` entry's bytes are compressed — and it was **verified empirically** by parsing real GRB `.data` files and Oodle-decompressing them with the game's `oo2core_7_win64.dll`.
+
+A GRB `.data` payload is **two consecutive `CompressedFileData` blocks**: first a small **metadata/index block**, then the **file-payloads block**. (Older AC games prefix a prefetch/int32 region; GRB has none.) Each `CompressedFileData` is:
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| Magic | uint64 | `1154322941026740787` (`0x1004FA9957FBAA33`); mismatch ⇒ "file could be locked" |
+| CompressionInfo | 7 bytes | `int16 Version`, `byte Algorithm`, `uint16`, `uint16` (block-size fields) |
+| BlockCount | int32 | (older games: int16) |
+| BlockInfo[BlockCount] | 8 bytes each | `int32 UncompressedSize`, `int32 CompressedSize` (older: uint16 pairs) |
+| Blocks[BlockCount] | — | each = `uint32 adler32` + `byte[CompressedSize]` |
+
+Per block: if `UncompressedSize == CompressedSize` the block is **stored raw**; otherwise decompress to `UncompressedSize` with the codec named by `CompressionInfo.Algorithm`.
+
+**GRB specifics** (`DataStorage.DataVersions[GhostReconBreakpoint] = (Version 3, Algorithm 3, Block 32768, …)`):
+- Blocks are **32 768 bytes uncompressed** max.
+- `Manager.GetCompressionAlgorithm` maps GRB's algorithm index: `0`=LZO1X, `1`=LZO1X999, `2`=LZO2A, **`3`=Oodle Mermaid (SuperFast)**, `4`=Oodle Mermaid (Optimal3). ATK writes **algorithm 3** by default, and can read any of `0–4`.
+
+> **Verified (empirical):** parsing `1687_-_TP_Top_Bodark_Trench_Cloth.data` showed magic OK, `Version 3 / Algorithm 3`, a 44-byte raw metadata block, and five 32 768-byte payload blocks Oodle-compressed to ~17–24 KB each — decompressed correctly via `oo2core_7_win64.dll`. This **confirms and refines** the Oodle inference above: GRB `.data` compression is **Oodle Mermaid in 32 KB blocks with a per-block adler32**, at the `.data` (not forge) layer. See [`03-data-and-resources.md`](03-data-and-resources.md) for the surrounding container and [`tools/data_inspect.py`](../tools/data_inspect.py).
+
 ## Companion / sidecar files inside forges
 
 When ATK unpacks a forge you will also encounter special entries:
@@ -111,12 +133,12 @@ ATK treats `.forge` **and** `.data` as unpackable containers — "To unpack/repa
 
 ## Open binary-format questions
 
-Items 1–2 below were **resolved** by decompiling ATK (2026-06-30) — see the verified layout above. Remaining:
+Items 1–4 below were **resolved** by decompiling ATK (2026-06-30) — see the verified layouts above. Remaining:
 
 1. ~~Exact header layout~~ — **resolved** (`ForgeFile.Serialize27`).
 2. ~~Index/entry record layout~~ — **resolved** (`ForgeEntry`).
-3. Per-entry **compression descriptor** — how the codec + chunking is recorded inside each `.data` payload (the `DataFile` class is the next read).
-4. The full **`Extension` (resource-type) id → type** table, including which id marks a `.cloth`/ClothPackage.
+3. ~~Per-entry **compression descriptor**~~ — **resolved** (`CompressedFileData`/`DataBlock`, verified empirically). See "Verified: the `.data` block-compression container" above.
+4. ~~The full **`Extension` (resource-type) id → type** table~~ — **resolved**: the id is `CRC32(typeName)` and the map is `ScimitarClassRegistry`. GRB garment cloth is typed **`Cloth`** (id `3811591354`); there is no standalone `ClothPackage` id (it's nested). Full table + method: [`reference/resource-type-ids.md`](../reference/resource-type-ids.md).
 5. The precise **GlobalMetaFile** and **PrefetchingFileInfos** schemas.
 
 The ground truth for all of these is ATK's source. See [`04-anvil-toolkit.md`](04-anvil-toolkit.md) for how it was decompiled.
