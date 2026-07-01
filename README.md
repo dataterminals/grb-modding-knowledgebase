@@ -66,6 +66,10 @@ assets/      Diagrams and supporting images
 
 Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventory.md) · [`reference/resource-types.md`](reference/resource-types.md) · [`reference/cloth-section-types.md`](reference/cloth-section-types.md) · [`reference/glossary.md`](reference/glossary.md)
 
+## Tools
+
+- **🧵 Cloth Inspector** ([`tools/`](tools/README.md)) — a click-to-run tool (window, drag-and-drop, or a standalone `.exe`) that reads a GRB `.cloth` file and tells you, in plain language, what it is: its simulated bodies, the exact **mesh + LOD** each is bound to, and its cloth features. **No coding needed.** See [`tools/README.md`](tools/README.md).
+
 ## Community
 
 - **Tier 1 Imports** — the primary active GRB modding community.

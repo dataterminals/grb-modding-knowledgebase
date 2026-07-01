@@ -26,6 +26,12 @@ AnvilToolkit*/
 *.dll
 *.exe
 
+# Python / PyInstaller build artifacts (from building ClothInspector.exe)
+__pycache__/
+build/
+dist/
+*.spec
+
 # OS / editor cruft
 Thumbs.db
 desktop.ini

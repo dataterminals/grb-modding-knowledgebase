@@ -1,0 +1,7 @@
+# Keep Windows batch launchers as CRLF so they always run correctly on Windows.
+*.bat text eol=crlf
+
+# Normalize everything else to LF in the repo.
+* text=auto
+*.py text eol=lf
+*.md text eol=lf
