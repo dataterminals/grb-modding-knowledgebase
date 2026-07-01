@@ -1,0 +1,47 @@
+name: Build Forge Inspector (.exe)
+
+# Builds a standalone Windows ForgeInspector.exe so non-technical modders can
+# download and double-click it (no Python needed). No extra DLLs required - it
+# reads only the forge index.
+#
+#   - Run manually from the repo's "Actions" tab (workflow_dispatch), then
+#     download the "ForgeInspector-exe" artifact.
+#   - Or push a tag like  forge-inspector-v1  to also attach it to a Release.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'forge-inspector-v*'
+
+permissions:
+  contents: write   # needed only for the Release step on a tag
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install PyInstaller
+        run: pip install pyinstaller
+
+      - name: Build ForgeInspector.exe
+        working-directory: tools
+        run: pyinstaller --onefile --windowed --name ForgeInspector forge_inspect_gui.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ForgeInspector-exe
+          path: tools/dist/ForgeInspector.exe
+
+      - name: Attach to Release (tagged builds only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: tools/dist/ForgeInspector.exe

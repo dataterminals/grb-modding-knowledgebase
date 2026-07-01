@@ -38,6 +38,18 @@ The base+patch pairing is consistent across the whole install (see [`reference/f
 
 The `_patch_01` suffix strongly implies a numbered patch chain (`_patch_02`, etc., are possible as the game updates). Mods reuse the **`_patch_01`** slot, which is exactly why mods can collide with each other and occasionally with official patches.
 
+## Verified: real IDs are globally unique, and patches override by ID (empirical)
+
+Parsing the **forge indexes directly** (the real `ForgeEntry.ID` for every entry — a uint64, *not* the positional number in unpacked filenames; see [`03-data-and-resources.md`](03-data-and-resources.md)) settles the ID model on real data:
+
+- **IDs are unique within every forge.** `DataPC.forge` (48 707 entries), `DataPC_Resources.forge` (123 571), and every patch forge each had **zero duplicate IDs**.
+- **IDs do not collide across forge families.** Real-ID overlap between unrelated forges is essentially just the two **reserved sidecar IDs** every forge carries — `16` (`GlobalMetaFile`) and `145` (`PrefetchingFileInfos`): `DataPC_Resources ∩ DataPC = 2`, `Resources ∩ extra = 2`, etc. The occasional extra cross-forge match (e.g. `WG_SMG_UZZI` present in both `DataPC_patch` and `extra_patch`) carries the **same ID *and* the same name** — the same logical resource intentionally shipped in two forges, not a collision. **There were no "same ID, different resource" cases across families.** So a 64-bit file ID effectively identifies one resource game-wide.
+- **A patch overrides its base by ID.** Shared IDs between a base and its patch: `DataPC ∩ DataPC_patch = 2321`, `Resources ∩ Resources_patch = 1961`, `extra ∩ extra_patch = 268`. The large majority carry **matching names** (2316 / 1799 / 254) — the patch entry replaces the same resource. The rest are Ubisoft **repurposing an ID for new content** (e.g. `WI_DMR_MK14_Stock_Collapsed_LOD0` → `WI_DMR_JAEM1A_Stock_LOD0`; the `MSR` sniper parts → `JAE700` parts) or fixing a name typo (`TP_FaceHair…` → `TP_FacialHair…`, `FTP_Glove_Alicia` → `FTP_Gloves_Alicia`). Either way the patch entry with that ID wins.
+
+> **This is the technical basis for replacement mods**, now confirmed rather than inferred: the merged index is keyed on the real 64-bit ID; put an entry with an existing ID into a mounted patch forge and it overrides. Ubisoft's own patches do exactly this, even repurposing IDs to swap content. (Tool: parse any forge's IDs/types or diff two forges for shared-ID conflicts with the Forge Inspector — see [`tools/`](../tools/README.md).)
+>
+> **Correction:** an earlier draft suspected IDs "aren't globally unique across forges" after seeing the number `34224` in two forges. That number was a **positional index in the unpacked filename**, not a file ID — the real IDs above show no such collision. See [`03-data-and-resources.md`](03-data-and-resources.md) and the research log.
+
 ## Consequences for modding (these are the practical rules)
 
 1. **You override by ID, in a patch forge.** Put an entry with an existing file ID into `DataPC_*_patch_01.forge` and it replaces the base entry everywhere that ID is referenced. This is the entire basis of replacement mods.
@@ -50,7 +62,7 @@ The `_patch_01` suffix strongly implies a numbered patch chain (`_patch_02`, etc
 
 Tracked in [`meta/research-log.md`](../meta/research-log.md):
 
-- The **exact priority rule** when an ID appears in multiple mounted forges (load order source of truth).
+- **Partly resolved:** override *is* keyed on the real 64-bit ID, and a patch overrides its base (verified above). Still open is the **priority order when the same ID is in two *peer* forges** — e.g. two mods, or a mod vs. an official patch, both in `*_patch_01` slots. That's a game-runtime rule (mount order) not encoded in ATK; it needs an in-game A/B test.
 - Whether GRB supports a patch chain beyond `_patch_01` and how numbering affects priority.
 - The role of `GlobalMetaFile` / `PrefetchingFileInfos` in mount/streaming and whether a mod must update them for new content (vs. pure replacement).
 - How the world-map `_Split` forges and `Bootstrap` forge participate (streaming regions vs. global data).
