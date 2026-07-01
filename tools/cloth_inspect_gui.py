@@ -19,15 +19,18 @@ import cloth_inspect
 
 INTRO = (
     "GRB Cloth Inspector\n"
-    "Point it at a GRB cloth file (a .data named like  *_Cloth  or  Cloth_* )\n"
-    "and it tells you what the cloth is: its simulated bodies, the mesh + LOD\n"
-    "each is bound to, and which cloth features it uses.\n\n"
-    "  •  Open a cloth file…      inspect one cloth\n"
-    "  •  Compare two cloth files…  diff two cloths side by side\n\n"
-    "Tip: a body named  Sim_<Mesh>_LOD<n>  is bound to that exact mesh + LOD.\n"
+    "Point it at a GRB cloth file - a  *.Cloth  (what ATK writes when you unpack a\n"
+    "cloth .data) or the cloth  .data  itself - and it tells you, in plain terms:\n"
+    "how many cloth pieces (LODs), the mesh each is bound to, the sim-mesh size,\n"
+    "and HOW the garment is attached (which decides how you can reskin it):\n\n"
+    "  •  Open a cloth file…        inspect one cloth\n"
+    "  •  Compare two cloth files…  see two cloths side by side\n\n"
+    "  DIRECT      = visible mesh IS the sim mesh; keep the same points to reskin.\n"
+    "  BARYCENTRIC = garment pinned onto a sim mesh; a new mesh needs re-pinning.\n\n"
+    "Tip: a piece named  Sim_<Mesh>_LOD<n>  is bound to that exact mesh + LOD.\n"
 )
 
-CLOTH_TYPES = [("Cloth data", "*.data"), ("All files", "*.*")]
+CLOTH_TYPES = [("Cloth files", "*.Cloth"), ("Cloth data", "*.data"), ("All files", "*.*")]
 
 class App:
     def __init__(self, root):

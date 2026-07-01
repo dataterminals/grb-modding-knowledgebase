@@ -228,6 +228,29 @@ Build the accurate MotionCloth section reader/writer (parse ClothPackage via the
 
 ---
 
+## Entry — 2026-07-01 — Built the accurate MotionCloth reader/writer (`motioncloth.py`); upgraded Cloth Inspector
+
+### What I did
+Built `tools/motioncloth.py` — the exact ClothPackage reader/writer that the remap encoder needs — and rewired the Cloth Inspector to use it (accurate + plain-language + `.data`/Oodle support).
+
+### VERIFIED (new)
+- **Exact parse + byte-for-byte round-trip.** `motioncloth.py` locates every ClothPackage in a resource (one per LOD), walks each MotionBody's sections by their self-declared size (validating the `0xECD7` marker), decodes them, and re-serializes **byte-identical** to the input. Verified on: `IanBlake_TrenchCoat_Cloth` (direct, 2 LODs 186/305 + 138/227), `TP_WalkerCoat_Cloth` (barycentric, 2 LODs 170/288 + 66/100), and `1687_-_TP_Top_Bodark_Trench_Cloth.data` (Oodle path). Coverage checked: all `0xECD7` section markers fall inside located packages (bar one chance byte in Walker's bone-weight data).
+- **Multi-ClothPackage resources confirmed.** A cloth resource holds one ClothPackage per LOD, with MotionClothLOD/state/skinning data (and the ScimitarClass wrapper) between/around them; `splice()` preserves all of that when editing one package.
+- Incidental: `1687_-_TP_Top_Bodark_Trench_Cloth` reuses the **`Sim_Tsec_IanBlake_Trench`** sim mesh (same 186/305) — Bodark trench and IanBlake trench share the coat model.
+
+### How it reads (for reuse)
+Accepts a decompressed `*.Cloth` resource (what ATK writes when you unpack a cloth `.data`) or a cloth `.data` (auto-Oodle via the game DLL). Locate = find a `0xECD7` section, treat preceding 8 bytes as ClothPackage `count`+`body0len`, validate by parsing `count` bodies that consume exactly — robust against chance markers.
+
+### Deliverables
+- `tools/motioncloth.py` — accurate reader/writer engine (locate/parse/round-trip/splice + decoders).
+- Upgraded `tools/cloth_inspect.py` (+ GUI text/filters) to delegate to it: exact counts, `.data`/`.Cloth` input, and a plain-language **DIRECT vs BARYCENTRIC** attachment call-out so modders know their reskin route. Rebuilt `ClothInspector.exe`.
+- Docs: [`11`](../docs/11-cloth-and-physics.md) (remap "Progress"; open Q3 = built), [`tools/README`](../tools/README.md), main README.
+
+### Still open (next)
+The **write/encode** side: compute new barycentric bindings for a new render mesh (ATK's `computeTriBarycentricCoords` math) and encode them into the `ClothAdditionalVertices*` sections via `motioncloth`'s writer — then **in-game validation** on the Walker coat.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
