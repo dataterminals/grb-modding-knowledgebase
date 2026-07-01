@@ -217,6 +217,14 @@ Ordered by reliability with today's tools:
 
 ## The render↔sim remap — design, and what ATK already gives us
 
+> **⚠️ Update (2026-07-01) — this section's binding model is under revision.** Building the encoder surfaced that the picture below is **incomplete and partly wrong**, so the encoder is **paused** pending confirmation. What newer decompilation of `MotionSoftBodyLOD`/`MotionClothLOD` established (verified):
+> - A cloth LOD stores much more than the ClothPackage: per-**sim**-vertex paint arrays (`VertexMaxDistance`, `…BackStopDistance`, `…GravityScale`, `…Damping`, `…SkinWidthScale`, `…Friction`), the sim mesh (`VertexPos`/`VertexNormals`/`Indices`) **skinned to the skeleton** (`BoneIndices`/`BoneWeights` + `MeshBones`), and separate **visual-mesh** fields.
+> - The simple render→sim binding form ATK's own generator produces — `VisualVertexMappings` (a list of `SoftBodyVertexMapping` = 3 sim indices + 3 weights) — is **empty (count 0)** in real GRB cloths. So GRB does **not** use that representation.
+> - `ClothAdditionalVertices*` (4561–4565): for the Walker coat LOD0 the count **equals the sim *triangle* count** (288), which points to these being **per-triangle "additional collision vertices"**, *not* the per-render-vertex binding claimed below.
+> - ATK's cloth→GLB export emits only the **sim** mesh (with `VertexMaxDistance`→vertex-color `Color1`), flagged `IsGeneratedFromCloth`.
+>
+> **Net:** the claim below (and in "Why the BuildTable reference isn't enough") that **4565 is the render↔sim binding** is **doubtful** — treat it as unverified. The real open question is *how a GRB MotionCloth drives its render mesh* given `VisualVertexMappings` is empty. Resolving that is the prerequisite for the encoder. See [`meta/research-log.md`](../meta/research-log.md) (2026-07-01 entry). The `tools/motioncloth.py` reader/writer (accurate, round-trips) is unaffected and stands.
+
 This is the frontier task (bind a vanilla `.cloth` to a *new* garment mesh). Decompiling the MotionCloth binding path and surveying every GRB cloth turns it from a mystery into a concrete, scoped engineering problem.
 
 ### Survey: two binding schemes exist (verified)

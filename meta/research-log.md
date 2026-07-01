@@ -251,6 +251,34 @@ The **write/encode** side: compute new barycentric bindings for a new render mes
 
 ---
 
+## Entry — 2026-07-01 — Encoder dig: the cloth binding model needs correcting (encoder paused)
+
+### What I did
+Started the render↔sim encoder. First step was to crack the barycentric quantization by decoding it and checking it reconstructs a known ground truth. Read the full LOD binary structure (`MotionSoftBodyLOD.Read` + `MotionClothLOD.Read`), `SIMDF8`, `Triangle`, `Handle`, `MeshBone`, `ScimitarClass`/`ScimitarClassReader`, and empirically walked real cloths (`TP_WalkerCoat_Cloth`, `IanBlake_TrenchCoat_Cloth`) extracted from `DataPC.forge`.
+
+### VERIFIED (new)
+- **Full GRB cloth-LOD layout.** Each MotionClothLOD (one per LOD) contains, in order: `Settings`; six per-**sim**-vertex `byte[]` paint arrays — **`VertexMaxDistance`**, `VertexBackStopDistance`, `VertexGravityScale`, `VertexDamping`, `VertexSkinWidthScale`, `VertexFriction`; the **ClothPackage** (length-prefixed blob; blob length int32 immediately precedes it — verified == parsed end); `TriQuadIndex`; **`VertexPos`** (sim, count == `ClothUserData.UserVerticesCount`); `VertexNormals`; `Indices` (sim tris×3); then visual/other fields; then (MotionClothLOD) `BoneIndices`/`BoneWeights`, `VisualVertexPos`, `VisualBoneIndices`/`VisualBoneWeights`, `MeshBones`/`VisualMeshBones`.
+- **Sim mesh is skinned to the skeleton** (`BoneIndices`/`BoneWeights` + `MeshBones`; `MeshBone` = bind `Matrix4x4` + hashed bone name). ATK's `ToMesh` exports **only the sim mesh** (MaxDistance→`Color1`, per-vertex data→`Color2/3`), flagged `IsGeneratedFromCloth`.
+- **`VisualVertexMappings` (SoftBodyVertexMapping list) = 0** in real GRB cloths (Walker + IanBlake). ATK's generator (`FromMeshSet`/`GenerateVisualMapping`) produces *this* form — so it does not match GRB's on-disk representation.
+- **`SIMDF8` = 3 floats** {Scale, Offset, MagicValue}. Nested ScimitarClass header (GRB) = `ClassID`(u64,8) + `Hash`(u32,4).
+- **`ClothAdditionalVertices*` (4561–4565) count == sim *triangle* count** for Walker LOD0 (288 == 288). Strongly suggests these are **per-triangle "additional collision vertices"**, not the per-render-vertex binding.
+
+### CORRECTION (supersedes earlier)
+The earlier claim (doc-11) that **`ClothAdditionalVerticesBarycentricCoordinatesData` (4565) is the render↔sim binding** is now **doubtful**. Evidence: `VisualVertexMappings` empty, 4561==triangle-count, sim/visual are separate skeleton-skinned meshes. doc-11's remap section now carries an ⚠️ "under revision" note. Not yet replaced with a confirmed model — flagged, not asserted.
+
+### OPEN (the crux, blocks the encoder)
+**How does a GRB MotionCloth drive its render mesh, given `VisualVertexMappings` is empty?** Candidates: (a) the separate render `Mesh` resource carries its own cloth-skinning to sim vertices; (b) `VisualVertexPos`+`VisualBoneIndices/Weights` at the LOD level; (c) 4561–4565 after all. Must resolve before the encoder.
+- Secondary: my per-LOD walk **desyncs right after `Indices`** — a `BaseObject[]` array (read via `ClassReader.Read`) doesn't parse with the ClassID+Hash+data size I derived (Hash reads as 0, which ATK would reject). There's a nested-serialization subtlety (the exact `ClassReader` path / possible null handling) I haven't cracked. Needed to reach `VisualVertexPos`/`VisualBoneIndices` and to build a full LOD reader/writer.
+
+### Deliverables / state
+- No encoder yet (correctly — the model was wrong). `tools/motioncloth.py` (ClothPackage reader/writer, byte-exact round-trip) is solid and unaffected.
+- Docs: doc-11 remap section flagged under revision.
+
+### Next
+Resolve the nested-`BaseObject`/`ClassReader` serialization to finish the LOD walk (get `VisualVertexPos`/`VisualBoneIndices` counts) and settle the render→sim mechanism — likely via reading `ClassReader.Read` exactly, or by having ATK export a Walker cloth to GLB and inspecting. Then re-scope the encoder around the confirmed mechanism.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
