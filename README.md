@@ -70,6 +70,7 @@ Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventor
 
 - **🧵 Cloth Inspector** ([`tools/`](tools/README.md)) — a click-to-run tool (window, drag-and-drop, or a standalone `.exe`) that reads a GRB `.cloth` file and tells you, in plain language, what it is: its simulated bodies, the exact **mesh + LOD** each is bound to, and its cloth features. **No coding needed.** See [`tools/README.md`](tools/README.md).
 - **🔎 Data Inspector** ([`tools/`](tools/README.md)) — a click-to-run tool (window, drag-and-drop, or a standalone `.exe`) that lists the typed resources inside any GRB `.data` (name, **type**, ClassID, size), Oodle-decompressing via the game's DLL. **No coding needed.** See [`tools/README.md`](tools/README.md).
+- **🗂️ Forge Inspector** ([`tools/`](tools/README.md)) — a click-to-run tool (window, drag-and-drop, or a standalone `.exe`) that reads a whole `.forge` by its index (fast, no unpacking) to show its resource-type histogram, or **diff two forges by real file ID** to find mod conflicts/overrides. **No coding needed.** See [`tools/README.md`](tools/README.md).
 
 ## Community
 

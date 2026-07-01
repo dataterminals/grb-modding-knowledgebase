@@ -146,3 +146,42 @@ window, or pass `--oodle` on the command line. The DLL is **not** bundled with t
 
 Background: [`../reference/resource-type-ids.md`](../reference/resource-type-ids.md),
 [`../docs/02-forge-file-format.md`](../docs/02-forge-file-format.md).
+
+---
+
+## 🗂️ GRB Forge Inspector — what's in a `.forge`, and do two mods conflict?
+
+Reads a whole `.forge` by its **index only** (no unpacking, no Oodle), so even the
+23 GB resources forge opens in a moment. Two jobs:
+
+- **Inspect one forge** → version, entry count, and a **resource-type histogram**
+  (how many Meshes / TextureMaps / BuildTables / Animations / … it holds), keyed on
+  the **real 64-bit file IDs**.
+- **Compare two forges** → a **diff by file ID**. Shared IDs mean: **overrides** (if
+  one is a patch of the other) or **conflicts** (if they're two mods — only one can
+  win). This is the mod-conflict / merge checker.
+
+### How to use it (three ways, easiest first)
+1. **Window (recommended):** double-click **`Forge Inspector (GUI).bat`** (or
+   `ForgeInspector.exe`) → “Open a forge…”, “Compare two forges…”, or “Save entries
+   as CSV…”.
+2. **Drag-and-drop:** drop one `.forge` (summary) or two `.forge` files (diff) onto
+   **`Forge Inspector (drag files here).bat`**.
+3. **Command line:**
+   ```
+   python forge_inspect.py  DataPC_patch_01.forge
+   python forge_inspect.py  DataPC_patch_01.forge  DataPC.forge      # diff by ID
+   python forge_inspect.py  DataPC_Resources.forge --csv out.csv     # dump every entry
+   ```
+
+### Get / build the `.exe`
+- **Download** `ForgeInspector.exe` from
+  [Releases](https://github.com/dataterminals/grb-modding-knowledgebase/releases)
+  or the **Actions** tab
+  ([`build-forge-inspector.yml`](../.github/workflows/build-forge-inspector.yml)) →
+  `ForgeInspector-exe` artifact.
+- **Build:** `pip install pyinstaller` then, in `tools/`,
+  `pyinstaller --onefile --windowed --name ForgeInspector forge_inspect_gui.py`.
+
+Background: [`../docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md),
+[`../reference/resource-type-ids.md`](../reference/resource-type-ids.md).
