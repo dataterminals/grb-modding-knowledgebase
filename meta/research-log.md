@@ -362,6 +362,28 @@ Docs updated (doc-11 "Net" note now says the wrap is stored + located; open-ques
 
 ---
 
+## Entry — 2026-07-01 — Wrap record structure cracked (20-byte format); weight encoding hits a correspondence wall
+
+### What I did
+Pushed to fully decode the stored render↔sim wrap for an encoder. Pinned the record layout by histogramming the gaps between "local sim-triple" positions in the LOD0 visual block, then tried to crack the weight encoding by reconstructing render positions and regressing stored fields against true barycentric.
+
+### VERIFIED (new)
+- **Wrap record = 20 bytes, fixed stride.** Gap histogram between local sim-index triples is dominated by **20** (1144×) → fixed 20-byte records. Layout: **`[u16 flag][6× u16][3× u16 sim vertex index]`** (indices in the last 6 bytes, verified by a consistent phase). The 3 sim indices per record are valid (`< V`) local triangles.
+- **The binding reconstructs to render vertices.** Using the 3 sim indices + any reasonable weights, `Σ wₖ·simP[idxₖ]` lands **≈0.013 from a render vertex** (= the sim↔render frame offset) for essentially all clean records. Confirms render vert → 3 sim verts is the real mechanism.
+- **~75% of render verts are cloth-bound.** At the correct 20-byte phase, **1361 / 1816** records carry valid sim indices; the rest are likely null/rigid (skeleton-only) verts — physically sensible for a coat (upper rigid, lower swinging).
+
+### WALL (offline analysis can't finish this alone)
+- The **6 middle u16 don't decode as plain barycentric weights**: `stored/65535` sums to ~1.2–1.5 (too big for an in-plane barycentric), and regressing all 6 stored fields against the nearest-render-vert barycentric gives **~0 correlation** (|r|<0.18). Two non-exclusive reasons: (a) the encoding isn't a simple normalized-u16 barycentric (maybe weights+normal-offset, a different scale, or skin-style weights renormalized at runtime); (b) the exact **record ↔ render-vertex correspondence is unknown** — records carry no render index, so they must be in the cloth's own render-vertex order, which differs from the render `Mesh` buffer order, and the sim triangles are too small (~6 render verts each) to disambiguate geometrically. Can't crack the weights without the correspondence, can't pin the correspondence without the weights.
+
+### Paths to finish (next)
+1. Decode the **render-vertex-order remap** buffer — elsewhere in the same block there's an ascending-render-index + `0xFFFF`-delimited structure (seen ~offset 48814) that likely maps cloth render-order ↔ mesh order (or groups render verts per sim vert). Cracking it gives the correspondence, which unlocks the weight regression.
+2. Or an **in-game round-trip**: write records with straightforward computed barycentric weights (nearest sim triangle) and see whether the cloth drapes correctly — the fastest way to validate the encoding empirically (Sylvia's in-game testing).
+
+### Deliverables / state
+Record structure documented (doc-11). Scratchpad probes (`crack_weights.py` and the gap/regression scripts) session-temporary. No encoder yet — correctly, pending the weight encoding. `tools/motioncloth.py` unaffected (wrap is outside the ClothPackage).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
