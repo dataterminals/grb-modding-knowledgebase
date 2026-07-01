@@ -7,7 +7,7 @@ If a `.forge` is the archive, a **`.data`** entry is one item inside it — and 
 When ATK unpacks a forge, each entry is written to disk as:
 
 ```
-<decimalFileID>_-_<ResolvedName>.data
+<leadingNumber>_-_<ResolvedName>.data
 ```
 
 Real examples from unpacked GRB forges:
@@ -19,7 +19,8 @@ Real examples from unpacked GRB forges:
 107094_-_FTP_Head_Angel_DiffuseMap_PC_Mip0.data
 ```
 
-- The leading number is the **64-bit file ID** in decimal (`0`, `1003`, `30091`, …). This is the stable handle the game uses.
+- The leading number is a **positional index, not the file ID** — a common point of confusion. On a forge unpack ATK writes `SetIndex*5000 + i` (entries are split into FileSets of ≤5000; verified in `FileSet.cs`); for typed resources inside a `.data` it writes a sequential counter `k`; in hand-assembled mod folders it's whatever label the modder chose (often `77777` — see [`08-naming-conventions.md`](08-naming-conventions.md)). It is used only for **sort ordering** on repack.
+- The **real 64-bit file ID lives *inside* each resource** (its `ClassID`, right after the file header — see below). ATK reads it from the bytes at repack (`DataFile.CreateForgeEntry` → `ReadClassID`), and it's what the forge index (`ForgeEntry.ID`) and BuildTable references actually use. **Verified:** the entry unpacked as `3476_-_TP_Tacvest_Walker_Coat_LOD1.data` has embedded ClassID `1707208440119`, not `3476`.
 - The name after `_-_` is **resolved from ATK's hash dictionary**. Known hashes get human names; unknown ones fall back to the numeric ID. ATK has accumulated tens of thousands of GRB/Anvil hashes over its releases.
 
 ## Nesting: a `.data` holds typed resources
@@ -27,7 +28,7 @@ Real examples from unpacked GRB forges:
 Unpack a `.data` and you get the actual engine resources, each with a **type-specific extension**. A concrete observed example:
 
 ```
-23_-_TEAMMATE_Template.data/          ← a .data container (file ID 23)
+23_-_TEAMMATE_Template.data/          ← a .data container (entry #23; real ID is embedded)
     └── 295_-_Head_Hisp_Kunal.BuildTable   ← a typed resource inside it
 ```
 
@@ -84,8 +85,8 @@ Notice the recurring 8-byte pattern `50 51 30 A6 9A 01 00 00` — these are **64
 Throughout GRB data, **the file ID — not the name — is the identity.** Names are a convenience layer ATK adds for humans. Consequences worth internalizing:
 
 - Two resources can resolve to the same human name but have different IDs (e.g. `LOD0`/`LOD1`/`LOD2`/`LOD3` variants of one mesh).
-- A **replacement** mod keeps an existing ID and swaps the bytes. A **new-content** mod introduces new IDs (and often uses placeholder IDs like `77777` during authoring — see [`08-naming-conventions.md`](08-naming-conventions.md)).
-- Patch override at load time is keyed on the ID. Get the ID wrong and the game simply won't pick up your asset.
+- A **replacement** mod keeps an existing ID (the embedded `ClassID`) and swaps the bytes. A **new-content** mod introduces new IDs. Authoring often uses the *filename label* `77777` for new resources — but that's a label, not the ID; the real ID is embedded in the file (see [`08-naming-conventions.md`](08-naming-conventions.md)).
+- Patch override at load time is keyed on the ID (the embedded `ClassID`, mirrored in the forge index). Get the ID wrong and the game simply won't pick up your asset.
 
 ## Practical notes
 

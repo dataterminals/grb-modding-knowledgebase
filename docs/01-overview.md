@@ -41,11 +41,11 @@ This concentration is *why* this knowledgebase exists: the expertise is real but
                  ▼
    ┌─────────────────────────────────────┐
    │  .forge archive  (magic: "scimitar") │
-   │   ├─ .data entry  (file ID 30091)    │
+   │   ├─ .data entry (ID 1707208440119)  │
    │   │    └─ typed resource: Mesh       │
-   │   ├─ .data entry  (file ID 77777)    │
+   │   ├─ .data entry (ID 1439949634142)  │
    │   │    └─ typed resource: TextureMap │
-   │   └─ … index maps fileID → entry     │
+   │   └─ … index maps 64-bit ID → entry  │
    └─────────────────────────────────────┘
                  │  repack via ATK
                  ▼

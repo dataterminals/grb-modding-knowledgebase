@@ -8,7 +8,8 @@ Short definitions of the terms used throughout this knowledgebase. Cross-referen
 | **Scimitar** | The engine's internal codename; the literal magic string `scimitar` at the start of every **forge**. |
 | **`.forge`** | Top-level Anvil archive file. A virtual filesystem mapping 64-bit **file IDs** to compressed **data** entries. See [`docs/02-forge-file-format.md`](../docs/02-forge-file-format.md). |
 | **`.data`** | One entry inside a forge — itself a container holding one or more **typed resources**. Unpacked as `<ID>_-_<Name>.data`. |
-| **File ID** | A stable 64-bit handle identifying a resource. The *real* identity (names are an ATK convenience). Override/reference is keyed on ID. |
+| **File ID** | A stable 64-bit handle identifying a resource — its embedded `ClassID`, mirrored in the forge index (`ForgeEntry.ID`). The *real* identity; override/reference is keyed on it. **Not** the number shown in an unpacked filename (that's a positional index / sort label — see **Leading number**). |
+| **Leading number** | The `<N>` in an unpacked `<N>_-_<name>.ext`. A **positional index** (`SetIndex*5000+i` for forge entries; a counter inside a `.data`) or a modder label — used only for sort order, **not** the file ID. |
 | **Typed resource** | The actual engine asset inside a `.data`: **Mesh**, **TextureMap**, **Material**, **BuildTable**, **Skeleton**, etc. |
 | **ATK** / **Anvil Toolkit** | The community .NET/WPF tool that reads/writes forges and resources. The reference implementation of the format. See [`docs/04-anvil-toolkit.md`](../docs/04-anvil-toolkit.md). |
 | **Game Explorer** | ATK's file-explorer-style view of a forge as a navigable folder tree. |
@@ -29,7 +30,7 @@ Short definitions of the terms used throughout this knowledgebase. Cross-referen
 | **`WI_` / `WG_`** | Inferred prefixes: **W**eapon **I**tem (inventory) / **W**eapon **G**ameplay definitions. |
 | **`TP_` / `FTP_`** | Inferred prefixes: **T**hird-**P**erson model / Face-or-Female Third-Person (on heads). |
 | **`HDG`** | Inferred: **H**an**d**gun weapon class (e.g. the P12 pistol). |
-| **`77777`** | Modder placeholder **file ID** used for new (non-replacement) resources during authoring. See [`docs/08-naming-conventions.md`](../docs/08-naming-conventions.md). |
+| **`77777`** | A modder **filename label** (not a file ID) put on new, non-replacement resources during authoring; the real IDs are the files' distinct embedded ClassIDs. See [`docs/08-naming-conventions.md`](../docs/08-naming-conventions.md). |
 | **Oodle** | The primary compression codec for GRB forge resources (`oo2core_7_win64.dll`). |
 | **Swizzle / Unswizzle** | Console GPU texture byte reordering. Off for PC GRB (`UnswizzleTextures = False`). |
 | **GlobalMetaFile** | Forge-wide metadata sidecar (`.MetaFile`). |

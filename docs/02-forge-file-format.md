@@ -85,7 +85,7 @@ Across the Anvil forge family, the format is consistently shaped like this:
 
 The **file ID** is the key concept. It is a stable 64-bit handle for a resource. The game and other resources reference assets *by ID*, not by filename. This is what makes the patch-override mechanism work: a patch forge that contains an entry with the *same ID* as a base entry will, at load time, take precedence (see [`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)).
 
-> ATK exposes these IDs directly. When it unpacks a forge, each entry is written out as `<decimalFileID>_-_<ResolvedName>.data`. The decimal number is the file ID; the name is resolved from a hash dictionary ATK ships (it has added "around 35000 new hashes" and more across versions — many names are known, some remain numeric).
+> ATK exposes these IDs in the forge index, but **the number in an unpacked filename `<N>_-_<Name>.data` is a positional index, not the file ID** — `FileSet.cs` writes `SetIndex*5000 + i`. The real 64-bit file ID (`ForgeEntry.ID`) equals the resource's **embedded `ClassID`** and is what references resolve against; see [`03-data-and-resources.md`](03-data-and-resources.md). The name is resolved from a hash dictionary ATK ships (it has added "around 35000 new hashes" and more across versions — many names are known, some remain numeric).
 
 ## Compression
 
