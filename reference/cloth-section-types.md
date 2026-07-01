@@ -100,8 +100,8 @@ The render (visual) mesh = the sim vertices (driven directly) **+ `A` "additiona
 | 4561 | `ClothAdditionalVerticesCounters` | `{int32 AdditionalVerticesBufferSize N, int32 AdditionalVerticesSIMDSize M}`; `N` = sim triangle count, `M` = `A` padded to ×8; sizes 4562/4563/4565 |
 | 4562 | `ClothAdditionalVerticesTriangleVerticesCount` | `byte[N]`, **per sim triangle**: # additional verts on it (`sum = A`) |
 | 4563 | `ClothAdditionalVerticesTriangleFirstVertexIndex` | `ushort[N]`, **per sim triangle**: first additional-vertex index (CSR offset into the `A`-list); `4563[last]+4562[last]=A` |
-| 4564 | `ClothAdditionalVerticesBarycentricCoordinatesParameters` | `SIMDF8` = `{Scale, Offset, Magic}` dequant params for 4565 (`Magic ≈ Scale·255`) |
-| 4565 | `ClothAdditionalVerticesBarycentricCoordinatesData` | `ushort[M]`, one per additional vert (tail padded `0xFFFF`); decode = split into hi/lo bytes, `coord = byte·Scale + Offset` → the two smaller barycentric weights, third = `1−u−v` |
+| 4564 | `ClothAdditionalVerticesBarycentricCoordinatesParameters` | `SIMDF8` = `{Scale, Offset, Magic}`; `Scale` = per-LOD normalization (`maxStoredWeight/255`), `Magic = Scale·255` (Walker LOD0 0.524, LOD1 0.751 — not a fixed ½) |
+| 4565 | `ClothAdditionalVerticesBarycentricCoordinatesData` | `ushort[M]`, one per additional vert (tail padded `0xFFFF`); decode = split hi/lo bytes, `weight = byte·Scale + Offset` → two of the triangle's barycentric weights (fixed vertex slots, index-buffer order), third = `1−u−v`. Verified: stored ≤ Magic, reconstructed positions inside sim bbox. Open: the exact slot permutation (render mesh / in-game). |
 
 > **Render↔sim binding (barycentric scheme):** present only in some cloths (e.g. `TP_WalkerCoat_Cloth`); many GRB cloths omit 4561–4565 and the render mesh *is* the sim mesh (direct). Triangle `t`'s 3 sim verts are `ClothMeshIndexBuffer(4371)[3t..3t+2]`. Recomputing these for a new render mesh is the render↔sim remap — see [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md).
 
