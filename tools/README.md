@@ -104,20 +104,45 @@ and the two `.bat` launchers. All read-only, all documented.
 
 ---
 
-## 🔎 `data_inspect.py` — what's inside any `.data`?
+## 🔎 GRB Data Inspector — what's inside any `.data`?
 
-A companion command-line tool that opens **any** GRB `.data` container and lists the
-typed resources inside it — each resource's **name**, **type** (Mesh, TextureMap,
-BuildTable, Cloth, …), 64-bit **ClassID**, and size.
+Opens **any** GRB `.data` container and lists the typed resources inside it — each
+resource's **name**, **type** (Mesh, TextureMap, BuildTable, Cloth, …), 64-bit
+**ClassID**, and size. Like the Cloth Inspector, **you don't need to know any coding.**
 
+### How to use it (three ways, easiest first)
+
+**1. The window (recommended).** Double-click **`Data Inspector (GUI).bat`** (or
+`DataInspector.exe`). Click **“Open .data file(s)…”**, pick one or more `.data`, and
+read the report. **“Save report…”** writes it to a file you can paste into Discord.
+
+**2. Drag-and-drop.** Drag one or more `.data` files onto
+**`Data Inspector (drag files here).bat`**.
+
+**3. Command line.**
 ```
 python data_inspect.py  30091_-_WI_HDG_P12_Main.data
 python data_inspect.py  *.data                       # several at once
 python data_inspect.py  foo.data --oodle "D:\...\Ghost Recon Breakpoint\oo2core_7_win64.dll"
 ```
 
-GRB `.data` payloads are Oodle-compressed (Mermaid, 32 KB blocks). The tool loads the
-game's `oo2core_7_win64.dll` to decompress — it **auto-searches** up from the file's
-path and common spots, or pass `--oodle`. It's **read-only**. Background:
-[`../reference/resource-type-ids.md`](../reference/resource-type-ids.md),
+### Oodle note (important)
+GRB `.data` payloads are Oodle-compressed (Mermaid, 32 KB blocks), so the tool needs
+the game's **`oo2core_7_win64.dll`** to read them. It **auto-finds** the DLL by
+searching up from the file you open (the DLL lives in your GRB folder, and `.data`
+files sit under it in `Extracted\`). If it can't, use **“Set Oodle DLL…”** in the
+window, or pass `--oodle` on the command line. The DLL is **not** bundled with the
+`.exe` (it's Ubisoft's). The tool is **read-only**.
+
+### Get / build the `.exe`
+- **Download:** grab **`DataInspector.exe`** from
+  [Releases](https://github.com/dataterminals/grb-modding-knowledgebase/releases)
+  (if a build has been published), or from the **Actions** tab
+  ([`build-data-inspector.yml`](../.github/workflows/build-data-inspector.yml)) →
+  the `DataInspector-exe` artifact.
+- **Build it yourself:** `pip install pyinstaller` then, in `tools/`,
+  `pyinstaller --onefile --windowed --name DataInspector data_inspect_gui.py`
+  → `dist/DataInspector.exe`.
+
+Background: [`../reference/resource-type-ids.md`](../reference/resource-type-ids.md),
 [`../docs/02-forge-file-format.md`](../docs/02-forge-file-format.md).
