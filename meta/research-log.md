@@ -548,6 +548,16 @@ A full day of in-game testing produced two definitive results and two retraction
 
 ---
 
+## Entry — 2026-07-02 (end) — CORRECTION: the gravity we edited was section 4357's copy; a dedicated `ClothPropertiesGravity` (4398) was never touched
+
+Caught at session's end, before starting fresh next time. Gravity exists in **two** places per cloth: the `ClothProperties` (**4357**) struct field we edited all day (offset 2, `Vector3`), **AND a dedicated `ClothPropertiesGravity` section, type 4398** — a 12-byte `Vector3` carrying the *same* value — which **we never edited.** Verified both present with identical values in `Cloth_HunterCoat`, `Cloth_FTP_Kilt`, `Cloth_ArcturusWarrior_Ghillie_JacketBody2` (all default `(0,0,-10)` / `(0,0,-15)`).
+
+⇒ **The "GRB ignores cloth gravity" headline (the DEFINITIVE entry above) is DOWNGRADED.** Confirmed: 4357's gravity field is inert. **Untested:** section **4398**, which is the *likely* runtime field. The kilt null is fully consistent with "we edited the wrong copy," not "gravity is ignored." Same pattern almost certainly applies to the other params — dedicated sibling sections (**4397** Wind, **4360** `ClothPropertiesConstraintsStiffness`, …) probably hold the live values, not the 4357 struct fields (see [`reference/cloth-section-types.md`](../reference/cloth-section-types.md)). **This likely explains ALL the day's nulls: every gravity edit hit 4357.**
+
+**Next session, step 1 (see [`meta/next-session.md`](next-session.md)):** reverse/zero gravity in **section 4398** (12-byte Vector3, floats @ 0/4/8) on the Tactical Kilt, leave 4357 alone, run the proven pipeline. If the hem moves → gravity is a live lever after all and the "ignored" conclusion is retracted.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
