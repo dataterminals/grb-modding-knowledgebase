@@ -20,16 +20,30 @@ The 3 sim indices (last 6 bytes) are what we edit for the diagnostic - those byt
 positions are certain. The weight encoding is not yet fully decoded (that's what
 the in-game test helps settle), so this tool does NOT yet rebind a new mesh.
 
-Input/output: a decompressed *.Cloth resource (what ATK writes when you unpack a
-cloth's .data), or a cloth .data (auto-Oodle via the game DLL). Diagnostic edits
-are same-size and in-place, so everything outside the sim-index bytes is preserved
-byte-for-byte.
+Input/output: a cloth **.data** (the entry ATK writes when you unpack a forge; pass
+`--oodle <oo2core_7_win64.dll>`) or a decompressed **.Cloth**. When the input is a
+.data, the output is a drop-in .data (rebuilt with raw/uncompressed blocks, which
+ATK reads fine) — put it back in your unpacked forge folder under the SAME filename
+and repack the forge in ATK. All edits are same-size, so everything else is
+byte-identical.
+
+  --diagnostic twist|collapse   mis-point the wrap (twist = shift cage indices;
+                                collapse = all -> cage vertex 0). Tests whether the
+                                wrap actually drives the visible mesh.
+  --gravity X,Y,Z               set ClothProperties gravity (default is ~0,0,-15).
+                                Use as a CONTROL: on a simulated cloth this MUST
+                                visibly change the drape/billow. If it doesn't, you
+                                edited the wrong file/LOD — so a null wrap test is
+                                meaningless until the gravity control visibly works.
+
+*** IN-GAME STATUS (2026-07-01): the wrap-as-render-driver hypothesis is NOT yet
+    validated in-game — ghillie tests were inconclusive (only a subset of ghillie
+    cloths were edited). Always run the --gravity control first. See docs/11. ***
 
 Usage:
-  python clothwrap.py cloth.Cloth                         # inspect the wrap
-  python clothwrap.py cloth.Cloth --diagnostic twist   --out broken.Cloth
-  python clothwrap.py cloth.Cloth --diagnostic collapse --out broken.Cloth
-  python clothwrap.py cloth.data  --oodle oo2core_7_win64.dll --diagnostic twist --out broken.Cloth
+  python clothwrap.py cloth.data --oodle oo2core_7_win64.dll                    # inspect
+  python clothwrap.py cloth.data --oodle oo2core_7_win64.dll --gravity 120,0,150 --out g.data
+  python clothwrap.py cloth.data --oodle oo2core_7_win64.dll --diagnostic collapse --out c.data
 """
 import sys, os, struct
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -145,6 +159,106 @@ def diagnostic(payload, mode):
     return bytes(buf)
 
 
+def set_gravity(payload, gx, gy, gz):
+    """Return a modified payload with every ClothProperties (section 4357) gravity
+    set to (gx,gy,gz). A control edit: on a working (simulated) cloth this MUST
+    change how the garment hangs/billows in-game, which proves the edit reaches
+    the live sim before you trust a null wrap-test. Same size."""
+    buf = payload; n = 0
+    for pkg in mc.locate_clothpackages(buf):
+        changed = False
+        for body in pkg.bodies:
+            for s in body.sections:
+                if s.type == 4357 and len(s.payload) >= 14:
+                    pl = bytearray(s.payload)
+                    struct.pack_into("<3f", pl, 2, gx, gy, gz)  # Gravity is a Vector3 @ offset 2
+                    s.payload = bytes(pl); changed = True; n += 1
+        if changed:
+            nb = pkg.to_bytes()
+            assert len(nb) == pkg.end - pkg.start, "gravity edit changed length"
+            buf = buf[:pkg.start] + nb + buf[pkg.end:]
+    print(f"  gravity set to ({gx},{gy},{gz}) in {n} ClothProperties section(s)")
+    return buf
+
+
+# ---- write the modified resource back into a .data container ATK/GRB can read ----
+# Uses RAW (uncompressed) blocks: ATK's DataBlock.Read handles num==num2 and ignores
+# the per-block checksum, so no Oodle compression is needed. See docs/02.
+
+_DATA_MAGIC = 1154322941026740787
+_BLK = 32768
+
+
+def _split_cfds(raw, oodle):
+    """Return (cfd1_bytes_verbatim, files_content) from a compressed cloth .data."""
+    import ctypes
+    oo = ctypes.WinDLL(oodle); dec = oo.OodleLZ_Decompress; dec.restype = ctypes.c_longlong
+    dec.argtypes = [ctypes.c_char_p, ctypes.c_longlong, ctypes.c_char_p, ctypes.c_longlong,
+                    ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_longlong,
+                    ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_longlong, ctypes.c_int]
+    off = [0]
+    def rd(fmt):
+        v = struct.unpack_from("<" + fmt, raw, off[0]); off[0] += struct.calcsize("<" + fmt); return v
+    def read_cfd():
+        start = off[0]
+        rd("Q"); rd("h"); rd("B"); rd("H"); rd("H"); nb = rd("i")[0]
+        infos = [(rd("i")[0], rd("i")[0]) for _ in range(nb)]
+        out = bytearray()
+        for un, cn in infos:
+            rd("I"); blk = raw[off[0]:off[0] + cn]; off[0] += cn
+            if un == cn:
+                out += blk
+            else:
+                dst = ctypes.create_string_buffer(un)
+                dec(blk, cn, dst, un, 1, 0, 0, None, 0, None, None, None, 0, 3)
+                out += dst.raw[:un]
+        return start, off[0], bytes(out)
+    s1, e1, _meta = read_cfd()
+    s2, e2, files = read_cfd()
+    return raw[s1:e1], files
+
+
+def _build_raw_cfd(files_content):
+    import zlib
+    hdr = bytearray()
+    hdr += struct.pack("<Q", _DATA_MAGIC)
+    hdr += struct.pack("<hBHH", 3, 3, 0, _BLK)   # CompressionInfo: ver=3, algo=3
+    chunks = [files_content[i:i + _BLK] for i in range(0, len(files_content), _BLK)] or [b""]
+    hdr += struct.pack("<i", len(chunks))
+    for c in chunks:
+        hdr += struct.pack("<ii", len(c), len(c))   # uncomp==comp -> stored raw
+    body = bytearray()
+    for c in chunks:
+        body += struct.pack("<I", zlib.adler32(c) & 0xffffffff)
+        body += c
+    return bytes(hdr) + bytes(body)
+
+
+def write_data(orig_data_path, new_resource, out_path, oodle):
+    """Rebuild `orig_data_path` (a compressed cloth .data) with `new_resource`
+    (same-length modified resource bytes) and write to out_path. Verifies it reads
+    back. Drop the result into your unpacked forge folder (same filename) and
+    repack the forge in ATK."""
+    raw = open(orig_data_path, "rb").read()
+    cfd1, files = _split_cfds(raw, oodle)
+    p = 0
+    struct.unpack_from("<I", files, p); p += 4
+    L = struct.unpack_from("<i", files, p)[0]; p += 4
+    sl = struct.unpack_from("<i", files, p)[0]; p += 4; p += sl
+    if len(new_resource) != L:
+        raise SystemExit(f"resource length changed ({len(new_resource)} != {L}); edits must be same-size")
+    new_files = files[:p] + new_resource + files[p + L:]
+    open(out_path, "wb").write(cfd1 + _build_raw_cfd(new_files))
+    if mc.load_resource_payload(out_path, oodle) != new_resource:
+        raise SystemExit("round-trip check FAILED - not writing a bad .data")
+    return out_path
+
+
+def _is_data(path):
+    raw = open(path, "rb").read(8)
+    return len(raw) >= 8 and struct.unpack("<Q", raw)[0] == _DATA_MAGIC
+
+
 def main(argv):
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -159,21 +273,40 @@ def main(argv):
     mode = None
     if "--diagnostic" in argv:
         k = argv.index("--diagnostic"); mode = argv[k + 1]; del argv[k:k + 2]
+    grav = None
+    if "--gravity" in argv:
+        k = argv.index("--gravity"); grav = tuple(float(x) for x in argv[k + 1].split(",")); del argv[k:k + 2]
     args = argv[1:]
     if not args:
         print(__doc__); return
-    payload = mc.load_resource_payload(args[0], oodle)
+    src = args[0]
+    payload = mc.load_resource_payload(src, oodle)
+
+    if not mode and grav is None:
+        print(inspect(payload)); return
+
+    # apply the requested edit(s)
+    tag = "edit"
+    newp = payload
+    if grav is not None:
+        newp = set_gravity(newp, *grav); tag = "grav"
     if mode:
-        newp = diagnostic(payload, mode)
-        if not out:
-            out = os.path.splitext(args[0])[0] + f".{mode}.Cloth"
-        open(out, "wb").write(newp)
-        print(f"  wrote {out}")
-        print("  Re-import this with ATK (repack into a PATCH forge on a backed-up")
-        print("  install), load GRB, and view the garment. Visible distortion")
-        print("  confirms the wrap drives the visible mesh.")
+        newp = diagnostic(newp, mode); tag = mode
+
+    # write out - a .data if the source was a .data (drop-in for forge repack), else a .Cloth
+    is_data = _is_data(src)
+    if not out:
+        base = os.path.splitext(src)[0]
+        out = f"{base}.{tag}.data" if is_data else f"{base}.{tag}.Cloth"
+    if is_data:
+        write_data(src, newp, out, oodle)
     else:
-        print(inspect(payload))
+        open(out, "wb").write(newp)
+    print(f"  wrote {out}")
+    print("  -> put this in your unpacked forge folder (same filename as the original")
+    print("     entry), repack the forge in ATK on a BACKED-UP install, and load GRB.")
+    print("     TIP: use --gravity 120,0,150 as a CONTROL first (a working cloth must")
+    print("     visibly billow); only then does a null wrap --diagnostic mean anything.")
 
 
 if __name__ == "__main__":
