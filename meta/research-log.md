@@ -491,6 +491,63 @@ Third correction in this thread. Compounding lesson: a null in-game result can m
 
 ---
 
+## Entry — 2026-07-02 — In-game cloth-gravity tests; forge *append*-edits are NOT launch-safe (ATK repack required); real-mod corpus survey begun
+
+### Environment
+- Same researcher workstation as 2026-06-30 (H:\ Steam install, user `sylvi`, GitHub `dataterminals`). Disk was critically low (~4.5 GB free); freed to ~14 GB before forge work. Repo pulled up-to-date (was 21 commits behind — the cloth-wrap research had advanced on another machine).
+
+### What we did
+- Resumed the project and ran the **first substantial in-game cloth tests**, driving edits through a custom *append-repoint* forge writer (scratchpad `forge_stage.py`) + `clothwrap.py` gravity edits — then, on the tester's advice, **pivoted to the standard ATK repack workflow**.
+
+### VERIFIED (new)
+- **Cloth resources live only in `DataPC.forge`.** All **56** `Cloth`-typed entries are there; the sole patch-forge copy is `TP_Top_Bodark_Trench_Cloth` (overridden in **both** `DataPC_patch_01.forge` and `DataPC_TGT_WorldMap_Bootstrap_Split_patch_01.forge`). So a cloth edit targets `DataPC.forge` — the exception to the usual "cosmetic mods don't touch DataPC" rule (meshes/textures live in Resources; DataPC holds BuildTables + logic + cloth).
+- **`ClothProperties` gravity (section 4357) is freely editable and round-trips**; negating/scaling the vector reads back live through Oodle decompression. (Editable ≠ visibly effective — the render effect is the open question below.)
+- **⚠️ KEY FINDING — *append-repoint* forge editing is NOT launch-safe for GRB.** *(⚠️ **RETRACTED same day** — see the later 2026-07-02 entry: the real cause was **RAW vs Oodle-compressed `.data` blocks**, not the packing method; a clean ATK repack fails identically when fed raw-block cloths.)* A writer that appends modified entries to the end of a `.forge` and re-points the index yields a forge that *parses* correctly (Forge Inspector reads it; the game even booted one such edit once) but the game then **repeatedly fails to launch — dying at the pre-app, borderless-logo splash, before the engine window opens.** That pre-engine timing implicates a **startup data-integrity/structure check** that a clean rebuild passes and an append+dead-space+raw-block forge fails (seemingly intermittently). **A proper ATK repack of the unpacked forge folder is the correct, launch-safe way to edit GRB forges** (the community's standard method). ⇒ do NOT ship a naive forge-*writer* tool; document ATK repack as required. (Caveat: the tester reports GRB/Ubisoft-Connect launches are semi-flaky *independent* of edits — retry the splash a couple times before concluding.)
+- **The Golem Cape ("Golem Cape | Field Medic", a vest-slot skin) is genuinely cloth-simulated** — video-confirmed: the long coat flares/swings/lags with movement in gameplay and hangs straight down at rest. It's an **equippable, close-up-viewable, truly-simulated** control subject — exactly what every prior in-game cloth test lacked (ghillies were skinned/inconclusive).
+- **Mid-write hazard confirmed:** editing forge files while the game is launching/running corrupts what it reads (crash). Always edit with the game fully closed (added a `GRB.exe`-running guard to the staging scripts).
+
+### Method note — the effective gravity value
+- First tests used `(120,0,150)` — gravity **reversed and ~12× over-cranked** (magnitude ~192 vs default 10–15). We initially blamed this for a crash ("sim blow-up"), but the crash is at the *pre-engine* splash, so that theory is **wrong** (cloth isn't loaded yet). Switched to **per-cloth vector negation** (same magnitude, reversed direction) as the stable, clean control value regardless.
+
+### OPEN / in progress
+- **THE control test (in progress):** does editing a cloth's gravity visibly move a genuinely-simulated garment? Reversed-gravity now delivered the right way — edited the 56 cloth `.data` files **in the tester's `Extracted\DataPC.forge\` working folder** (originals backed up), for a normal **ATK repack**. Awaiting the in-game result on the Golem Cape (menu-standing pose is the clearest tell: hem hangs **down** vs. lifts **up**). Outcome decides whether cloth edits reach the render at all, and retroactively makes the ghillie null meaningful or not.
+- Ghillie gravity flip showed **no visible change** — but ghillies appear skinned/pinned (invalid subject); inconclusive pending the coat/cape control.
+
+### Deliverables / state
+- Scratchpad only (NOT for the repo as-is): `forge_stage.py` append-repoint writer **(launch-unsafe — see above)**, `prep_*`/`stage_*` batch cloth-gravity pipelines, an ffmpeg-based video→contact-sheet frame extractor for reviewing in-game clips. The **working** delivery path = reverse gravity on the cloth `.data` in the Extracted working dir → ATK repack (the tool's designed path; raw/uncompressed `.data` blocks are ATK- and game-readable).
+
+### Side thread (started) — real-mod corpus
+- Began surveying the tester's **207-mod** corpus (`Downloads` + `Extracted\GRBMods`) to write a **"GRB mod anatomy"** reference note (working-folder → forge-family mapping, BuildTable+resources split, the `23_-_TEAMMATE_Template` item-def container, install-by-ATK-repack). Confirmed on two samples: `CFLIONNESS_JPCVest` = BuildTable (DataPC) + mesh/UI (`DataPC_Resources_patch_01`); `APC9 RepScorpionCQC` = `dbcontainer/ extra/ resources/` split. Cataloging workflow running; note to be added under `reference/` when it lands.
+
+---
+
+## Entry — 2026-07-02 (later) — DEFINITIVE: GRB cloth runtime IGNORES `ClothProperties.Gravity`; the real load-blocker was RAW vs Oodle-compressed `.data` (append-repoint theory RETRACTED)
+
+A full day of in-game testing produced two definitive results and two retractions.
+
+### Headline
+1. **The load-blocker was the `.data` BLOCK FORMAT, not the forge-packing method.** A cloth `.data` written with **RAW/uncompressed** blocks (what `clothwrap.write_data` produces) makes GRB **crash or hang at load**. The *same* edit written as **Oodle-compressed** loads fine. Both a custom append-repoint writer **and** a clean ATK repack fail with raw-block cloths and both succeed with compressed ones — so the packing method was never the cause.
+2. **GRB's cloth runtime completely IGNORES the per-cloth `ClothProperties.Gravity` (section 4357).** Proven on a genuinely *loose* garment (Tactical Kilt, `Cloth_FTP_Kilt`): reversing gravity (direction) → **0 visible change**; setting gravity to **(0,0,0)** (magnitude) → **0 visible change**. The edit was confirmed **live in the repacked forge (Z read back +10, then 0) and NOT patch-shadowed**. So GRB applies a global/scene gravity to cloth; that field is inert authoring metadata at runtime.
+
+### VERIFIED (new)
+- **Game-loadable compressed cloth `.data` spec** (the writer GRB needs): keep the 1st `CompressedFileData` (metadata) verbatim; rebuild the 2nd CFD as `u64 magic 1154322941026740787` + `CompressionInfo{i16 ver=3, u8 algo=3, u16, u16 blk=32768}` + `i32 blockCount` + `blockCount×(i32 uncomp, i32 comp)` + per block `[u32 checksum][comp bytes]`, where **checksum = `adler32(compressed_bytes, seed=0)`** (zlib's default seed is 1 — GRB seeds 0), each 32 KB chunk compressed with **Oodle Mermaid (codec 9)** via the game's `oo2core_7_win64.dll::OodleLZ_Compress`; store a block raw iff comp≥uncomp. Verified: a no-op compressed round-trip decompresses byte-identical through the game DLL, and single/edited compressed cloths **launch**. ⇒ **`tools/clothwrap.py` must be changed to compress — its current raw-block writer produces unloadable cloths.**
+- **Edit pipeline + the community workflow (corrected by Sylvia).** Modders extract a forge to `Extracted\<forge>\` **once**, then edit/add/remove there **incrementally over time and repack from it** — you do NOT re-unpack per edit (ATK skips the unpack if the folder exists, and only re-backs-up the forge on a *fresh* extract, i.e. after you delete the folder). So `Extracted\` is the **persistent source of truth**, not something you regenerate each session. **The pitfall we hit** wasn't "didn't re-extract" — it was a forge whose *live* copy had **DIVERGED** from its Extracted folder: `DataPC.forge`, which this user "doesn't normally touch," so its Extracted was the original first-unpack while the live forge had gained unlock+clothing mods **via another path**. Repacking that stale Extracted silently **reverted those mods** (re-locked items, broke buildtable↔resource links → crash-on-mouseover). **Rule:** before repacking a forge you haven't been maintaining in `Extracted`, **verify `Extracted`==live thoroughly** (all entry sizes + byte-compare the BuildTable/unlock records — a 16-sample check falsely passed the stale folder); if diverged, **re-extract that one forge once** to resync (ATK re-backs-up on the fresh extract), then edit incrementally. Once in sync: edit the cloth `.data` **compressed** in place → **ATK repack** → launch; mods preserved.
+- **Cloth↔garment identification:** every `Cloth` carries an internal **`Sim_<TargetMesh>_LOD<n>`** body name = the authoritative garment map (dumped for all 56). Two garments people assume are cloth are not: the **"Golem Cape / Field Medic" raid vest cape has NO `Cloth`/`SoftBody` resource** (there are **zero** `SoftBody`/`MotionSoftBody` entries in `DataPC.forge`) → skinned/bone secondary-motion; **ghillie strands are pinned** (`VertexMaxDistance`≈0 — move from motion, not gravity). Neither was a fair gravity subject; the Kilt (loose hem) was.
+
+### RETRACTED
+- ❌ Earlier-today's "**append-repoint forge editing is NOT launch-safe; ATK repack is the launch-safe way**" (the ⚠️ KEY FINDING in the earlier 2026-07-02 entry). Both methods behave identically: raw cloth → fails, compressed cloth → loads. The forge structure was never the issue.
+- ◑ "`ClothProperties` (incl. gravity) is tunable for GRB" — as implied by [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md) and [[grb-forge-and-atk-facts]]. True for ATK's *supported* games; **for GRB at runtime, gravity is not read.** (Other fields untested — see open.)
+
+### OPEN / next (the actually-useful levers)
+- Whether **other** `ClothProperties` fields (**stiffness, damping, friction, wind**) or the per-vertex **`VertexMaxDistance`** paint ARE runtime-effective. Gravity being ignored does not imply all cloth params are; these are what a modder would tune to change drape/stiffness, and they're **untested**. Same pipeline; a floppy-vs-stiff kilt is the tell.
+- Fold the compressed-`.data` writer into `tools/clothwrap.py`.
+
+### Deliverables / state
+- Scratchpad: game-format compressed cloth `.data` writer (Oodle compress + `adler32` seed-0), the re-edit/verify pipeline, an ffmpeg video→contact-sheet reviewer. User's forge restored to the pristine modded backup; a **hash-verified tangible backup** at `D:\GRB_KnownGood_ForgeBackup_2026-07-02\`.
+- New KB draft: [`reference/mod-anatomy.md`](../reference/mod-anatomy.md) (18-mod survey; `23_-_TEAMMATE_Template` = player **and** teammate customization, not teammate-only).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
