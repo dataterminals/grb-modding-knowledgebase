@@ -41,8 +41,17 @@ jobs:
           name: DataInspector-exe
           path: tools/dist/DataInspector.exe
 
+      - name: Release title from tag
+        if: startsWith(github.ref, 'refs/tags/')
+        id: rel
+        shell: bash
+        run: echo "title=GRB Data Inspector ${GITHUB_REF_NAME#data-inspector-}" >> "$GITHUB_OUTPUT"
+
       - name: Attach to Release (tagged builds only)
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
+          name: ${{ steps.rel.outputs.title }}
+          body: |
+            **DataInspector.exe** — standalone Windows app: download and double-click. No Python, no compiling, no workflow runs. (Needs the game's `oo2core_7_win64.dll` at runtime — auto-located from the `.data` you open.)
           files: tools/dist/DataInspector.exe

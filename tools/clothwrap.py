@@ -22,8 +22,8 @@ the in-game test helps settle), so this tool does NOT yet rebind a new mesh.
 
 Input/output: a cloth **.data** (the entry ATK writes when you unpack a forge; pass
 `--oodle <oo2core_7_win64.dll>`) or a decompressed **.Cloth**. When the input is a
-.data, the output is a drop-in .data (rebuilt with raw/uncompressed blocks, which
-ATK reads fine) — put it back in your unpacked forge folder under the SAME filename
+.data, the output is a drop-in .data (rebuilt as a proper Oodle-compressed
+.data — raw/uncompressed blocks parse in ATK but crash GRB at load) — put it back in your unpacked forge folder under the SAME filename
 and repack the forge in ATK. All edits are same-size, so everything else is
 byte-identical.
 
@@ -181,9 +181,11 @@ def set_gravity(payload, gx, gy, gz):
     return buf
 
 
-# ---- write the modified resource back into a .data container ATK/GRB can read ----
-# Uses RAW (uncompressed) blocks: ATK's DataBlock.Read handles num==num2 and ignores
-# the per-block checksum, so no Oodle compression is needed. See docs/02.
+# ---- write the modified resource back into a .data container GRB can LOAD ----
+# GRB REQUIRES Oodle-compressed blocks: a raw/uncompressed .data parses in ATK but the
+# game crashes/hangs at load. So we re-compress each 32 KB chunk (Oodle Mermaid) with
+# per-block checksum = adler32(compressed, seed=0). See docs/02 + meta/research-log.md
+# (2026-07-02: "the real load-blocker was RAW vs Oodle-compressed .data").
 
 _DATA_MAGIC = 1154322941026740787
 _BLK = 32768
@@ -218,19 +220,32 @@ def _split_cfds(raw, oodle):
     return raw[s1:e1], files
 
 
-def _build_raw_cfd(files_content):
-    import zlib
-    hdr = bytearray()
-    hdr += struct.pack("<Q", _DATA_MAGIC)
-    hdr += struct.pack("<hBHH", 3, 3, 0, _BLK)   # CompressionInfo: ver=3, algo=3
+def _build_compressed_cfd(files_content, oodle):
+    """Build a CompressedFileData block GRB can LOAD: each 32 KB chunk Oodle-Mermaid-
+    compressed via the game's oo2core DLL, per-block checksum = adler32(compressed,
+    seed=0). (zlib's default adler seed is 1 — GRB seeds 0; that detail matters.)"""
+    import zlib, ctypes
+    oo = ctypes.WinDLL(oodle)
+    comp = oo.OodleLZ_Compress
+    comp.restype = ctypes.c_longlong
+    comp.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_longlong, ctypes.c_char_p,
+                     ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p,
+                     ctypes.c_void_p, ctypes.c_longlong]
+
+    def _c(chunk):
+        dst = ctypes.create_string_buffer(len(chunk) + 1024)
+        n = comp(9, chunk, len(chunk), dst, 4, None, None, None, None, 0)  # 9=Mermaid, 4=Normal
+        return chunk if (n <= 0 or n >= len(chunk)) else dst.raw[:n]        # store raw if no gain
+
     chunks = [files_content[i:i + _BLK] for i in range(0, len(files_content), _BLK)] or [b""]
-    hdr += struct.pack("<i", len(chunks))
-    for c in chunks:
-        hdr += struct.pack("<ii", len(c), len(c))   # uncomp==comp -> stored raw
+    stored = [(len(c), _c(c)) for c in chunks]
+    hdr = struct.pack("<Q", _DATA_MAGIC) + struct.pack("<hBHH", 3, 3, 0, _BLK)  # ver=3, algo=3
+    hdr += struct.pack("<i", len(stored))
+    for un, cc in stored:
+        hdr += struct.pack("<ii", un, len(cc))
     body = bytearray()
-    for c in chunks:
-        body += struct.pack("<I", zlib.adler32(c) & 0xffffffff)
-        body += c
+    for un, cc in stored:
+        body += struct.pack("<I", zlib.adler32(cc, 0) & 0xffffffff) + cc    # adler seed=0
     return bytes(hdr) + bytes(body)
 
 
@@ -248,7 +263,7 @@ def write_data(orig_data_path, new_resource, out_path, oodle):
     if len(new_resource) != L:
         raise SystemExit(f"resource length changed ({len(new_resource)} != {L}); edits must be same-size")
     new_files = files[:p] + new_resource + files[p + L:]
-    open(out_path, "wb").write(cfd1 + _build_raw_cfd(new_files))
+    open(out_path, "wb").write(cfd1 + _build_compressed_cfd(new_files, oodle))
     if mc.load_resource_payload(out_path, oodle) != new_resource:
         raise SystemExit("round-trip check FAILED - not writing a bad .data")
     return out_path
