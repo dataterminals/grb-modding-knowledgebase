@@ -95,6 +95,8 @@ Forge data entries are compressed. The relevant facts:
 - ATK additionally links a stack of codecs (LZMA / fast-lzma2, LZ4, Zstandard/`libzstd`, LZO, 7-zip) — the Anvil family has used different codecs across games and entry types.
 - **GRB-specific behavior:** ATK historically made *GRB data files always serialize uncompressed* (changelog 1.2.7), then later (1.2.9) *"Enabled GRB data file compression… you must enable compression in settings."* The default ATK config now ships with `EnableCompression = True`. This matters when repacking: see [`07-modding-workflow.md`](07-modding-workflow.md).
 
+> **⚠️ Correction (2026-07-02, in-game verified):** for GRB this is **not** a mere preference — a `.data` written with **raw / uncompressed** blocks **crashes or hangs GRB at load** (it parses fine in ATK, but the game rejects it). A game-loadable GRB `.data` must be **Oodle-Mermaid-compressed** (`Version 3, Algorithm 3`, 32 KB blocks, per-block `adler32` seeded **0** — see the container spec below). Both a hand-written forge writer *and* a clean ATK repack fail identically when fed raw-block entries and succeed with compressed ones. So compression is a **load-safety requirement**, not a toggle you can leave off. See [`meta/research-log.md`](../meta/research-log.md) (2026-07-02).
+
 > **Inferred:** that the base-game GRB resource entries are Oodle-compressed. Confirmed indirectly by the presence of `oo2core_7_win64.dll` and `compressed_oodle_compression_state.bin` in the game directory and ATK's Oodle code path.
 
 ### Verified: the `.data` block-compression container (`CompressedFileData` / `DataBlock`)

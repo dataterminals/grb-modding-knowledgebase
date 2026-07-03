@@ -30,19 +30,24 @@ byte-identical.
   --diagnostic twist|collapse   mis-point the wrap (twist = shift cage indices;
                                 collapse = all -> cage vertex 0). Tests whether the
                                 wrap actually drives the visible mesh.
-  --gravity X,Y,Z               set ClothProperties gravity (default is ~0,0,-15).
-                                Use as a CONTROL: on a simulated cloth this MUST
-                                visibly change the drape/billow. If it doesn't, you
-                                edited the wrong file/LOD — so a null wrap test is
-                                meaningless until the gravity control visibly works.
+  --gravity X,Y,Z               set the DEDICATED gravity vector (ClothPropertiesGravity,
+                                section 4398) on every LOD. NOTE: the gravity field inside
+                                ClothProperties (section 4357) is verified INERT at GRB
+                                runtime (2026-07-02), so this tool now edits 4398 - the
+                                live-candidate. Whether 4398 is itself runtime-effective is
+                                the current OPEN in-game test (see meta/next-session.md);
+                                do NOT treat gravity as a proven control until 4398 is
+                                confirmed to move a loose garment in-game.
 
-*** IN-GAME STATUS (2026-07-01): the wrap-as-render-driver hypothesis is NOT yet
-    validated in-game — ghillie tests were inconclusive (only a subset of ghillie
-    cloths were edited). Always run the --gravity control first. See docs/11. ***
+*** IN-GAME STATUS (2026-07-02): the wrap-as-render-driver hypothesis is NOT yet
+    validated in-game (ghillie tests were inconclusive). Gravity is also unsettled: the
+    ClothProperties (4357) gravity field is verified INERT at runtime; the dedicated
+    ClothPropertiesGravity (4398) is the untested live-candidate this tool now edits.
+    See docs/11-cloth-and-physics.md and meta/next-session.md. ***
 
 Usage:
   python clothwrap.py cloth.data --oodle oo2core_7_win64.dll                    # inspect
-  python clothwrap.py cloth.data --oodle oo2core_7_win64.dll --gravity 120,0,150 --out g.data
+  python clothwrap.py cloth.data --oodle oo2core_7_win64.dll --gravity 0,0,10 --out g.data   # reverse gravity (4398)
   python clothwrap.py cloth.data --oodle oo2core_7_win64.dll --diagnostic collapse --out c.data
 """
 import sys, os, struct
@@ -160,24 +165,29 @@ def diagnostic(payload, mode):
 
 
 def set_gravity(payload, gx, gy, gz):
-    """Return a modified payload with every ClothProperties (section 4357) gravity
-    set to (gx,gy,gz). A control edit: on a working (simulated) cloth this MUST
-    change how the garment hangs/billows in-game, which proves the edit reaches
-    the live sim before you trust a null wrap-test. Same size."""
+    """Return a modified payload with every ClothPropertiesGravity (section 4398,
+    a bare Vector3) set to (gx,gy,gz). Section 4398 is the DEDICATED gravity field and
+    the live-candidate; the gravity inside ClothProperties (4357) is verified INERT at
+    GRB runtime (2026-07-02), so this edits 4398 instead. Whether 4398 is runtime-
+    effective is the current open in-game test (meta/next-session.md). Same size.
+    (Tip: reverse gravity by negating the vanilla vector, e.g. (0,0,-10) -> (0,0,10),
+    for an unmissable hem-up vs hem-down tell on a loose garment.)"""
     buf = payload; n = 0
     for pkg in mc.locate_clothpackages(buf):
         changed = False
         for body in pkg.bodies:
-            for s in body.sections:
-                if s.type == 4357 and len(s.payload) >= 14:
-                    pl = bytearray(s.payload)
-                    struct.pack_into("<3f", pl, 2, gx, gy, gz)  # Gravity is a Vector3 @ offset 2
-                    s.payload = bytes(pl); changed = True; n += 1
+            s = body.find(4398)                       # ClothPropertiesGravity (dedicated)
+            if s and len(s.payload) >= 12:
+                pl = bytearray(s.payload)
+                struct.pack_into("<3f", pl, 0, gx, gy, gz)   # bare Vector3 @ offset 0
+                s.payload = bytes(pl); changed = True; n += 1
         if changed:
             nb = pkg.to_bytes()
             assert len(nb) == pkg.end - pkg.start, "gravity edit changed length"
             buf = buf[:pkg.start] + nb + buf[pkg.end:]
-    print(f"  gravity set to ({gx},{gy},{gz}) in {n} ClothProperties section(s)")
+    print(f"  gravity set to ({gx},{gy},{gz}) in {n} ClothPropertiesGravity (4398) section(s)")
+    if n == 0:
+        print("  (note: no section-4398 found in this cloth; nothing changed. 4357 is inert - not edited.)")
     return buf
 
 
@@ -320,8 +330,8 @@ def main(argv):
     print(f"  wrote {out}")
     print("  -> put this in your unpacked forge folder (same filename as the original")
     print("     entry), repack the forge in ATK on a BACKED-UP install, and load GRB.")
-    print("     TIP: use --gravity 120,0,150 as a CONTROL first (a working cloth must")
-    print("     visibly billow); only then does a null wrap --diagnostic mean anything.")
+    print("     NOTE: --gravity edits the dedicated 4398 section (4357 is inert at runtime);")
+    print("     whether 4398 moves a loose garment in-game is the current open test.")
 
 
 if __name__ == "__main__":

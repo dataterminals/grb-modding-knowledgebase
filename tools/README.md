@@ -2,15 +2,19 @@
 
 A little tool that reads a **Ghost Recon: Breakpoint cloth file** and tells you, in
 plain language, **what that cloth is** — how many cloth pieces (LODs) it has, the exact
-**mesh + LOD** each is bound to, the size of the simulated mesh, and — the useful part —
-**how the garment is attached**, which decides how you're allowed to reskin it:
-
-- **DIRECT** — the visible mesh *is* the simulated mesh. Keep the same points (in the
-  same order) when you reskin.
-- **BARYCENTRIC** — the garment is pinned onto a separate low-res sim mesh; a brand-new
-  mesh needs its pinning recomputed (the render↔sim remap).
+**mesh + LOD** each is bound to (via its `Sim_<Mesh>_LOD<n>` name), and the size of the
+simulated "cage" mesh.
 
 It's aimed at modders — **you do not need to know any coding to use it.**
+
+> **⚠️ Reskin reality check:** the *visible* garment is a **separate**, larger,
+> skeleton-skinned mesh that follows the low-res simulation **cage** via a stored wrap.
+> That wrap is decoded on paper but **not yet validated in-game**, so rebinding a
+> brand-new visible mesh is **unsolved for GRB** today. What works: reshape the vanilla
+> garment while keeping the cage's vertex **count and order** (constraints are addressed
+> by cage-vertex index).
+> *(An earlier version labeled cloths "DIRECT/BARYCENTRIC" as a "reskin route" — that
+> rested on a since-disproven binding model; see [`../docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md).)*
 
 > Why this helps: GRB cloth is baked to one specific mesh at one specific LOD. This
 > tool shows you that binding at a glance (e.g. a body named
@@ -68,16 +72,16 @@ FILE: TP_WalkerCoat_Cloth.Cloth
   match your mod to it (e.g. Sim_TP_... is the wearable one, not a cutscene).
 
   - LOD0: Sim_TP_Tacvest_Walker_Coat_LOD0   [gameplay / wearable cloth]
-      simulated mesh: 170 points, 288 triangles
-      attachment: BARYCENTRIC - the visible garment is pinned onto the sim mesh...
+      simulation cage: 170 points, 288 triangles
 ```
 
 - **Cloth pieces (LODs)** = the separate simulated pieces in the file.
 - **Piece name** `Sim_<Mesh>_LOD<n>` = **the mesh and LOD this cloth drives.** If it says
   `..._CIN_...`/`TPri_...` it's a **cinematic** (cutscene) cloth; `Sim_TP_<gear>` is the
-  **wearable** one you want for player gear.
-- **attachment: DIRECT vs BARYCENTRIC** = tells you your reskin route (see the top of
-  this page). This is the practical takeaway.
+  **wearable** one you want for player gear. **Identifying this cloth↔garment binding is
+  the practical takeaway.**
+- **simulation cage** size = the low-res physics mesh (not the visible garment — see the
+  reskin reality check up top).
 
 ## Good to know
 
@@ -109,7 +113,11 @@ download the `ClothInspector.exe` artifact.
 *Files here:* `motioncloth.py` (the exact MotionCloth reader/writer engine — locates every
 ClothPackage, walks sections by their real sizes, round-trips byte-for-byte),
 `cloth_inspect.py` (the plain-language report on top of it), `cloth_inspect_gui.py` (the
-window), and the two `.bat` launchers. All read-only, all documented.
+window), and the two `.bat` launchers — these are **read-only**. Also here:
+`clothwrap.py` — an **experimental / research** tool that *writes* modified cloths (locates
+the render↔sim wrap; can set the dedicated gravity section `4398` for in-game tests;
+rebuilds a game-loadable **Oodle-compressed** `.data`). Because it edits cloth internals,
+**always work on a backed-up copy.** All documented.
 
 ---
 

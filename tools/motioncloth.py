@@ -8,10 +8,11 @@ by their self-declared sizes (validating the 0xECD7 marker), decodes the pieces
 that matter, and can re-serialize byte-for-byte. That exactness is what a
 render<->sim remap needs (edit a few sections, rewrite, keep everything else).
 
-What it's for (plain version): a GRB "cloth" file describes the *simulated* cloth
-(a mesh of points + springs) and, for some garments, how the *visible* garment is
-pinned onto that simulated mesh. This reads all of that out reliably, and lets a
-program change it and write it back.
+What it's for (plain version): a GRB "cloth" file describes the *simulated* cloth cage
+(a mesh of points + springs). The *visible* garment is a SEPARATE, larger,
+skeleton-skinned mesh that follows the cage via a stored wrap (decoded on paper but NOT
+yet validated in-game). This reads the cloth's sections out reliably, and lets a program
+change them and write them back.
 
 Works on:
   * a decompressed cloth resource - the `*.Cloth` file ATK writes when you unpack
@@ -173,6 +174,9 @@ def sim_triangle_count(body):
 
 
 def uses_barycentric(body):
+    # True iff the cloth carries the 'additional-vertices' sections (4565 present).
+    # NOTE: despite the name, this is NOT the visible-mesh binding - those points are a
+    # small per-triangle set (likely collision). Kept only as a structural predicate.
     return body.find(4565) is not None
 
 
@@ -264,12 +268,13 @@ def report(path, oodle_dll=None):
             sv, tr = sim_vertex_count(body), sim_triangle_count(body)
             L.append(f"  - LOD{i}: {nm}")
             L.append(f"      simulated mesh: {sv} points, {tr} triangles   ({len(body.sections)} data sections)")
+            L.append(f"      note: this is the simulation CAGE. The visible garment is a "
+                     f"separate, larger, skeleton-skinned mesh that follows the cage via a")
+            L.append(f"      stored wrap (decoded on paper, NOT yet validated in-game). Reshape "
+                     f"in place keeps these {sv} cage points in order; rebinding a new mesh is unsolved.")
             if uses_barycentric(body):
-                L.append(f"      binding: the visible garment is pinned onto the sim mesh "
-                         f"(barycentric). A new mesh needs its pinning recomputed.")
-            else:
-                L.append(f"      binding: DIRECT - the visible mesh IS the sim mesh. A new mesh "
-                         f"must keep the same {sv} points in the same order.")
+                L.append(f"      (also carries 'additional-vertices' sections 4561-4565 - a small "
+                         f"per-triangle point set, likely collision; NOT the visible-mesh binding.)")
     L.append(f"  rewrite check (byte-for-byte): {'OK' if roundtrip_ok(payload) else 'FAILED'}")
     return "\n".join(L) + "\n"
 

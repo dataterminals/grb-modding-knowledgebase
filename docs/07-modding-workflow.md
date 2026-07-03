@@ -42,9 +42,9 @@ Import your authored asset into the game's data via ATK. Mechanically:
 ## 4. Repack ⚠️
 
 Repack the unpacked folder back into its `.forge` — **in your actual game install**. In the normal workflow ATK is pointed straight at the GRB install and rewrites the forge *in place*, so for your own machine repacking **is** installing (see step 5). Notes for GRB:
-- GRB data historically serialized **uncompressed**; **compression is now a setting** (`EnableCompression` defaults `True` in the shipped config). If a repacked mod misbehaves in-game, compression settings are a thing to check.
-- ATK won't unpack over an existing unpacked folder (prevents clobbering); manage your working folders accordingly.
-- You repack the forge that holds the target entries — usually the `*_patch_01` set for gear/weapons (see [`05-three-forge-model.md`](05-three-forge-model.md)).
+- **Keep `EnableCompression` ON.** A GRB `.data` written with **raw/uncompressed** blocks **crashes/hangs the game at load** (verified 2026-07-02) — it parses in ATK but the game rejects it. This is a load-safety requirement, not a tunable; see [`02-forge-file-format.md`](02-forge-file-format.md). (Historical note: ATK once serialized GRB data uncompressed by default, then made compression a setting; for GRB you must leave it on.)
+- **The unpacked folder is a *persistent* working source, not a per-edit scratch.** Unpack a forge to `Extracted\<forge>\` **once**, then edit/add/remove entries there and repack **from it incrementally over time** — you do *not* re-unpack each session (ATK won't unpack over an existing folder, and only re-creates its forge backup on a *fresh* extract). ⚠️ **Before repacking a forge you have *not* been actively maintaining in `Extracted\`, verify `Extracted\` still matches the *live* forge** (a stale working folder whose live forge gained mods by another path will **revert those mods** on repack — a real incident, 2026-07-02). If it has diverged, re-extract that one forge once to resync, then edit incrementally. See [`meta/research-log.md`](../meta/research-log.md).
+- You repack the forge that holds the target entries — usually the `*_patch_01` set for gear/weapons (see [`05-three-forge-model.md`](05-three-forge-model.md)). (Cloth is the exception — it lives in the base `DataPC.forge`; see [`11-cloth-and-physics.md`](11-cloth-and-physics.md).)
 
 Backups: ATK writes `.bak` files and/or `Backups` folders (`CreateBackups`, `CreateDataBackups`, `CreateFileBackups` default `True`). Note `OverwriteFileBackups` also defaults `True`, and `AddDateToBackups` defaults `False` — so backups overwrite rather than accumulate by date unless you change that. Forges are multi-GB original game data; keep your own clean copy of anything irreplaceable.
 
@@ -63,4 +63,7 @@ Launch GRB and verify the asset appears correctly at all LODs/distances and unde
 
 ## The loop, compressed
 
-> Unpack the forge in your install → find by ID → export reference → edit in Blender → export glTF/DDS → import/replace in ATK → fix BuildTable + IDs (keep the layers consistent) → back up the forge → repack in place → test → repeat.
+> **First time on a forge:** back up the forge → unpack it once to a persistent `Extracted\<forge>\` working folder.
+> **Each edit thereafter:** find by ID → export reference → edit in Blender → export glTF/DDS → import/replace in ATK (compression ON) → fix BuildTable + IDs (keep the layers consistent) → repack **from the same working folder** in place → test → repeat.
+>
+> You **re-unpack only** if the working folder has drifted from the live forge (see the ⚠️ in step 4) — not every session.
