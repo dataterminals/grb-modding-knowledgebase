@@ -3,13 +3,14 @@
 cloth_inspect.py - tell a modder, in plain language, what a GRB cloth file is.
 
 It reads a GRB cloth resource and reports: how many cloth pieces (LODs) it has,
-the name/mesh each is bound to, how big the simulated mesh is, and - importantly -
-HOW the visible garment is attached, which decides how you can reskin it:
+which mesh + LOD each is bound to (the Sim_<Mesh>_LOD<n> body name), and how big the
+simulated "cage" mesh is.
 
-  * DIRECT      the visible mesh IS the simulated mesh. Your new mesh must keep
-                the same number of points, in the same order.
-  * BARYCENTRIC the visible garment is pinned onto a separate low-res sim mesh.
-                A brand-new mesh needs its pinning recomputed (the remap step).
+Reskin reality check: the VISIBLE garment is a SEPARATE, larger, skeleton-skinned mesh
+that follows the low-res sim cage via a stored wrap. That wrap is decoded on paper but
+NOT yet validated in-game, so rebinding a brand-new visible mesh is unsolved for GRB.
+What works today: reshape the vanilla garment while keeping the sim cage's points in the
+same order (constraints are addressed by cage-vertex index).
 
     python cloth_inspect.py  yourcloth.Cloth          # or a cloth .data
     python cloth_inspect.py  clothA.Cloth  clothB.Cloth   # compare two
@@ -53,15 +54,10 @@ def _describe_body(body, lod_index):
     tr = mc.sim_triangle_count(body)
     tag = f"   [{purpose}]" if purpose else ""
     L.append(f"  - LOD{lod_index}: {name}{tag}")
-    L.append(f"      simulated mesh: {sv} points, {tr} triangles")
+    L.append(f"      simulation cage: {sv} points, {tr} triangles")
     if mc.uses_barycentric(body):
-        L.append("      attachment: BARYCENTRIC - the visible garment is pinned onto the")
-        L.append("      sim mesh. A brand-new mesh (different shape/points) needs its pinning")
-        L.append("      recomputed, or the cloth won't take on. Reshaping the vanilla garment")
-        L.append("      (same points) is the safe route today.")
-    else:
-        L.append(f"      attachment: DIRECT - the visible mesh IS the sim mesh. To reskin,")
-        L.append(f"      keep the same {sv} points in the same order (reshape, don't retopo).")
+        L.append("      (+ 'additional-vertices' sections 4561-4565: a small per-triangle")
+        L.append("       point set, likely collision - NOT the visible-mesh binding.)")
     return L
 
 
@@ -87,6 +83,12 @@ def report(path):
         for body in pkg.bodies:
             L.append("")
             L += _describe_body(body, i)
+    L.append("")
+    L.append("  Reskin note: the sizes above are the low-res SIMULATION CAGE. The visible")
+    L.append("  garment is a separate, larger, skeleton-skinned mesh that follows the cage")
+    L.append("  via a stored wrap (decoded on paper, NOT yet validated in-game). Rebinding a")
+    L.append("  brand-new mesh is unsolved for GRB; reshaping the vanilla garment while")
+    L.append("  keeping the cage's points in the same order is the route that works today.")
     return "\n".join(L) + "\n"
 
 
@@ -98,7 +100,7 @@ def _fingerprint(path):
         for body in pkg.bodies:
             rows.append((i, _clean_name(mc.body_name(body)), mc.sim_vertex_count(body),
                          mc.sim_triangle_count(body),
-                         "barycentric" if mc.uses_barycentric(body) else "direct"))
+                         "yes" if mc.uses_barycentric(body) else "no"))
     return rows
 
 
@@ -114,11 +116,13 @@ def diff(path_a, path_b):
     out.append(f"  A = {os.path.basename(path_a)}   pieces: {len(ra)}")
     out.append(f"  B = {os.path.basename(path_b)}   pieces: {len(rb)}")
     out.append("")
-    out.append(f"  {'piece':40} {'points':>7} {'tris':>6} {'attachment':>12}")
-    out.append(f"  {'-'*40} {'-'*7} {'-'*6} {'-'*12}")
+    out.append("  (addl-verts = has sections 4561-4565, a small per-triangle collision-ish")
+    out.append("   point set - NOT the visible-mesh binding. 'cage pts' = sim-cage vertices.)")
+    out.append(f"  {'piece':40} {'cage pts':>8} {'tris':>6} {'addl-verts':>10}")
+    out.append(f"  {'-'*40} {'-'*8} {'-'*6} {'-'*10}")
     for tag, rows in (("A", ra), ("B", rb)):
         for (i, nm, sv, tr, att) in rows:
-            out.append(f"  {tag}: {nm[:36]:37} {sv:>7} {tr:>6} {att:>12}")
+            out.append(f"  {tag}: {nm[:36]:37} {sv:>8} {tr:>6} {att:>10}")
     return "\n".join(out) + "\n"
 
 

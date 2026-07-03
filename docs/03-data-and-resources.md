@@ -60,7 +60,7 @@ The typed resources are where modding actually happens. ATK recognizes a long li
 | **LocalizationPackage** | Text/strings | XML |
 | **PrefetchingFileInfos** | Streaming/prefetch hints (sidecar) | — |
 | **GlobalMetaFile** | Forge-wide metadata (sidecar, `.MetaFile`) | — |
-| **Cloth / SoftBody / MotionSoftBody** | Physics-driven deformable assets | glTF / XML |
+| **Cloth / SoftBody / MotionSoftBody** | Physics-driven deformable assets | ⚠️ **not for GRB** — ATK's structured cloth reader is gated off for GRB (`SoftBody.SupportedGames` excludes it), so no glTF/XML/viewer; it only round-trips GRB cloth as **opaque bytes** on repack. Edit GRB cloth at the raw-section level ([`tools/motioncloth.py`](../tools/motioncloth.py)); see [`11-cloth-and-physics.md`](11-cloth-and-physics.md). |
 | **FacialSolverData** | Facial animation solving data | (supported 1.3.0) |
 
 A fuller catalog with notes is in [`reference/resource-types.md`](../reference/resource-types.md).

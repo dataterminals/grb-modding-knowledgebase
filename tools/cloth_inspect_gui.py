@@ -21,12 +21,13 @@ INTRO = (
     "GRB Cloth Inspector\n"
     "Point it at a GRB cloth file - a  *.Cloth  (what ATK writes when you unpack a\n"
     "cloth .data) or the cloth  .data  itself - and it tells you, in plain terms:\n"
-    "how many cloth pieces (LODs), the mesh each is bound to, the sim-mesh size,\n"
-    "and HOW the garment is attached (which decides how you can reskin it):\n\n"
+    "how many cloth pieces (LODs), the mesh each is bound to, and the sim-cage size.\n\n"
     "  •  Open a cloth file…        inspect one cloth\n"
     "  •  Compare two cloth files…  see two cloths side by side\n\n"
-    "  DIRECT      = visible mesh IS the sim mesh; keep the same points to reskin.\n"
-    "  BARYCENTRIC = garment pinned onto a sim mesh; a new mesh needs re-pinning.\n\n"
+    "Reskin note: the visible garment is a SEPARATE skeleton-skinned mesh that follows\n"
+    "the low-res sim cage via a stored wrap (not yet validated in-game); rebinding a\n"
+    "brand-new mesh is unsolved for GRB. Reshaping the vanilla garment while keeping the\n"
+    "cage's points in order is the route that works today.\n\n"
     "Tip: a piece named  Sim_<Mesh>_LOD<n>  is bound to that exact mesh + LOD.\n"
 )
 

@@ -26,10 +26,12 @@ Where the facts in this knowledgebase come from, so claims can be re-checked and
 ## How to reproduce the decompilation
 ATK is a .NET assembly. With the .NET SDK installed: `dotnet tool install -g ilspycmd`, then `ilspycmd -p -o <outdir> AnvilToolkit.dll` dumps a full C# project; or `ilspycmd -t <FullTypeName> AnvilToolkit.dll` for one class. (Note: ilspycmd's project output is UTF-8; PowerShell `>` redirection writes UTF-16 — read accordingly.) The `Read`/`Write`/`Serialize`/`Deserialize` methods are the format.
 
+## In-game testing (now a source, as of 2026-07-02)
+Empirical in-game testing on a real modded GRB install is **now a load-bearing source** (it was a gap on 2026-06-30). It established, among other things, that a **raw/uncompressed cloth `.data` crashes/hangs GRB at load** while an Oodle-Mermaid-compressed one loads, and that the per-cloth **`ClothProperties` gravity field (section 4357) is ignored at GRB runtime** (with the dedicated `ClothPropertiesGravity` section 4398 as the untested live-candidate). These results are recorded in [`meta/research-log.md`](research-log.md) (2026-07-02 entries) and drive [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md). **Reliability:** direct observation on one researcher's machine — high for what was seen, but single-install.
+
 ## What is NOT yet a source (gaps)
-- **Engine-level documentation** of GRB's forge mount/load order — none consulted; the load model in [`docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md) is inferred (though the flat-ID-archive basis is now verified from ATK).
-- **Empirical in-game tests** of conflict/override behavior and XML-tuned cloth — none run yet.
-- **`DataFile` / file-type registry** (the per-`.data` compression descriptor and `Extension`-id→type map) — identified but not yet read.
+- **Engine-level documentation** of GRB's forge mount/load order — none consulted; the load model in [`docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md) is inferred (though the flat-ID-archive basis is now verified from ATK). In particular, the **priority order when the same ID sits in two *peer* forges** (mod vs mod, or mod vs official patch) is still untested in-game.
+- **XML-tuned cloth is not a GRB workflow.** ATK cannot XML-export GRB cloth at all (`SoftBody.SupportedGames` gate), so there is no "XML-tune the cloth" path to test for GRB — cloth edits go through raw-section tools + a compressed `.data` repack. (This corrects an earlier gap-note that listed "XML-tuned cloth" as a pending test.)
 
 ## Citation style used in the docs
 - `> **Verified:**` — observed directly this session (with the artifact noted).

@@ -8,7 +8,7 @@ Meshes are the geometry of weapons, gear, bodies, hair, and props; skeletons rig
 | --- | --- |
 | **Mesh** | Geometry: vertices (position, normals, tangents, binormals, UVs, vertex colors, weights) + index buffer, organized into primitives with material assignments. |
 | **Skeleton** | Bone hierarchy (names, parent/child, bind transforms) that skinned meshes weight to. |
-| **Cloth / SoftBody / MotionSoftBody** | Physics-deformable variants ATK can also load/export. |
+| **Cloth / SoftBody / MotionSoftBody** | Physics-deformable variants. ⚠️ For **other** Anvil games ATK can load/export these; for **GRB** its cloth/softbody reader is gated off (`SoftBody.SupportedGames` excludes GRB), so no Mesh-Viewer/GLB/generation — GRB cloth round-trips only as opaque bytes. See [`11-cloth-and-physics.md`](11-cloth-and-physics.md). |
 
 ## The glTF/GLB pipeline (the Blender bridge)
 
@@ -50,7 +50,9 @@ Meshes ship as a **LOD set**: `LOD0` (highest detail, close-up) through `LOD3` (
 
 ## BuildTables from the Mesh Viewer
 
-The Mesh Viewer can **generate a BuildTable** from a scene, a mesh, a skeleton, or a SoftBody. This is a major convenience for new content: rather than hand-authoring the definition that tells the game how to assemble your asset, you can have ATK emit a starting BuildTable from your imported scene. (BuildTables: [`03-data-and-resources.md`](03-data-and-resources.md).)
+The Mesh Viewer can **generate a BuildTable** from a scene, a mesh, or a skeleton. This is a major convenience for new content: rather than hand-authoring the definition that tells the game how to assemble your asset, you can have ATK emit a starting BuildTable from your imported scene. (BuildTables: [`03-data-and-resources.md`](03-data-and-resources.md).)
+
+> **Note (GRB):** ATK can also generate a BuildTable from a **SoftBody**, but that path — like all of ATK's SoftBody/cloth handling — is **gated off for GRB** (`SoftBody.SupportedGames` excludes GRB), so BuildTable-from-SoftBody is not available for GRB. Mesh/skeleton generation is GRB-enabled. See [`11-cloth-and-physics.md`](11-cloth-and-physics.md).
 
 ## Replacing a mesh — the short version
 

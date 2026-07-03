@@ -55,14 +55,16 @@ So when a modder says "open the file in ATK and replace it," they mean: navigate
 ### Unpack / repack
 The fundamental loop. Unpack a forge to a working folder, change resources, repack to a new forge. Notes specific to GRB:
 - ATK won't unpack if the destination unpacked folder already exists (avoids clobbering work).
-- GRB data files: uncompressed-by-default historically; compression is now a setting (`EnableCompression = True` by default in the shipped config). See [`07-modding-workflow.md`](07-modding-workflow.md).
+- GRB data files: uncompressed-by-default historically; compression is now a setting (`EnableCompression = True` by default). **Keep it on for GRB** — a raw/uncompressed `.data` crashes the game at load (verified 2026-07-02; not an optional preference — see [`02-forge-file-format.md`](02-forge-file-format.md) and [`07-modding-workflow.md`](07-modding-workflow.md)).
 - Background-threaded and multithreaded unpacking for speed.
 
 ### Texture Viewer
 Double-click a texture (TextureMap) to open it. You can **export** to DDS / PNG / TGA / JPG and **replace** with a new image (any image format accepted; **DDS recommended** for full control). Supports gamma settings (auto-updated on import), mip generation on import, cube maps, and a drop-preview UI. GRB TextureMap and TextureSet support are explicitly listed.
 
 ### Mesh Viewer
-A real-time 3D viewer (HelixToolkit/SharpDX). Load Mesh, Skeleton, Cloth/SoftBody resources; inspect bones; **export to glTF/GLB and import edited meshes back**. Rich GRB-specific handling: all GRB vertex formats, skinned meshes, up to 5 UV sets, vertex colors (with Blender-friendly naming), tangent/binormal recalculation on glTF import, automatic rescale, bone-limit checks. It can also generate **BuildTables** directly from a scene/mesh/skeleton.
+A real-time 3D viewer (HelixToolkit/SharpDX). Load Mesh and Skeleton resources; inspect bones; **export to glTF/GLB and import edited meshes back**. Rich GRB-specific handling: all GRB vertex formats, skinned meshes, up to 5 UV sets, vertex colors (with Blender-friendly naming), tangent/binormal recalculation on glTF import, automatic rescale, bone-limit checks. It can also generate **BuildTables** directly from a scene/mesh/skeleton.
+
+> **⚠️ GRB caveat — Cloth/SoftBody do NOT load here for GRB.** The Mesh Viewer loads Cloth/SoftBody for the Anvil games ATK supports, but its cloth/softbody reader is **gated off for GRB** (`SoftBody.SupportedGames` excludes `GhostReconBreakpoint`), so viewing / GLB-export / generation never run on GRB cloth — ATK round-trips GRB cloth only as opaque bytes on repack. Mesh and Skeleton *are* GRB-enabled. See [`11-cloth-and-physics.md`](11-cloth-and-physics.md).
 
 ### XML export/import (schema-based)
 Many resource types export to **XML** for editing and recompile back. For GRB specifically the changelog lists: **BuildTables, EntityBuilder, Materials, TextureSet, LocalizationPackage, PrefetchingFileInfos**, and (as of 1.3.0) a **schema-based exporter** for AC1–Syndicate that can be forced with Shift+double-click / Shift+context-menu.
@@ -76,7 +78,7 @@ The default `AnvilToolkit.dll.config` reveals behaviors a modder/AI should expec
 
 | Setting | Default | Why it matters |
 | --- | --- | --- |
-| `EnableCompression` | `True` | Repacked data may be compressed; relevant to GRB compatibility. |
+| `EnableCompression` | `True` | **Leave ON for GRB.** Repacked `.data` must be Oodle-compressed — a raw/uncompressed GRB `.data` crashes the game at load (verified 2026-07-02; see [`02-forge-file-format.md`](02-forge-file-format.md) "Compression"). Not an optional preference for GRB. |
 | `CreateBackups` / `CreateDataBackups` / `CreateFileBackups` | `True` | ATK auto-creates `.bak`/Backups folders — your safety net. |
 | `OverwriteFileBackups` | `True` | Existing backups can be overwritten — don't rely on it for long-term archival. |
 | `AddDateToBackups` | `False` | Backups overwrite rather than version by date unless you change this. |
