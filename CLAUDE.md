@@ -2,6 +2,8 @@
 
 You are an AI assistant working in the **GRB Modding Knowledgebase**. This file orients you so you can help with Ghost Recon: Breakpoint (GRB) modding accurately and safely. Read it fully before acting.
 
+> **🎯 Read [`meta/project-goal.md`](meta/project-goal.md) FIRST.** It is the concrete modding objective (from SamiPuma) that all the cloth research serves: **put an existing in-game garment's cloth physics onto a NEW mesh** (replace a flowing coat with an outside poncho, keeping the coat's cloth physics) — a **rebind** problem, *not* parameter tuning. Then read [`meta/research-log.md`](meta/research-log.md) (latest entry = current state) and [`meta/next-session.md`](meta/next-session.md) (what to do next). As of 2026-07-03 the active leads are **(A)** rebinding `.cloth` to new geometry and **(B)** GRB's ATK-readable `.skeleton` bone-physics path.
+
 ## What this repo is
 
 A structured knowledgebase about modding GRB via the Ubisoft *Anvil* engine, its `.forge` archives, and the **Anvil Toolkit (ATK)**. It is documentation-first. There is no build step and (currently) no code to run. Your job is usually to **read, reason, document, and guide** — not to mutate game files unless explicitly asked.
