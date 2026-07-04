@@ -558,6 +558,47 @@ Caught at session's end, before starting fresh next time. Gravity exists in **tw
 
 ---
 
+## Entry — 2026-07-03 — Params all null on the kilt; discovered a FORGE SHADOW; patch-override HANGS; Sami's real goal reframes the effort
+
+### Environment
+Same desktop workstation (H:\ Steam install). Resumed the 2026-07-02 "STEP 1" plan (re-test gravity in the dedicated section **4398**).
+
+### VERIFIED (in-game this session)
+Ran a full battery of cloth-parameter edits on the **Tactical Kilt** — a **confirmed genuinely-simulated** garment (Sylvia verified the hem sways/lags like normal Ubisoft cloth). Each edit was derived from pristine bytes, byte-verified (only the target section changed), Oodle-compressed, and **confirmed read back live from the *repacked* `DataPC.forge`**:
+- **Gravity §4398** (dedicated `ClothPropertiesGravity`) reversed `(0,0,+10)` → **no visible change.**
+- **Stiffness §4360 → `(0,0,0)` + Wind §4397 `WindVelocity → (100,0,0)`** (combined screen) → **no visible change.**
+- **MaxDistance (per-vertex paint) → fully free (255)** → **no visible change.**
+
+So: edits reach the game, the subject genuinely simulates, yet nothing moves. Provisional read was "runtime uses a compiled cloth, ignores the editable resource" — **but a confound overturns that:**
+
+### 🚨 THE FORGE SHADOW (overturns prior "inert" conclusions)
+- **44 of 56 `Cloth` resources are DUPLICATED across two *base* forges:** `DataPC.forge` **and** a WorldMap region forge — `DataPC_TGT_WorldMap_Bootstrap_Split.forge` (41, incl. the kilt / both Walker coats / HunterCoat), `_Darkwood_Split` (3), `_MaungaNui_Split` (2). Same 64-bit ID + name in both. Only **9** cloths are DataPC-only (all NPC/civilian — IanBlake trench, FTciv dress, kids). `TP_Top_Bodark_Trench_Cloth` is the lone cloth in **4** forges (both bases + both patches).
+- **We had only ever edited the `DataPC.forge` copy.** If the game loads the WorldMap-base copy (or it mounts with priority), every null — this session's **and last session's "4357 gravity inert DEFINITIVE"** — is **SHADOWING, not runtime-inertness.** Last session's "confirmed live, not patch-shadowed" only proved the edit was *in* DataPC.forge, not that the game *loads* that copy, and it checked only *patch* forges, missing the WorldMap *base* duplication.
+- **⇒ DOWNGRADE: "GRB cloth gravity/params are runtime-inert" is no longer supported.** Confounded by the shadow; unresolved. (doc-11's gravity claims reconciled accordingly.)
+
+### Patch-override (the proper mod path) → HANGS
+Per Sylvia (practitioner): normal cloth-mod path = a **patch-forge override** (overrides base by ID → sidesteps which-base-wins). Template: Bodark cloth ships as an override in **both** `DataPC_patch_01` and `Bootstrap_Split_patch_01`.
+- Override of the 2 kilt cloths into `DataPC_patch_01` only (combined: reversed gravity + free MaxDistance) → **game HANGS ~34% into the post-title load** (1.98 GB, CPU spinning, Responding-but-stalled; no crash report ⇒ hang, not crash). Recovered.
+- Retried a **gentle STABLE** override (reversed gravity only, pinning intact — verified stable) in `DataPC_patch_01` only → **hangs identically.** A stable edit hanging **rules out sim-instability** → the hang is the **override mechanism** itself, most likely an **incomplete override** (base copy in 2 forges, patched in only 1 → conflicting versions).
+- **STAGED, NOT YET RUN:** the *complete* Bodark-pattern override — gentle gravity in **both** patch forges, base `DataPC.forge` restored pristine (confound removed). This is the decisive **"can a modified cloth take effect at all?"** test. Files staged in both patch `Extracted\` folders on the desktop; awaiting a 2-patch repack + launch.
+
+### 🎯 SAMI'S REAL GOAL — reframes everything (verbatim in [`project-goal.md`](project-goal.md))
+The north star is **NOT parameter tuning.** SamiPuma wants to **replace a flowing coat with an outside-source poncho and give the poncho the coat's cloth physics** — i.e. **REBIND vanilla cloth to NEW geometry.** His method (weight-paint transfer + point the item at the coat's `.cloth`) fails because the `.cloth` is **welded to the coat's exact vertices**. **KEY LEAD:** GRB's separate **`.skeleton`** bone-physics (rigid hanging items — thermoses) **DOES** transfer to new meshes via weight-paint, and **ATK can read GRB skeletons** (unlike cloth). ⇒ Real levers: **(A) cloth→mesh rebind** (render↔sim remap; hard) and **(B) the `.skeleton` bone-cloth path** (maybe more practical). Parameter tuning is orthogonal — but the param/shadow/override tests remain a **prerequisite**: can a *modified* cloth take effect in-game *at all*? (= the staged both-patches test.) If never → (A) is dead, pivot to (B).
+
+### Technical facts nailed
+- **GRB per-vertex cloth paint layout:** the 6 per-sim-vertex byte arrays (`VertexMaxDistance`, BackStop, GravityScale, Damping, SkinWidth, Friction — MaxDistance first, order from ATK `MotionSoftBodyLOD`) are stored **BARE `byte[V]` contiguous in GRB** — NOT length-prefixed as ATK's supported-game reader expects — as `6×V` bytes ending exactly at the ClothPackage's `int32 blobLen`. Verified both kilt cloths/LODs. (Spatial correlation to §4363 positions was weak → paint uses a different vertex order than the position buffer.)
+- From ATK source: `§4360 ClothPropertiesConstraintsStiffness` = `float[3]` (default 1.5s; kilt 0.5/0.6/0.5); `§4397 ClothPropertiesWind` = `bool WindIsEnabled` + `Vec3 WindVelocity` + 2 densities + 3 rotation vecs (57 B); `ClothDefinition.UseWind` = byte 8 (kilt: true, WindVelocity=0).
+
+### Deliverables / state
+- New [`meta/project-goal.md`](project-goal.md); doc-11 gravity claims downgraded (shadow confound); this entry.
+- Scratchpad (desktop, temporary): staging/edit/verify scripts, extracted ATK dll + decompiles, staged variants under `Extracted\_kilt_cloth_tests\`, the both-patches override in the patch `Extracted\` folders. Base `DataPC.forge` + `DataPC_patch_01` restored clean this session. Backups: `D:\GRB_KnownGood_ForgeBackup_2026-07-02\`.
+
+### Next session (reoriented — see [`next-session.md`](next-session.md))
+1. (If in-game) run the staged **both-patches** override → does a modified cloth take effect / even load? Fork to (A) or (B).
+2. **Pivot to Sami's goal:** (A) cloth→poncho rebind and/or (B) the ATK-readable `.skeleton` bone-cloth path. **Stop parameter-tuning.**
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
