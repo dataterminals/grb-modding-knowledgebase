@@ -6,5 +6,5 @@ Quick summary of the non-negotiables (full detail in `CLAUDE.md`):
 
 - This is a **documentation-first knowledgebase** for Ghost Recon: Breakpoint modding. Default to reading, reasoning, and writing docs — not mutating game files.
 - **Never modify a `.forge` or `.data` file without a verified backup.** Forges are multi-gigabyte original game data.
-- **ATK (the Anvil Toolkit) is the authoritative reference implementation** of the forge format. When this repo and ATK disagree, ATK wins — and the doc should be corrected.
+- **ATK (the Anvil Toolkit) is the authoritative reference implementation** of the forge format. When this repo and ATK disagree, ATK wins — and the doc should be corrected. **Caveat:** ATK is authoritative only for the formats and games it actually supports. GRB's cloth reader is *gated off* in ATK, and GRB's on-disk cloth layout demonstrably differs from ATK's serialization (e.g. GRB writes the per-sim-vertex paint arrays **bare** where ATK length-prefixes them). For GRB cloth, verified on-disk bytes win over ATK's unused-for-GRB code path.
 - Keep the **verified vs. inferred** distinction explicit in everything you write, and log new findings in [`meta/research-log.md`](meta/research-log.md).

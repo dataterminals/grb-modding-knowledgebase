@@ -53,6 +53,8 @@ To replace a weapon, you generally need to coordinate, with consistent IDs:
 
 Miss one layer (e.g. update the world model but not the inventory model) and the gun looks new in-hand but old in the menu — a classic symptom of an incomplete three-forge mod.
 
+> **⚠️ Caveat — this clean recipe assumes one base copy per resource ID.** It holds for weapon/gear resources like this USP. It does **not** hold for **shadowed** resources — most notably cloth — where the same ID lives in two *base* forges and the override must be duplicated across **both** families' patch forges to take effect (a single-patch override hangs the load). See the forge shadow in [`../docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md).
+
 ## Open threads from this example
 
 - Only `LOD0` meshes are shipped here — does the game fall back to base LODs for distance, or does this mod simply not provide lower LODs (and is that visible at range)? (See [`docs/10-meshes-and-skeletons.md`](../docs/10-meshes-and-skeletons.md).)

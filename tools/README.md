@@ -117,7 +117,10 @@ window), and the two `.bat` launchers — these are **read-only**. Also here:
 `clothwrap.py` — an **experimental / research** tool that *writes* modified cloths (locates
 the render↔sim wrap; can set the dedicated gravity section `4398` for in-game tests;
 rebuilds a game-loadable **Oodle-compressed** `.data`). Because it edits cloth internals,
-**always work on a backed-up copy.** All documented.
+**always work on a backed-up copy** — and note most cloths are *shadowed* (same ID in
+`DataPC.forge` **and** a WorldMap base forge), so an override must be repacked into **both**
+families' patch forges to take effect (a single-patch override hangs the load; see
+[`../docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md)). All documented.
 
 ---
 
@@ -175,8 +178,11 @@ Reads a whole `.forge` by its **index only** (no unpacking, no Oodle), so even t
   (how many Meshes / TextureMaps / BuildTables / Animations / … it holds), keyed on
   the **real 64-bit file IDs**.
 - **Compare two forges** → a **diff by file ID**. Shared IDs mean: **overrides** (if
-  one is a patch of the other) or **conflicts** (if they're two mods — only one can
-  win). This is the mod-conflict / merge checker.
+  one is a patch of the other), **conflicts** (if they're two mods — only one can
+  win), or a **forge shadow** (if they're two *base* forges — the same resource
+  intentionally duplicated, e.g. cloth in `DataPC.forge` and a WorldMap `_Split` base;
+  see [`../docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md)).
+  This is the mod-conflict / merge / shadow checker.
 
 ### How to use it (three ways, easiest first)
 1. **Window (recommended):** double-click **`Forge Inspector (GUI).bat`** (or

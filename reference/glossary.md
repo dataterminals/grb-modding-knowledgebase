@@ -23,8 +23,9 @@ Short definitions of the terms used throughout this knowledgebase. Cross-referen
 | **LOD** (Level of Detail) | A mesh detail tier. `LOD0` = highest/closest, `LOD3` = lowest/distant. |
 | **Mip / Mipmap** | A precomputed half-resolution texture level. `Mip0` = full res. |
 | **Repack** | Writing an unpacked working folder back into a `.forge` (or `.data`). |
-| **Patch forge** | A `*_patch_01.forge` the game loads on top of base forges, overriding by ID. Mods ship these. See [`docs/05-three-forge-model.md`](../docs/05-three-forge-model.md). |
+| **Patch forge** | A `*_patch_01.forge` the game loads on top of base forges, overriding by ID. Mods ship these. ⚠️ *Override-by-ID assumes one base copy per ID; for **shadowed** IDs (same ID in two base forges — most cloths, see **Forge shadow**) a patch in one family alone is insufficient.* See [`docs/05-three-forge-model.md`](../docs/05-three-forge-model.md). |
 | **Base forge** | The original `DataPC_<name>.forge` shipped with the game (no `_patch` suffix). |
+| **Forge shadow** | The same 64-bit ID present in **two base forges** (e.g. a cloth in both `DataPC.forge` and `DataPC_TGT_WorldMap_Bootstrap_Split.forge`). Which base copy the runtime resolves is **unresolved**, and overriding a shadowed ID needs a patch in *both* families. Affects 44 of 56 cloths (found 2026-07-03). See [`docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md). |
 | **The three forges** | The trio most cosmetic mods touch: `DataPC_patch_01` (items/`WI_`), `DataPC_extra_patch_01` (gameplay/`WG_`), `DataPC_Resources_patch_01` (meshes/textures). |
 | **`WI_` / `WG_`** | Inferred prefixes: **W**eapon **I**tem (inventory) / **W**eapon **G**ameplay definitions. |
 | **`TP_` / `FTP_`** | Inferred prefixes: **T**hird-**P**erson model / Face-or-Female Third-Person (on heads). |

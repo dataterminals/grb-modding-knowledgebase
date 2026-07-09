@@ -599,6 +599,27 @@ The north star is **NOT parameter tuning.** SamiPuma wants to **replace a flowin
 
 ---
 
+## Entry — 2026-07-09 — Session resume: repo re-verified, staged both-patch test confirmed NOT run, KB reconciled to the 2026-07-03 shadow findings
+
+### What I did
+Resumed on the same H:\ workstation. Confirmed the local clone is current with GitHub (`main` @ `d6b1ee0`; the `docs/cloth-2026-07-02-corrections` branch is now **merged** — its "4357 gravity inert" claim was properly downgraded by the later shadow-confound commit `7a7e7f7`, so the old "don't merge yet" hold is resolved). Ran a full re-read of the KB + an on-disk state check, then reconciled every passage that still asserted the downgraded param claims or the one-base-copy-per-ID model.
+
+### VERIFIED (new — on-disk state)
+- **The decisive both-patch-forge kilt test has NOT been run.** SHA256 of all three live forges (`DataPC.forge`, `DataPC_patch_01.forge`, `DataPC_TGT_WorldMap_Bootstrap_Split_patch_01.forge`) is **byte-identical** to the `D:\GRB_KnownGood_ForgeBackup_2026-07-02\` known-good set. The staged `90001`/`90002` override is NOT live; the forges are in the clean restored state (the 2026-07-03 03:12 mtimes are from that restore, not a landed edit).
+- **The staged override is intact and ready.** `90001_-_Cloth_FTP_Kilt.data` (304,860 B) + `90002_-_Cloth_0X193A6210EB9.data` (318,759 B), byte-identical pairs, sit in BOTH `Extracted\DataPC_patch_01.forge\` and `Extracted\DataPC_TGT_WorldMap_Bootstrap_Split_patch_01.forge\` (sizes +1/+3 B vs pristine — single-field edit).
+- **Backups intact:** D:\ set hash-verifies; plus `.pre-coattest-backup` / `.pre-ghillietest-backup` files and `_kilt_4398_test_ORIGINALS`. Rollback fully covered.
+- **`Extracted\` root =** `H:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint\Extracted\`. `_kilt_cloth_tests\` holds **8** variant folders (README documents 6; `6_paint_PIN_all0` + `7_paint_FREE_all255` were added 07-03 01:48).
+- ⚠️ **The AnvilToolkit executable was not found on disk** (only the `AnvilToolkit_Release_v1.3.1-…` zip in Downloads) — likely needs re-extracting before the next repack.
+
+### Reconciliation (docs corrected this session)
+Rewrote every passage still asserting "gravity §4357 verified inert" or framing §4398 as "the untested live-candidate" — all now read: nulls **confounded by the forge shadow, unresolved**. Files: `docs/11` (runtime caveat, render↔sim update, open-question 7), `meta/sources.md`, `tools/clothwrap.py` (docstrings + prints), `tools/README.md`. Added the **forge-shadow caveat** to the one-base-copy-per-ID model in `docs/06` (new callout + consequence-rule-1 exception + open-question), `docs/07`, `reference/forge-inventory.md`, `reference/mod-anatomy.md`, `reference/glossary.md` (+ a new **"Forge shadow"** glossary term), and `examples/case-study-usp-tactical.md`. Documented GRB's **BARE `6×byte[V]`** per-vertex paint layout in `docs/11` and `reference/cloth-section-types.md`, and an ATK-vs-GRB divergence caveat in `AGENTS.md`. Added `4359`/`4360`/`4398` to `tools/motioncloth.py` `SECTION_NAMES`. Folded **10 parked leads** into `meta/next-session.md`.
+
+### Questions answered / opened
+- **Answered:** Is the staged test run? **No** (hashes prove it). Are backups safe? **Yes.**
+- **Open (unchanged):** the decisive both-patch-forge test still needs an in-game run; re-extract the ATK exe first; and after the repack, **hash-verify the patch forges actually changed** — ATK dropping never-before-seen IDs (90001/90002) is an unverified risk (fallback = overwrite the existing kilt IDs 34800/34793 rather than mint new ones).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
