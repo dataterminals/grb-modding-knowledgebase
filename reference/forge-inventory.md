@@ -36,7 +36,7 @@ Region/streaming data. Each has a base `_Split.forge` and a `_Split_patch_01.for
 | `DataPC_TGT_WorldMap_Windy_Split.forge` | 554 MB | Region. |
 | `DataPC_TGT_WorldMap_OrphanCells_Split.forge` | 530 MB | Streaming "orphan" cells. |
 | `DataPC_TGT_WorldMap_Egg_Split.forge` | 146.8 MB | Region. |
-| `DataPC_TGT_WorldMap_Bootstrap_Split.forge` | 136.8 MB | World bootstrap/init data. |
+| `DataPC_TGT_WorldMap_Bootstrap_Split.forge` | 136.8 MB | World bootstrap/init data. **Also *shadows* 41 `Cloth` resources** — same 64-bit IDs as in `DataPC.forge` (incl. the kilt, Walker/Hunter coats). Overriding those cloths needs *this* family's `_patch_01` too. See [`../docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md). |
 
 ## GhostRoom / misc forges
 

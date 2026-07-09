@@ -31,19 +31,25 @@ byte-identical.
                                 collapse = all -> cage vertex 0). Tests whether the
                                 wrap actually drives the visible mesh.
   --gravity X,Y,Z               set the DEDICATED gravity vector (ClothPropertiesGravity,
-                                section 4398) on every LOD. NOTE: the gravity field inside
-                                ClothProperties (section 4357) is verified INERT at GRB
-                                runtime (2026-07-02), so this tool now edits 4398 - the
-                                live-candidate. Whether 4398 is itself runtime-effective is
-                                the current OPEN in-game test (see meta/next-session.md);
-                                do NOT treat gravity as a proven control until 4398 is
-                                confirmed to move a loose garment in-game.
+                                section 4398) on every LOD. NOTE: whether ANY gravity edit
+                                affects GRB at runtime is UNRESOLVED - every param edit
+                                tested (gravity 4357 AND 4398, stiffness 4360, wind 4397,
+                                MaxDistance) showed no in-game effect, but all those nulls
+                                are confounded by the FORGE SHADOW (the cloth is duplicated
+                                across DataPC.forge and a WorldMap base forge; only the
+                                DataPC copy was edited). This edits 4398 (the dedicated
+                                field); do NOT treat gravity as a proven control until a
+                                shadow-free both-patch-forge override is tested in-game
+                                (see meta/next-session.md).
 
-*** IN-GAME STATUS (2026-07-02): the wrap-as-render-driver hypothesis is NOT yet
-    validated in-game (ghillie tests were inconclusive). Gravity is also unsettled: the
-    ClothProperties (4357) gravity field is verified INERT at runtime; the dedicated
-    ClothPropertiesGravity (4398) is the untested live-candidate this tool now edits.
-    See docs/11-cloth-and-physics.md and meta/next-session.md. ***
+*** IN-GAME STATUS (2026-07-03): the wrap-as-render-driver hypothesis is NOT yet
+    validated in-game (ghillie tests were inconclusive). Cloth-parameter effectiveness is
+    ALSO unresolved: every param edit (gravity 4357 & 4398, stiffness 4360, wind 4397,
+    MaxDistance) read no in-game change, but all are confounded by a FORGE SHADOW - the
+    cloth is duplicated across DataPC.forge and a WorldMap base forge, and only the DataPC
+    copy was edited. A shadowed cloth must be overridden in BOTH families' patch forges
+    (a single-patch override hangs the load). See docs/11-cloth-and-physics.md and
+    meta/next-session.md. ***
 
 Usage:
   python clothwrap.py cloth.data --oodle oo2core_7_win64.dll                    # inspect
@@ -166,10 +172,10 @@ def diagnostic(payload, mode):
 
 def set_gravity(payload, gx, gy, gz):
     """Return a modified payload with every ClothPropertiesGravity (section 4398,
-    a bare Vector3) set to (gx,gy,gz). Section 4398 is the DEDICATED gravity field and
-    the live-candidate; the gravity inside ClothProperties (4357) is verified INERT at
-    GRB runtime (2026-07-02), so this edits 4398 instead. Whether 4398 is runtime-
-    effective is the current open in-game test (meta/next-session.md). Same size.
+    a bare Vector3) set to (gx,gy,gz). 4398 is the DEDICATED gravity field (distinct from
+    the gravity inside ClothProperties, 4357). Whether EITHER is runtime-effective is
+    UNRESOLVED - the in-game nulls are confounded by the forge shadow (only the DataPC
+    copy was edited); test with a both-patch-forge override before trusting it. Same size.
     (Tip: reverse gravity by negating the vanilla vector, e.g. (0,0,-10) -> (0,0,10),
     for an unmissable hem-up vs hem-down tell on a loose garment.)"""
     buf = payload; n = 0
@@ -187,7 +193,7 @@ def set_gravity(payload, gx, gy, gz):
             buf = buf[:pkg.start] + nb + buf[pkg.end:]
     print(f"  gravity set to ({gx},{gy},{gz}) in {n} ClothPropertiesGravity (4398) section(s)")
     if n == 0:
-        print("  (note: no section-4398 found in this cloth; nothing changed. 4357 is inert - not edited.)")
+        print("  (note: no section-4398 found in this cloth; nothing changed. 4357 not edited.)")
     return buf
 
 
@@ -330,8 +336,10 @@ def main(argv):
     print(f"  wrote {out}")
     print("  -> put this in your unpacked forge folder (same filename as the original")
     print("     entry), repack the forge in ATK on a BACKED-UP install, and load GRB.")
-    print("     NOTE: --gravity edits the dedicated 4398 section (4357 is inert at runtime);")
-    print("     whether 4398 moves a loose garment in-game is the current open test.")
+    print("     NOTE: most cloths are SHADOWED (same ID in DataPC.forge AND a WorldMap base")
+    print("     forge) - to actually override one, place the edit in BOTH families' patch")
+    print("     forges; a single-patch cloth override hangs the load. Whether any cloth")
+    print("     param edit takes effect in-game is unresolved (see meta/next-session.md).")
 
 
 if __name__ == "__main__":
