@@ -40,6 +40,19 @@ Typed resources are what live inside `.data` containers (see [`docs/03-data-and-
 | **LocalizationPackage** | Text/strings table. | XML export/import | ✅ (added 1.2.2) |
 | UI assets (`UI_…`) | Inventory icons / maps, etc. | as TextureMaps | ✅ (observed) |
 
+## Gameplay database records
+
+Item, tool, and gadget definitions — the records behind the item wheel, class tools and consumables. They live in **`Game Bootstrap Settings`** and **`DBContainer`** inside `DataPC[_patch_01].forge`, and are commonly edited **in a hex editor** rather than through ATK, by re-pointing the 64-bit object references they hold. See [`hex-item-swaps.md`](hex-item-swaps.md).
+
+| Type | Description | Notes |
+| --- | --- | --- |
+| **DBToolSetting** | Slot / tool setting — the wrapper binding a wheel slot to an item object. | Observed as `DBItemSetting_HealingItemEssence_Bandages.DBToolSetting` in `0_-_Game Bootstrap Settings.data`. |
+| **HealingItemEssence** | A healing-item object (bandage, syringe tiers). | Observed in `DBContainer`; e.g. `HealingItemEssence_HealingSyringes` / `…SyringesUpgraded`. Sibling `*Essence` types for other item classes are implied but unenumerated. |
+| **GR_WeaponDBEntry** | Weapon item definition. | Appears on disk as an **empty named directory** — see [`mod-anatomy.md`](mod-anatomy.md). |
+| `DBContainerEntry_0X…` | A DB container entry whose name hash ATK could not resolve. | The `0X<HEX>` form is ATK's unresolved-hash rendering, not part of the name. |
+
+> *(observed, not enumerated)* — these come from community tutorials and one live folder listing, not from a dump of `ScimitarClassRegistry`. Their type ids are not yet recorded in [`resource-type-ids.md`](resource-type-ids.md); CRC-32 the type name to derive one.
+
 ## Container / streaming sidecars
 
 | Type | Description | Notes |

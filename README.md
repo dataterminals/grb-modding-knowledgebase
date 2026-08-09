@@ -63,8 +63,11 @@ assets/      Diagrams and supporting images
 | [`docs/09-textures.md`](docs/09-textures.md) | DDS, pixel formats, swizzling, mips, gamma |
 | [`docs/10-meshes-and-skeletons.md`](docs/10-meshes-and-skeletons.md) | Vertex formats, LODs, the glTF pipeline, skeletons |
 | [`docs/11-cloth-and-physics.md`](docs/11-cloth-and-physics.md) | The `.cloth` / MotionCloth format, reverse-engineered from ATK source — sections, tunable properties, how to mod cloth |
+| [`docs/12-localization-and-text.md`](docs/12-localization-and-text.md) | Renaming items, weapons, and any in-game text via `LocalizationPackage` XML |
 
 Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventory.md) · [`reference/resource-types.md`](reference/resource-types.md) · [`reference/resource-type-ids.md`](reference/resource-type-ids.md) · [`reference/buildtable-xml.md`](reference/buildtable-xml.md) · [`reference/cloth-section-types.md`](reference/cloth-section-types.md) · [`reference/mod-anatomy.md`](reference/mod-anatomy.md) · [`reference/glossary.md`](reference/glossary.md)
+
+Techniques and sources: [`reference/hex-item-swaps.md`](reference/hex-item-swaps.md) (swap what an item *does*, in a hex editor) · [`reference/community-tutorials.md`](reference/community-tutorials.md) (index of absorbed Tier 1 Imports tutorials)
 
 ## Tools
 

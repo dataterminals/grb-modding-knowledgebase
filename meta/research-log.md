@@ -656,6 +656,39 @@ New: [`reference/buildtable-xml.md`](../reference/buildtable-xml.md). Updated: `
 
 ---
 
+## Entry — 2026-08-09 (second) — Localization/renaming and hex item swaps; two new technique classes
+
+### What I did
+Continued absorbing *Tier 1 Imports* `#mod-tutorials` threads (guild `1302392670181916722`, forum `1302692674863763586`). The user intends to work through the whole forum, so this session also established [`reference/community-tutorials.md`](../reference/community-tutorials.md) as the thread→page index. Sources:
+
+- **"Renaming ingame items (or basically any visible text you could think of)"** — thread/msg `1485672994138358001`, **ViruS**, 2026-03-23, 14 👍. Full post + 25 replies. Attachment `image.png` on msg `1517910027392909473` read directly (a live `DataPC_patch_01.forge\Extracted` listing).
+- **"How to swap out bandage slot for another item (and do hex item swaps in general)"** — thread/msg `1481311357134704753`, **spncryn**, 2026-03-11, requested by *steven*. Full post + 25 replies, including Tenebrae's clarification.
+
+### VERIFIED (new)
+- **The 64-bit ID model holds in DB records, and the encoding is little-endian.** spncryn's three worked IDs decode as LE uint64: `53 D0 C7 E7 64 01 00 00` → `1532896989267`; `51 77 EB 97 43 01 00 00` → `1389823227729`; `5B B4 BE B4 89 01 00 00` → `1690954544219`. Same magnitude band as ClassIDs verified from other angles (`1707208440119`, `1778867967382`, `1661865036083`). **Independent corroboration of the ID model from hex editing rather than ATK.** Characteristic shape: trailing `01 00 00` / `00 00`, so IDs are visually obvious in a dump.
+- **`0_-_Game Bootstrap Settings.data` has a known purpose now.** It holds `DBToolSetting` slot/tool records (e.g. `DBItemSetting_HealingItemEssence_Bandages.DBToolSetting`); the item objects themselves (`*.HealingItemEssence`) live in `DBContainer`. The entry was previously only a name in `docs/03`.
+- **Live `DataPC_patch_01.forge\Extracted` listing** (13 items, ATK **1.3.4**): `0_-_Game Bootstrap Settings.data`, `1_-_DBContainerEntry_0X104634F921.data`, `23_-_TEAMMATE_Template.data`, `24_-_MIS_Y2E4_Katya_Maksimov.data`, `26_-_TP_BackPacks_Bivouac.data`, `28627_-_WI_ASR_Mk17_CQC.data`, and the seven `LocalizationPackage_English(US)*` containers at `29523 / 44689 / 45089 / 45346 / 45470 / 47002 / 47602`. Independently confirms `23_-_TEAMMATE_Template` and the `Extracted\<forge>.forge\Extracted\` working layout.
+- **English (US) localization is split across seven containers** with stable suffixes `(none) / _E015 / _1L2 / _1E2 / _1E3 / _1L3 / _2E4`. Items are scattered across them and **may appear in more than one** — a partial edit silently fails.
+- **`&` in a localization string corrupts the file** (raw ampersand is invalid XML); the fix is `&amp;`, not avoidance. Cost one modder their work.
+- **ATK renders unresolved *name* hashes as `0X<HEX>`** (`DBContainerEntry_0X104634F921`) — the same convention as `x<HEX>` for field names in BuildTable XML.
+
+### INFERRED (new)
+- The localization suffixes (`_E015`, `_1L2`, `_2E4`, …) look like content/expansion partitions — episode and title-update batches. Unconfirmed.
+- Item swaps succeed between objects sharing an **activation model** and fail otherwise (stealth camo is called out as not swappable). Informal, from practitioner experience.
+
+### Questions answered / opened
+- **Answered — a major usability trap:** a hex item swap changes an item's **function but not its item-wheel icon**. *"it looks like a duck, but it quacks like a lion"* (Tenebrae). The tutorial's requester lost days to this, concluded a working swap had failed, and broke his install trying to fix it. **Test by using the item, not by looking at it.**
+- **Second field case on the renumbering question** (see the first 2026-08-09 entry). Localization edits compiled and repacked correctly but didn't appear; the fix was consolidating the XMLs into one container **renumbered to `1_-_`**, and it worked. Still confounded — the fix bundles consolidation with renumbering — but it's now two independent reports where the leading number coincided with an in-game behaviour change. Recorded in `docs/08` and `docs/12`. **This raises the priority of the controlled test.**
+- **Open — ID byte offset in DB resources.** spncryn says "bytes 1-8"; our `resource-type-ids.md` layout says a payload begins with a `FileHeader` byte, putting the ClassID at offset 1. Either these types write no header byte, or the phrasing is loose. Needs a hex check against a real `.DBToolSetting`.
+- **Open — ATK 1.3.4 is in the wild**; this KB's format facts were decompiled from **1.3.1**. Worth confirming nothing relevant changed before treating 1.3.1 behaviour as current.
+- **Open — Spncryn's BuildTable tutorial** is referenced as the thorough method for cross-category slot moves but has not been located. Tracked in `community-tutorials.md`.
+- **Open — can the item-wheel icon be re-pointed** by the same hex technique, closing the "looks like a duck" gap?
+
+### Docs written this session
+New: [`docs/12-localization-and-text.md`](../docs/12-localization-and-text.md), [`reference/hex-item-swaps.md`](../reference/hex-item-swaps.md), [`reference/community-tutorials.md`](../reference/community-tutorials.md). Updated: `docs/08` (second field case), `reference/resource-types.md` (new "Gameplay database records" section), `README.md`.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
