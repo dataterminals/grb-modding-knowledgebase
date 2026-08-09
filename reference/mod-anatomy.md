@@ -55,6 +55,8 @@ A gear/clothing/hair mod is conceptually two layers:
 
 The folder name **`23_-_TEAMMATE_Template`** (sometimes `23_-_TEAMMATE_Template.data`) is a recurring, important marker — a container (template family **#23**) inside `DataPC.forge`. **Despite the "TEAMMATE" name it is NOT teammate-only** (practitioner correction, 2026-07-02): it is the shared **character-customization template** that worn-gear item definitions route through, and it drives **the player's own character model as well as AI teammates**. Modders drop a gear `.BuildTable` here and it applies to the player, not just squadmates — the folder name is misleading. Treat it as "the customization item-def container," not "the teammate mod folder."
 
+> **Confirmed from live data (2026-08-09).** The folder-name evidence is now corroborated *inside* a real BuildTable: an ATK XML export of a **pants** item resolves its own handle to `Path="DataPC\TEAMMATE_Template\TP_Pants_511Apex.BuildTable"`. The container appears in the engine's own reference path, on a non-teammate-specific garment. Same export shows gender variants carried as `tag_MAL` / `tag_FEM` BuildTable handles — the mechanism behind the `TP_`/`FTP_` pairing noted throughout this document. See [`buildtable-xml.md`](buildtable-xml.md).
+
 Examples routed through `23_-_TEAMMATE_Template`:
 - **`CFLIONNESS_JPCVest`** — one `TP_VestMedium_CryeJPC.BuildTable` + gender-paired TP/FTP meshes + UI map.
 - **`CFLIONNESS_SkinnyJeansX1`** — `TP_PANT_Metal_Punk.BuildTable` (reskins the vanilla "Metal Punk" pants slot).
@@ -74,6 +76,7 @@ A weapon's item-def equivalent is the **`.GR_WeaponDBEntry`**, which appears on 
 | **Vest / torso gear** | DataPC item def (often via `23_-_TEAMMATE_Template`) + DataPC_Resources | `CFLIONNESS_JPCVest`, `Crye AVS`, `acostabisonbattlebelt` | `TP_`/`FTP_` worn meshes (often 60–200 MB). Handled as static/rigged mesh — **no `.cloth`/MotionCloth** seen in these vests. |
 | **Pants** | DataPC item def + DataPC_Resources | `CFLIONNESS_SkinnyJeansX1`, `FemalePants_buildtables` (def-only), `FemalePants_resources` (mesh-only) | Ships both `TP_`+`FTP_` even for "female" items. |
 | **Hair** | DataPC item defs (×N headgear variants) + DataPC_Resources | `Ponytail` | Headgear-compatibility fan-out is the signature. |
+| **Facial hair** | same as hair | *(no sample in this corpus)* | **Beards fan out the same way** — practitioner report, 2025: *"beards are separated by types, meaning the beard that shows up when you're wearing a facemask, a balaclava, helmet with straps, etc are all different, meaning you have to add it to all relevant buildtables."* Doing one BuildTable is not doing the slot. |
 | **Face** | DataPC_Resources only | `Better Faces` (`CP_Wrinkles` normal maps) | Pure texture; **zero item-def work**. |
 | **Camo / texture** | DataPC_Resources only | `Desert Night Camo` (A-TACS LE), `Deckard_ATACSWeaponPaintReplacement` | Base `DiffuseMap` + `_Mip0` pairs; reuses real vanilla resource IDs. |
 | **UI / portrait** | DataPC_Resources only | `Sheva ui` (`UI_FTP_Head_Kunal_Map`) | Single texture swap; `.bak` shows edit-in-place. |
@@ -120,6 +123,20 @@ For every forge-based mod above, install is the same **manual repack** pattern �
    - `extra/` → **`DataPC_extra[_patch_01].forge`**
    - `resources/` / `resource/` / `DataPC_Resources_patch_01.forge/` → **`DataPC_Resources[_patch_01].forge`**
 4. Drop the repacked forge(s) into the game's Data folder, overriding the base/patch forge.
+
+### Fallback routing by file extension (when the mod ships no instructions)
+
+Most mods don't include a readme. The community's default rule — SAMIEVILPUMA's install guide, posted repeatedly in *Tier 1 Imports* `#on-topic` (msgs `1525051213945503844`, `1525059603858194462`, `1525174023540179047`, `1525198009800065235`) — routes by **file extension** instead of folder name:
+
+| File | Goes into | Then repack |
+| --- | --- | --- |
+| `.data` | `DataPC_Resources_patch_01.forge` | `DataPC_Resources_patch_01.forge` |
+| `.buildtable` | `DataPC_patch_01.forge` → `Extracted` → `TEAMMATE_Template` | **`TEAMMATE_Template` first, wait for it, then `DataPC_patch_01.forge`** |
+| `.DB` | `DataPC_patch_01.forge` → `Extracted` → `Dbcontainer` | **`Dbcontainer` first, wait for it, then `DataPC_patch_01.forge`** |
+
+Exceptions the modder is expected to call out: gun mods often specify their own split across all three forges; solid-colour mods name a different BuildTable folder. `.DB` files only show up on gun mods.
+
+> **⚠️ Nested containers repack inside-out.** `TEAMMATE_Template` and `Dbcontainer` are `.data` containers *inside* `DataPC_patch_01.forge` — repack the inner container and let it finish **before** repacking the outer forge, or the forge is rebuilt around a stale container. This two-stage order is easy to miss and is not implied by the folder→family table above.
 
 > ### Use a clean ATK repack — and make sure edited `.data` stays compressed
 > The reliable way to produce a modified forge is to **edit the unpacked working folder and let ATK repack it**. ATK rebuilds the archive's tables/offsets correctly and writes each entry in the game's expected form.

@@ -64,7 +64,7 @@ assets/      Diagrams and supporting images
 | [`docs/10-meshes-and-skeletons.md`](docs/10-meshes-and-skeletons.md) | Vertex formats, LODs, the glTF pipeline, skeletons |
 | [`docs/11-cloth-and-physics.md`](docs/11-cloth-and-physics.md) | The `.cloth` / MotionCloth format, reverse-engineered from ATK source — sections, tunable properties, how to mod cloth |
 
-Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventory.md) · [`reference/resource-types.md`](reference/resource-types.md) · [`reference/resource-type-ids.md`](reference/resource-type-ids.md) · [`reference/cloth-section-types.md`](reference/cloth-section-types.md) · [`reference/glossary.md`](reference/glossary.md)
+Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventory.md) · [`reference/resource-types.md`](reference/resource-types.md) · [`reference/resource-type-ids.md`](reference/resource-type-ids.md) · [`reference/buildtable-xml.md`](reference/buildtable-xml.md) · [`reference/cloth-section-types.md`](reference/cloth-section-types.md) · [`reference/mod-anatomy.md`](reference/mod-anatomy.md) · [`reference/glossary.md`](reference/glossary.md)
 
 ## Tools
 

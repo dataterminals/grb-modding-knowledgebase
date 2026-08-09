@@ -86,6 +86,41 @@ A crucial correction to a widespread assumption: the number before `_-_` in an u
 
 The **real 64-bit file ID is embedded in each resource** (its `ClassID`). ATK reads it from the bytes at repack (`DataFile.CreateForgeEntry` → `ReadClassID`); the leading number is used only to **sort** entries (`OrderBy(GetUntilOrEmptyInt("_-_"))`). Inspect the real ID with [`tools/data_inspect.py`](../tools/data_inspect.py).
 
+## "Renumber your mod files to 1" — what it does and doesn't do
+
+Community practice, repeated constantly in *Tier 1 Imports*: **before installing a mod, rename any file with a high leading number to `1_-_…`.** SAMIEVILPUMA's install guide states it as:
+
+> "If you get mod files (`.data`/`.buildtable`/`.db`) that have high numbers at the start (Like `34253_-_TP_Hoodie` or something) renumber those to 1 … This will ensure that those mod files come first and won't overtake vanilla files, making it easier for you to uninstall or find."
+
+The advice is sound, but **two different claims get conflated** and only one of them is about the game.
+
+### What it genuinely does (disk level)
+
+Renaming prevents a **filename collision in the unpacked working folder**. You unpack a patch forge to `Extracted\<forge>\`, where every entry is a file named `<N>_-_<Name>.<ext>`; then you copy a mod's files in. If a mod file's *exact filename* already exists there, the file manager silently replaces it — destroying whatever entry that was. A unique leading number (or an appended keyword) makes the collision impossible. SamiPuma states this mechanism directly:
+
+> "if you renumber/rename you won't ever overwrite vanilla files" — *(Tier 1 Imports `#on-topic`, msg `1532105102658244873`, 2026-07-29)*
+
+It also does exactly what it says for **housekeeping**: entries are sorted by the leading number on repack (`OrderBy(GetUntilOrEmptyInt("_-_"))`), so `1_-_` files cluster at the top of ATK's list and are easy to find and remove later. This is the same reasoning behind the `77777`/`99999` labels below.
+
+> **Verified:** ATK assigns its own numbers when you drag-and-drop into its Game Explorer, so an in-ATK import and a plain file-copy into `Extracted\` do not behave the same way. Community report: *"ATK kept renumbering them as I dropped them in"* (msg `1532445093724684360`).
+
+### What it does not do (engine level)
+
+**Renumbering does not change what your mod overrides in-game.** Override is keyed on the resource's **embedded 64-bit `ClassID`**, which ATK reads from the file's bytes at repack and ignores the filename number entirely (verified above; see also [`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)). A file carrying a vanilla resource's `ClassID` replaces that vanilla resource whether it is labelled `1_-_`, `34253_-_`, or anything else.
+
+> **⚠️ Common overstatement.** Mods are sometimes shipped with release notes like *"Mod files have been renumbered to 1 to avoid replacing vanilla files"* (msg `1534303468192530723`). If those resources carry vanilla `ClassID`s, they still replace the vanilla entries. **Renaming protects the loose file on disk; only the embedded `ClassID` decides what the game replaces.** Check with [`tools/data_inspect.py`](../tools/data_inspect.py), not the filename.
+
+### Unresolved: does it ever change in-game outcome?
+
+Field reports do not fully agree, and no controlled test has been run:
+
+- *"One of my vests wouldn't show either — it only showed the UI until I renumbered the vest it replaces. After that I was able to use the modded vest."* (msg `1533008421249482883`)
+- *"all these mods work fine for me even without renumbering"*, and separately, people who *"had issues even when they did the renumbering"* (msgs `1533475170650685440`, `1533475558418157600`)
+
+The disk-collision mechanism above explains the first report without any engine involvement (a colliding copy clobbering an entry the mod needed). The one place ordering could plausibly reach the engine is **two entries with the same real ID inside one forge**, where write order — which the leading number controls — would decide the winner. Vanilla forges contain **zero** duplicate IDs, and peer-forge priority is still open ([`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)).
+
+> **Open question.** Reproduce the vest case: install a mod that fails to appear, confirm via `data_inspect.py` whether a filename collision occurred, then renumber and re-test. That distinguishes "renaming avoided a disk collision" from "ordering changed what the engine resolved." Until then, treat renumbering as **good hygiene with a proven disk-level rationale** and an **unproven engine-level one**.
+
 ## The `77777` convention — a filename label, not a shared ID (resolved)
 
 In many weapon mods, **every new mesh file is *named* `77777_-_…`**:

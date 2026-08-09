@@ -78,6 +78,8 @@ A BuildTable is a serialized binary object graph. Hex from a real one (`295_-_He
 
 Notice the recurring 8-byte pattern `50 51 30 A6 9A 01 00 00` — these are **64-bit file references** (IDs of other resources the BuildTable points at). A BuildTable is essentially a node graph of references: "this head = this mesh + this material + this texture set + these properties." ATK can export BuildTables to **XML**, which is human-editable, and recompile them back.
 
+The XML side of that round-trip is documented element-by-element in [`reference/buildtable-xml.md`](../reference/buildtable-xml.md), from a real ATK export — including the two distinct ID spaces inside the document (the root's real 64-bit resource ID vs. file-local `0xF8000000+` object handles) and the community procedure for moving a mod onto a different gear slot.
+
 > This is why mods so often ship a tiny BuildTable `.data` *and* a heavy Resources `.data`: the BuildTable says "use my new mesh/texture," and the Resources forge supplies the actual bytes. See [`05-three-forge-model.md`](05-three-forge-model.md).
 
 ## File IDs are the real identity

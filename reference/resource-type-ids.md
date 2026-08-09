@@ -63,6 +63,7 @@ Values are decimal (as stored) and hex. Full map: `ScimitarClassRegistry` in the
 | ID (dec) | ID (hex) | Type |
 | ---: | --- | --- |
 | `585940579` | `0x22ECBE63` | **BuildTable** |
+| `3966419799` | `0xEC6AC357` | **GraphicObject** |
 | `2535097390` | `0x971A842E` | EntityBuilder |
 | `2866750051` | `0xAADF2263` | EntityGroupBuilder |
 | `1849465967` | `0x6E3C9C6F` | LocalizationPackage |
@@ -102,6 +103,19 @@ The GRB **garment cloth** resource is typed **`Cloth`** (not a standalone "Cloth
 > ```
 >
 > The `ClothPackage → MotionBody → MotionSection` layer is the MotionCloth format documented in [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md) and [`cloth-section-types.md`](cloth-section-types.md). **Empirically confirmed:** `1687_-_TP_Top_Bodark_Trench_Cloth.data` contains one resource whose embedded `Extension = 3811591354` (`Cloth`).
+
+## The same ids appear inside BuildTable XML (verified)
+
+The type-id space is not confined to `.data` records. In ATK's **BuildTable XML export**, each `DynamicProperty` names its slot's type with the identical `CRC32(typeName)` value, and ATK resolves it into a `HashName` attribute:
+
+```xml
+<Value Name="DataType" Type="UInt32" HashName="GraphicObject">3966419799</Value>
+<Value Name="DataType" Type="UInt32" HashName="BuildTable">585940579</Value>
+```
+
+Both check out: `zlib.crc32(b"GraphicObject") = 3966419799`, `zlib.crc32(b"BuildTable") = 585940579`. So when reading a BuildTable you can decode `DataType` with this table — it tells you what *kind* of resource that slot expects. Layout and worked example: [`buildtable-xml.md`](buildtable-xml.md).
+
+> Note the contrast with **`x`-prefixed names** in the same exports (`x73B5D0A0`, `x67660D91`): those are *field-name* hashes ATK could **not** resolve, printed as `x<HEX>`. A resolved `HashName` means the hash was in the dictionary; an `x…` name means it wasn't.
 
 ## Reproducing / extending this table
 

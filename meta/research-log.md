@@ -620,6 +620,42 @@ Rewrote every passage still asserting "gravity §4357 verified inert" or framing
 
 ---
 
+## Entry — 2026-08-09 — BuildTable XML structure; the "renumber to 1" practice, disambiguated
+
+### What I did
+Followed up a *Tier 1 Imports* screenshot the user asked about ("renumber mod files to 1"), then read the source material via the Discord bridge. Primary sources, all **Tier 1 Imports** (guild `1302392670181916722`):
+
+- **`#mod-tutorials`** thread *"Super short and simple way to move mods to another slot"* — msg/thread `1414435798090256437`, by **SAMIEVILPUMA**, 2025-09-08, 38 👍. Full 10-step procedure + **two screenshots of a real ATK BuildTable XML export** (`Screenshot_2025-06-17_211627.png`, `…211641.png` — `0_-_TP_Pants_511Apex.xml`, `tool="AnvilToolkit" toolVersion="1.2.10"`). Both images read directly.
+- **`#on-topic`** install guide, posted ≥4× — msgs `1525051213945503844`, `1525059603858194462`, `1525174023540179047`, `1525198009800065235`. The "Small advice" renumbering block is the tail of *this* guide, not of the slot-move thread.
+- Renumbering field reports: `1532105102658244873` (SamiPuma states the mechanism), `1533008421249482883` (adrian), `1533475170650685440` / `1533475558418157600` (Jen Jen), `1532445093724684360` (DeckardX, ATK renumbers on drag-drop), `1534303468192530723` (Lucklens release note). A guild search for "renumber" returns **151** hits — this is high-traffic practice, not a fringe habit.
+
+### VERIFIED (new)
+- **BuildTable XML has two distinct ID spaces.** The root `<BuildTable ID="1778867967382">` and every `Handle`/`FileReference` value are **real 64-bit resource IDs** (embedded `ClassID`s). But `ID=` on `BuildColumn` / `PropertyPath` / `RowSelector` / `BuildTags` is a **file-local serialization handle**, allocated as a sequential counter from **`0xF8000000`**: observed `4160749568/69/70/71/72` = `0xF8000000`–`0xF8000004` and `4160749580/81` = `0xF800000C`/`0xF800000D`. This is exactly why the slot-move procedure works — you swap the body, keep the root ID, and the game still resolves the destination slot.
+- **`CRC32(typeName)` type ids appear inside BuildTable XML**, in `DynamicProperty` → `<Value Name="DataType" … HashName="…">`. Confirmed `zlib.crc32(b"GraphicObject") = 3966419799` matching `HashName="GraphicObject"`, and `BuildTable = 585940579` (already known). Added **`GraphicObject` / `3966419799` / `0xEC6AC357`** to [`reference/resource-type-ids.md`](../reference/resource-type-ids.md).
+- **ATK prints unresolved *field-name* hashes as `x<HEX>`** — `x73B5D0A0` (`1941295264`), `x67660D91` (`1734741393`) in the same export. Distinct from a resolved `HashName`.
+- **`TEAMMATE_Template` confirmed from live data, not folder names.** A *pants* BuildTable resolves its own handle to `Path="DataPC\TEAMMATE_Template\TP_Pants_511Apex.BuildTable"`. Also visible: gender variants as `tag_MAL` / `tag_FEM` BuildTable handles (IDs `516281366872` / `…871`).
+- **ATK's XML round-trip is: double-click `.buildtable` → save → sibling `.xml`; right-click `.xml` → Compile → BuildTable.**
+- **Nested containers repack inside-out** — `TEAMMATE_Template` / `Dbcontainer` first, wait, *then* `DataPC_patch_01.forge`. Explicit in the install guide; was absent from our workflow docs.
+- **ATK assigns its own leading numbers on drag-and-drop into the Game Explorer**, so an in-ATK import and a plain file-copy into `Extracted\` do not behave the same way.
+
+### INFERRED (new)
+- The `Type` UInt32 on `DynamicProperty` (`0x1C0000`, `0x120000` — both `<byte> << 16`) is a slot/usage code. Unknown.
+- `BuildColumn`/`DynamicProperty` `Index` values are sparse (`1, 2, 10`; `13, 18`) → meaningful slot numbers, not positions.
+- `ForceBuiltTableTOCOrder` (empty in this sample) implies an explicit TOC-ordering override for built tables.
+
+### Questions answered / opened
+- **Corrected an over-strong claim made earlier this session.** I initially judged *"renumber to 1 so mod files won't overtake vanilla files"* simply **false**, reasoning that override is `ClassID`-keyed and the leading number is only a sort label. The engine-level reasoning is right, but it answers the wrong claim: SamiPuma means **filesystem overwrite in the unpacked working folder** — *"if you renumber/rename you won't ever overwrite vanilla files"* (`1532105102658244873`). Copying a mod file whose exact `<N>_-_<Name>.<ext>` filename already exists in `Extracted\` silently replaces that entry. Renaming genuinely prevents that. Both layers are now written up in [`docs/08-naming-conventions.md`](../docs/08-naming-conventions.md).
+- **Still an overstatement in the other direction:** mods shipped as *"renumbered to 1 to avoid replacing vanilla files"* (`1534303468192530723`) will still override vanilla if their resources carry vanilla `ClassID`s. Renaming protects the file on disk; only the embedded `ClassID` decides what the game replaces.
+- **Open — does renumbering ever change in-game outcome?** Field reports conflict (a vest that showed UI-only until renumbered, vs. mods that work either way, vs. mods that fail even after). The disk-collision mechanism explains the positive report without engine involvement. The only plausible engine path is two entries sharing a real ID inside one forge, where write order (which the leading number controls) decides — but vanilla forges have zero duplicate IDs, and peer priority is still open. **Test:** reproduce the vest case, use `data_inspect.py` to check for a filename collision before renumbering.
+- **Open (BuildTable):** the `Type` code; whether `ForceBuiltTableTOCOrder` is ever populated; resolve `x73B5D0A0`/`x67660D91`; whether the copy boundaries hold for non-gear BuildTables (weapons via `dbcontainer`, solid-colour mods). Only one export (pants, ATK 1.2.10) has been seen — a second category would confirm which elements are universal.
+- **Beards fan out like hair** across headgear-compatibility variants — every relevant BuildTable must be edited. Recorded in [`reference/mod-anatomy.md`](../reference/mod-anatomy.md); no sample in the 18-mod corpus.
+- **Bridge limitation noted:** Discord message bodies truncated at ~1500 chars until the user updated VCB mid-session; the full procedure came through afterwards.
+
+### Docs written this session
+New: [`reference/buildtable-xml.md`](../reference/buildtable-xml.md). Updated: `docs/03` (cross-link), `docs/07` (nested repack order, collision warning, BuildTable XML pointer), `docs/08` (new "Renumber your mod files to 1" section), `reference/resource-type-ids.md` (`GraphicObject` + BuildTable-XML usage), `reference/mod-anatomy.md` (TEAMMATE_Template confirmation, beards row, extension-routing table + inside-out repack), `README.md` (reference index).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
