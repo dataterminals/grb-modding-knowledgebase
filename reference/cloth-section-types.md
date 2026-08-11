@@ -1,8 +1,10 @@
 # Reference — MotionCloth section types
 
-Complete `SectionTypeID → class` map for GRB's MotionCloth format, transcribed directly from `MotionSectionFactory.ReadSection` in ATK v1.3.1 (decompiled). Each section in a `MotionBody` starts with `uint16 TypeID`, `uint16 0xECD7 (60631)`, `int32 SizeIncludingHeader`. See [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md) for the format.
+Complete `SectionTypeID → class` map **as modelled by ATK** — transcribed directly from `MotionSectionFactory.ReadSection` in ATK v1.3.1 (decompiled). Each section in a `MotionBody` starts with `uint16 TypeID`, `uint16 0xECD7 (60631)`, `int32 SizeIncludingHeader`. See [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md) for the format.
 
 > IDs are decimal as they appear in the source. Sections not listed fall through to `UnknownSection` (preserved verbatim by ATK). "sized by" means the section's length is computed from an earlier counter section rather than self-describing.
+
+> **⚠️ This map is complete for ATK, NOT for GRB (verified 2026-08-09).** `MotionSectionFactory.ReadSection` has **64** `case` entries, but a sweep of **156 cloth bodies across 81 GRB cloth resources** found **86 distinct section types in use — 22 of which ATK does not model at all.** Those 22 are real, populated GRB sections that fall through to `UnknownSection`; ATK preserves their bytes but cannot interpret them. Because this KB's section knowledge was transcribed *from ATK*, those 22 have been invisible to every earlier pass. See [Sections GRB uses that ATK does not model](#sections-grb-uses-that-atk-does-not-model) below — **this is where the render↔sim binding most plausibly lives.**
 
 ## Body (rigid) sections
 
@@ -24,7 +26,7 @@ Complete `SectionTypeID → class` map for GRB's MotionCloth format, transcribed
 | ---: | --- | --- |
 | 4353 | `ClothType` | |
 | 4354 | `ClothUserData` | holds `UserVerticesCount` (sizes several buffers) |
-| 4356 | `ClothDefinition` | **feature flags** (UseWind, UseTearing, UseClustering, …) |
+| 4356 | `ClothDefinition` | **feature flags** (UseWind, UseTearing, UseClustering, …) + `sbyte MeshMappingsCount` at offset **24**. 40 B in all 156 GRB bodies; `MeshMappingsCount` ∈ {1, 2, 3} (see §4395 below). Also carries `UseMeshMappingTangentSpace` (**true in all 156**) and `UseMappingOnGPU`. |
 | 4357 | `ClothProperties` | **simulation tunables** (Gravity, Damping, Friction, …) |
 
 ## Constraints & solver
@@ -62,13 +64,33 @@ Complete `SectionTypeID → class` map for GRB's MotionCloth format, transcribed
 
 | ID | Class | Notes |
 | ---: | --- | --- |
-| 4395 | `ClothPropertiesMeshMappings` | binds cloth to garment mesh (key for attachment) |
+| 4395 | `ClothPropertiesMeshMappings` | **`bool[64]` `MeshMappingsEnabled` — an enable bitmap, NOT a mapping table.** See below. |
 | 4396 | `ClothPropertiesLod` | LOD config |
 | 4397 | `ClothPropertiesWind` | wind response |
 | 4398 | `ClothPropertiesGravity` | `Vector3` gravity (default 0,0,−10) |
 | 4399 | `ClothPropertiesAzimuthAnimation` | |
 | 4400 | `ClothPropertiesInclinationAnimation` | |
 | 4401 | `ClothPropertiesRadiusAnimation` | |
+
+### §4395 `ClothPropertiesMeshMappings` — decoded (verified 2026-08-09)
+
+> **Verified (ATK source + 156-body corpus sweep).** ATK's reader is literally `for (i = 0; i < 64; i++) MeshMappingsEnabled[i] = br.ReadBoolean();` — the payload is a **fixed 64-byte array of booleans**, one per mesh-mapping slot. Payload length is **64 bytes in all 156 bodies**, no exceptions.
+>
+> **It does not contain any mapping data.** It only says *which* mapping slots are on. In all of vanilla GRB only two distinct values occur:
+>
+> | `MeshMappingsEnabled` | bodies | `ClothDefinition.MeshMappingsCount` |
+> | --- | ---: | --- |
+> | slot `0` only | 6 | 1 |
+> | slot `0` only | 123 | 2 |
+> | slots `0` and `1` | 27 | 3 |
+>
+> Slots `2–63` are **never** used in vanilla. The engine therefore supports up to **64** mesh mappings per cloth body while shipped content uses 1–2.
+>
+> **The relationship to `MeshMappingsCount` (§4356) is deterministic but not an identity** — `MMC=1` and `MMC=2` both yield exactly one enabled slot. Why the count exceeds the enabled-slot total for `MMC∈{2,3}` is **unresolved**; a plausible-but-unverified reading is that the final declared slot is implicit/reserved.
+>
+> **§4395 occurs TWICE per `MotionBody`**, paired with the two `ClothProperties` (§4357) blocks, and **both copies are byte-identical** in every body examined. A tool that edits only the first copy will produce an inconsistent resource.
+>
+> ⚠️ **Consequence for the rebind goal: this section is not the rebind lever.** It is a gate, not a binding. Whatever the mappings *are*, their payload is stored elsewhere — see [Sections GRB uses that ATK does not model](#sections-grb-uses-that-atk-does-not-model).
 
 ## Presets & colliders
 
@@ -112,10 +134,18 @@ Complete `SectionTypeID → class` map for GRB's MotionCloth format, transcribed
 | ID | Class | Notes |
 | ---: | --- | --- |
 | 4657 | `ClothEditorData` | |
-| 4658 | `ClothEditorDataClothID` | the cloth's editor ID (attachment) |
+| 4658 | `ClothEditorDataClothID` | **null-terminated string; EMPTY in all 156 vanilla bodies.** See below. |
 | 4659 | `ClothEditorDataVisibility` | |
 | 4661 | `ClothEditorDataCollisionEnabledColliders` | |
 | 4662 | `ClothEditorDataPresetsNames` | named presets |
+
+### §4658 `ClothEditorDataClothID` — decoded (verified 2026-08-09)
+
+> **Verified (ATK source + corpus sweep).** ATK reads it as `ClothID = br.ReadNullTerminatedString()` — it is a **string**, not a numeric resource ID. In **all 156 vanilla bodies** the payload is a **single `0x00` byte**, i.e. **the empty string**.
+>
+> This is **authoring-time editor metadata that GRB ships blank.** It carries no reference to a mesh, a skeleton, or another resource, and it is *not* a `ClassID`. An earlier note in this file described it as "the cloth's editor ID (attachment)" — that framing implied a binding role it does not have.
+>
+> ⚠️ **Consequence for the rebind goal: this section is not the rebind lever either.** There is nothing here to repoint.
 
 ## Strips untwisting
 
@@ -123,3 +153,52 @@ Complete `SectionTypeID → class` map for GRB's MotionCloth format, transcribed
 | ---: | --- | --- |
 | 4833 | `ClothStripsUntwistingIndicesCount` | sizes 4834 |
 | 4834 | `ClothStripsUntwistingIndices` | `ushort[]`, sized by 4833 |
+
+## Sections GRB uses that ATK does not model
+
+> **Verified 2026-08-09** by sweeping every `*Cloth*.data` under the game's `Extracted\` tree: **205 files seen, 81 containing real `ClothPackage`s, 156 `MotionBody`s**. Those bodies use **86 distinct section types**; `MotionSectionFactory.ReadSection` handles **64**. The **22** below are populated in real GRB cloths and have **no ATK class** — they fall through to `UnknownSection`.
+>
+> This matters more than a gap in a table: everything this KB knows about cloth sections was transcribed from ATK, so **these 22 have never been looked at.** They are the natural place for the render↔sim mapping that §4395 merely *enables* and §4356 merely *counts*.
+
+`V` = sim vertex count, `T` = sim triangle count for the body. "n" = occurrences across the 156-body corpus.
+
+| ID | n | Payload size | Shape |
+| ---: | ---: | --- | --- |
+| 4374 | 333 | 19 B | constant |
+| 4376 | 333 | 12 B | constant |
+| 4377 | 333 | 12 B | constant |
+| 4379 | 333 | 12 B | constant |
+| 4380 | 333 | 12 B | constant |
+| 4386 | 183 | 41–43 B | near-constant |
+| 4389 | 333 | varies (64, 80, 96, …) | multiple of 16 |
+| 4390 | 333 | varies (32, 48, 64, …) | multiple of 16 |
+| 4391 | 333 | varies (64, 80, 96, …) | multiple of 16 |
+| 4392 | 333 | varies (32, 48, 64, …) | multiple of 16 |
+| 4393 | 333 | varies (64, 80, 90, …) | |
+| **4403** | 156 | 12 B | **counter** for 4404 |
+| **4404** | 156 | varies (448, 688, 1280, …) | **4-byte elements** |
+| **4405** | 156 | 12 B | **counter** for 4406 |
+| **4406** | 156 | varies (224, 352, 640, …) | **2-byte elements**, same count as 4404 |
+| **4407** | 156 | 12 B | **counter** for 4408 |
+| **4408** | 156 | = 4404 exactly | second copy of the 4404 pair |
+| **4409** | 156 | 12 B | **counter** for 4410 |
+| **4410** | 156 | = 4406 exactly | second copy of the 4406 pair |
+| 4414 | 127 | varies (892, 1372, 2560, …) | large |
+| 4445 | 79 | varies (48, 80, 112, …) | |
+| 4660 | 63 | varies (1, 216, 258, …) | |
+
+### The 4403–4410 block — best remaining binding candidate
+
+> **Verified:** four `12-byte counter → variable buffer` pairs, present **exactly once per `MotionBody` in all 156 bodies**. `size(4404) == size(4408)` and `size(4406) == size(4410)` in every body, and `size(4404) == 2 × size(4406)` — i.e. **two parallel structures, each a 4-byte-element array alongside a 2-byte-element array of the same length.** That is the classic shape of an index+payload mapping table, and *two* of them echoes the 1–2 enabled slots in §4395.
+>
+> **Element counts are far larger than the simulation mesh** and do not track `V` or `T` by any fixed ratio:
+>
+> | Cloth | `V` | `T` | `4404 ÷ 4` |
+> | --- | ---: | ---: | ---: |
+> | `TP_WalkerCoat_Cloth` LOD0 | 170 | 288 | 636 |
+> | `IanBlake_TrenchCoat_Cloth` LOD0 | 186 | 305 | 1124 |
+> | `Cloth_ArcturusGhostGhillieHood` LOD0 | 107 | 190 | 18 972 |
+>
+> ⚠️ **Inferred, NOT confirmed — do not treat as the binding yet.** The decisive check available today came out **negative**: the KB records `TP_WalkerCoat` LOD0 as **1816 render vertices** vs 170 sim, but its `4404` holds **636** elements — so this is *not* a one-entry-per-render-vertex table. It is some intermediate structure of unknown meaning. What is established is only that these buffers are render-scale rather than sim-scale, are structured as paired index/payload arrays, and have never been examined.
+>
+> **Next step:** these sections have no ATK reader to crib from, so decoding them means working from the bytes directly (as with the wrap records) — start with the 12-byte counters (`4403`/`4405`/`4407`/`4409`, presumably 3×`int32`) and see whether their fields predict the buffer lengths.

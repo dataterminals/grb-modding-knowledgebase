@@ -68,7 +68,9 @@ only the embedded `ClassID` decides what the game replaces.
   `FileHeader` byte, putting the ClassID at offset 1. Either these types write no header byte or
   the phrasing is loose. Needs a hex check against a real `.DBToolSetting`.
 - **ATK 1.3.4 is in the wild**; this KB's format facts were decompiled from **1.3.1**. Confirm
-  nothing relevant changed before treating 1.3.1 behaviour as current.
+  nothing relevant changed before treating 1.3.1 behaviour as current. *(Partly settled 2026-08-09:
+  the build installed on this machine — `E:\Anvil Toolkit\` — **is 1.3.1**, so KB facts match the
+  tool actually in use. A 1.3.4 build still hasn't been examined.)*
 - **BuildTable unknowns:** the `Type` UInt32 slot/usage code (`0x1C0000`, `0x120000`); whether
   `ForceBuiltTableTOCOrder` is ever populated; resolve field-name hashes `x73B5D0A0` /
   `x67660D91`. Only **one** export has been seen (pants, ATK 1.2.10) — a second category (weapons
@@ -130,15 +132,27 @@ payoff.
 
 **Directly on the rebind goal (route A):**
 
-1. **`§4395 ClothPropertiesMeshMappings` + `§4658 ClothEditorDataClothID` are undecoded.** Flagged
-   "top cloth priority" on 2026-06-30 as the mesh/skeleton *attachment* sections, then abandoned
-   for the wrap hunt. `reference/cloth-section-types.md` itself calls 4395 "key for attachment"
-   with no layout. Plausibly the exact rebind lever — decode them.
+1. ~~**`§4395` + `§4658` are undecoded… plausibly the exact rebind lever.**~~ **CLOSED 2026-08-09 —
+   negatively. Do not re-open.** Both decoded from ATK source + a 156-body corpus sweep: §4395 is a
+   `bool[64]` **enable bitmap** (a gate, no binding data), §4658 is a **null-terminated string that
+   is empty in every vanilla body**. Neither is the rebind lever. Full write-ups in
+   [`cloth-section-types.md`](../reference/cloth-section-types.md).
+1b. **⭐ NEW top candidate — the 22 sections ATK does not model.** The same sweep found GRB cloths
+   use **86** section types while ATK's `MotionSectionFactory` handles **64**; the other **22** hit
+   `UnknownSection`. Since this KB's section knowledge was transcribed *from ATK*, they have never
+   been looked at. Best sub-target: the **4403–4410 block** — four `12-byte counter → variable
+   buffer` pairs, once per body in all 156, with `size(4404)==2×size(4406)` (paired index+payload
+   arrays). ⚠️ **Render-scale but NOT one-per-render-vertex** — Walker LOD0 has 1816 render verts
+   vs 636 elements in `4404`, so the obvious reading is already disproven. No ATK reader exists;
+   decode from bytes, starting with the 12-byte counters (presumably 3×`int32`).
 2. **Vanilla rebind precedent — the cheapest route-A experiment.**
-   `1687_-_TP_Top_Bodark_Trench_Cloth` reuses `Sim_Tsec_IanBlake_Trench` (the identical 186-vert /
-   305-tri sim mesh) — proof one sim mesh already serves two garments in vanilla. Try a **repoint**
-   (make a second item reference an existing cloth whose sim mesh matches) *before* attempting to
-   re-encode a wrap. No new encoder needed.
+   `1687_-_TP_Top_Bodark_Trench_Cloth` carries `Sim_Tsec_IanBlake_Trench_LOD0` at the identical
+   **186-vert / 305-tri** geometry as `30291_-_IanBlake_TrenchCoat_Cloth` — confirmed 2026-08-09.
+   ⚠️ **Refinement:** the sim-mesh name suffixes differ (`0x1DE8F05F3C9` vs `0x15FE3444A17`), so
+   it is a **copy, not a shared reference** — vanilla does *not* demonstrate one cloth serving two
+   items. Bodark also declares `MeshMappingsCount=1` and ships LOD0 only, vs IanBlake's `3` with
+   two LODs. Still the cheapest experiment: try a **repoint** (make a second item reference an
+   existing cloth whose sim mesh matches) before attempting to re-encode a wrap.
 3. **Wrap-collapse validation on the kilt.** Once STEP 1 proves an override loads, run
    `clothwrap.py --diagnostic collapse/twist` on the kilt via the same both-patch pattern. If the
    visible mesh visibly scrambles, the wrap **is** the render driver → the route-A encoder is worth

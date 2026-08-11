@@ -32,25 +32,65 @@ import sys, os, struct
 
 MAGIC = 0xECD7
 
+# Complete SectionTypeID -> class map from ATK v1.3.1 MotionSectionFactory.ReadSection
+# (64 cases). NOTE: GRB cloths also use 22 section types ATK does NOT model - those are
+# listed in UNMODELED_BY_ATK below and print as "#<id>". See
+# reference/cloth-section-types.md, "Sections GRB uses that ATK does not model".
 SECTION_NAMES = {
-    513: "NamedObjectName", 4353: "ClothType", 4354: "ClothUserData",
+    513: "NamedObjectName",
+    3073: "BodyType", 3074: "BodyIndexInIsland", 3076: "BodyUserData",
+    3077: "BodyBroadPhase", 3078: "BodyData", 3080: "BodyColor",
+    3083: "BodyTransform", 3085: "BodyIndexInIslandExtra",
+    4353: "ClothType", 4354: "ClothUserData",
     4356: "ClothDefinition", 4357: "ClothProperties",
-    4363: "ClothVerticesCurrentPosition", 4364: "ClothConstraintsSizes",
-    4365: "ClothConstraints", 4370: "ClothMeshIndexBufferSize",
-    4371: "ClothMeshIndexBuffer", 4381: "ClothStretchingConstraintsCount",
-    4394: "ClothStretchingConstraints", 4395: "ClothPropertiesMeshMappings",
     4359: "ClothPropertiesConstraintsEnable",
     4360: "ClothPropertiesConstraintsStiffness",
+    4361: "ClothEngineLoopStepCount", 4362: "ClothEngineLoop",
+    4363: "ClothVerticesCurrentPosition", 4364: "ClothConstraintsSizes",
+    4365: "ClothConstraints", 4366: "ClothConstraintsSIMDF8",
+    4369: "ClothMeshConstraintsOptimizedCount",
+    4370: "ClothMeshIndexBufferSize", 4371: "ClothMeshIndexBuffer",
+    4373: "ClothAABox",
+    4378: "ClothPropertiesConstraintsCorrectionFactors",
+    4381: "ClothStretchingConstraintsCount",
+    4382: "ClothMeshAABBTree",
+    4384: "ClothMeshHasVertexAABBTree", 4385: "ClothMeshHasTriangleAABBTree",
+    4387: "ClothMeshConstraintsSizes", 4388: "ClothMeshConstraints",
+    4394: "ClothStretchingConstraints",
+    4395: "ClothPropertiesMeshMappings",   # bool[64] enable bitmap - NOT a mapping table
+    4396: "ClothPropertiesLod",
     4397: "ClothPropertiesWind", 4398: "ClothPropertiesGravity",
-    4433: "ClothPresets",
+    4399: "ClothPropertiesAzimuthAnimation",
+    4400: "ClothPropertiesInclinationAnimation",
+    4401: "ClothPropertiesRadiusAnimation",
+    4415: "ClothConstraintsScaleFactor",
+    4433: "ClothPresets", 4434: "ClothPresetsCount",
+    4435: "ClothPresetDefinition", 4436: "ClothPresetBufferSize",
+    4443: "ClothPresetDefinitionPerVertexData",
+    4444: "ClothPresetPerVertexDataSize",
+    4465: "ClothRegisteredCollidersCount",
     4529: "ClothPerVertexDataDefinition", 4530: "ClothPerVertexDataCounters",
-    4531: "ClothPerVertexDataBuffer",
+    4531: "ClothPerVertexDataBuffer", 4532: "ClothPerVertexDataSIMDF8",
     4561: "ClothAdditionalVerticesCounters",
     4562: "ClothAdditionalVerticesTriangleVerticesCount",
     4563: "ClothAdditionalVerticesTriangleFirstVertexIndex",
     4564: "ClothAdditionalVerticesBarycentricCoordinatesParameters",
     4565: "ClothAdditionalVerticesBarycentricCoordinatesData",
-    4658: "ClothEditorDataClothID",
+    4657: "ClothEditorData",
+    4658: "ClothEditorDataClothID",         # null-terminated string, EMPTY in all vanilla
+    4659: "ClothEditorDataVisibility",
+    4661: "ClothEditorDataCollisionEnabledColliders",
+    4662: "ClothEditorDataPresetsNames",
+    4833: "ClothStripsUntwistingIndicesCount",
+    4834: "ClothStripsUntwistingIndices",
+}
+
+# Present in real GRB cloths, but NO ATK class parses them (they hit UnknownSection).
+# 4403/4405/4407/4409 are 12-byte counters for the variable buffers 4404/4406/4408/4410;
+# that block is the leading unexamined candidate for the render<->sim mapping.
+UNMODELED_BY_ATK = {
+    4374, 4376, 4377, 4379, 4380, 4386, 4389, 4390, 4391, 4392, 4393,
+    4403, 4404, 4405, 4406, 4407, 4408, 4409, 4410, 4414, 4445, 4660,
 }
 
 

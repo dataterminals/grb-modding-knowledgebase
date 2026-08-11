@@ -609,7 +609,7 @@ Resumed on the same H:\ workstation. Confirmed the local clone is current with G
 - **The staged override is intact and ready.** `90001_-_Cloth_FTP_Kilt.data` (304,860 B) + `90002_-_Cloth_0X193A6210EB9.data` (318,759 B), byte-identical pairs, sit in BOTH `Extracted\DataPC_patch_01.forge\` and `Extracted\DataPC_TGT_WorldMap_Bootstrap_Split_patch_01.forge\` (sizes +1/+3 B vs pristine — single-field edit).
 - **Backups intact:** D:\ set hash-verifies; plus `.pre-coattest-backup` / `.pre-ghillietest-backup` files and `_kilt_4398_test_ORIGINALS`. Rollback fully covered.
 - **`Extracted\` root =** `H:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint\Extracted\`. `_kilt_cloth_tests\` holds **8** variant folders (README documents 6; `6_paint_PIN_all0` + `7_paint_FREE_all255` were added 07-03 01:48).
-- ⚠️ **The AnvilToolkit executable was not found on disk** (only the `AnvilToolkit_Release_v1.3.1-…` zip in Downloads) — likely needs re-extracting before the next repack.
+- ~~⚠️ **The AnvilToolkit executable was not found on disk** (only the `AnvilToolkit_Release_v1.3.1-…` zip in Downloads) — likely needs re-extracting before the next repack.~~ **WRONG — corrected 2026-08-09:** ATK is installed and in active use at **`E:\Anvil Toolkit\AnvilToolkit.exe`** (v1.3.1). The 07-09 search simply never covered `E:\`. No re-extraction is needed before a repack.
 
 ### Reconciliation (docs corrected this session)
 Rewrote every passage still asserting "gravity §4357 verified inert" or framing §4398 as "the untested live-candidate" — all now read: nulls **confounded by the forge shadow, unresolved**. Files: `docs/11` (runtime caveat, render↔sim update, open-question 7), `meta/sources.md`, `tools/clothwrap.py` (docstrings + prints), `tools/README.md`. Added the **forge-shadow caveat** to the one-base-copy-per-ID model in `docs/06` (new callout + consequence-rule-1 exception + open-question), `docs/07`, `reference/forge-inventory.md`, `reference/mod-anatomy.md`, `reference/glossary.md` (+ a new **"Forge shadow"** glossary term), and `examples/case-study-usp-tactical.md`. Documented GRB's **BARE `6×byte[V]`** per-vertex paint layout in `docs/11` and `reference/cloth-section-types.md`, and an ATK-vs-GRB divergence caveat in `AGENTS.md`. Added `4359`/`4360`/`4398` to `tools/motioncloth.py` `SECTION_NAMES`. Folded **10 parked leads** into `meta/next-session.md`.
@@ -686,6 +686,36 @@ Continued absorbing *Tier 1 Imports* `#mod-tutorials` threads (guild `1302392670
 
 ### Docs written this session
 New: [`docs/12-localization-and-text.md`](../docs/12-localization-and-text.md), [`reference/hex-item-swaps.md`](../reference/hex-item-swaps.md), [`reference/community-tutorials.md`](../reference/community-tutorials.md). Updated: `docs/08` (second field case), `reference/resource-types.md` (new "Gameplay database records" section), `README.md`.
+
+---
+
+## Entry — 2026-08-09 (third) — §4395 and §4658 decoded and BOTH ruled out as the rebind lever; found ATK's 22-section blind spot
+
+### What I did
+Took parked lead #1 ("`§4395 ClothPropertiesMeshMappings` + `§4658 ClothEditorDataClothID` are undecoded… plausibly the exact rebind lever"). Answered it two ways: decompiled the two classes out of `AnvilToolkit.dll`, and swept the whole on-disk cloth corpus to see what vanilla actually stores. Corpus = every `*Cloth*.data` under `…\Ghost Recon Breakpoint\Extracted\`: **205 files seen, 81 containing real `ClothPackage`s, 156 `MotionBody`s**.
+
+### VERIFIED (new)
+- **§4395 `ClothPropertiesMeshMappings` is `bool[64]`** — ATK's reader is `for (i=0;i<64;i++) MeshMappingsEnabled[i]=br.ReadBoolean();`. Payload is **64 bytes in all 156 bodies**. It is an **enable bitmap, not a mapping table** — it contains no binding data whatsoever. Vanilla uses only two values: slot `0` alone (129 bodies) or slots `0`+`1` (27 bodies). Slots `2–63` are never used → the engine supports up to **64** mesh mappings per body while shipped content uses 1–2.
+- **§4356 `ClothDefinition` carries `sbyte MeshMappingsCount` at offset 24**, 40-byte payload in all 156 bodies, values ∈ {1 (6 bodies), 2 (123), 3 (27)}. Correlation with §4395 is deterministic: `MMC=1`→slot{0}, `MMC=2`→slot{0}, `MMC=3`→slots{0,1}. `UseMeshMappingTangentSpace` is **true in all 156**.
+- **§4658 `ClothEditorDataClothID` is a null-terminated STRING, and it is EMPTY in all 156 vanilla bodies** (payload = a single `0x00`). It is not a numeric ID, not a `ClassID`, and references nothing. The old table entry "the cloth's editor ID (attachment)" implied a binding role it does not have.
+- **Both sections occur TWICE per `MotionBody`** (paired with the two §4357 `ClothProperties` blocks), and both copies are byte-identical in every body. A tool editing only the first copy yields an inconsistent resource.
+- **ATK's section map is complete for ATK but NOT for GRB.** `MotionSectionFactory.ReadSection` has **64** `case` entries; the corpus uses **86** distinct section types. **22 types are populated in real GRB cloths with no ATK class at all** — they fall through to `UnknownSection`. Because this KB's cloth-section knowledge was transcribed *from ATK*, these 22 have never been examined. Full list + size profile now in [`reference/cloth-section-types.md`](../reference/cloth-section-types.md).
+- **The 4403–4410 block is the leading unexamined structure.** Four `12-byte counter → variable buffer` pairs, exactly once per body in all 156. `size(4404)==size(4408)`, `size(4406)==size(4410)`, and `size(4404)==2×size(4406)` — two parallel index+payload arrays, echoing the 1–2 enabled §4395 slots.
+- **ATK on this machine is v1.3.1** (`E:\Anvil Toolkit\`, README changelog ends at 1.3.1) — the same build every format fact here was decompiled from. **Corrects the 2026-07-09 entry's "AnvilToolkit executable was not found on disk"**, which was wrong: that search never covered `E:\`.
+- **Bodark-trench precedent, refined.** `1687/42/47351_-_TP_Top_Bodark_Trench_Cloth` all carry `Sim_Tsec_IanBlake_Trench_LOD0` at **186 verts / 305 tris** — geometrically identical to `30291_-_IanBlake_TrenchCoat_Cloth` LOD0, confirming the parked lead #2 claim. But the sim-mesh name suffixes **differ** (`0x1DE8F05F3C9` vs `0x15FE3444A17`), so it is a **copy, not a shared reference**; and Bodark declares `MeshMappingsCount=1` with only LOD0, vs IanBlake's `3` with LOD0+LOD1.
+
+### INFERRED (new)
+- The 4403–4410 buffers are **render-scale, not sim-scale**, and are the most plausible home for the render↔sim mapping. **Not confirmed — the one decisive check available came out negative:** `TP_WalkerCoat` LOD0 has **1816** render verts (per the KB) but only **636** elements in `4404`, so this is *not* a one-entry-per-render-vertex table. Its meaning is unknown.
+- Why `MeshMappingsCount` exceeds the enabled-slot count for `MMC∈{2,3}` is unresolved; possibly the final declared slot is implicit/reserved.
+
+### Questions answered / opened
+- **Answered — parked lead #1 is CLOSED, negatively.** Neither §4395 nor §4658 is the rebind lever. §4658 has nothing to repoint; §4395 is a gate, not a binding. This removes a lead that had been flagged "top cloth priority" since 2026-06-30 and twice deferred.
+- **Answered — ATK version in use is 1.3.1**, so 1.3.1-derived facts are current *for this machine*. The separate open question ("1.3.4 is in the wild") is unchanged: a 1.3.4 build has still not been examined.
+- **Opened — what are the 22 unmodeled sections?** No ATK reader exists to crib from, so decoding means working from bytes directly. Suggested start: the 12-byte counters (`4403`/`4405`/`4407`/`4409`, presumably 3×`int32`) and whether their fields predict the buffer lengths.
+- **Unchanged:** lane 2 STEP 1 (the both-patch kilt repack) is still un-run, and remains the gate on whether *any* cloth-resource edit can ship. Today's work narrows *where* to look; it does not change that dependency.
+
+### Docs written this session
+Updated: [`reference/cloth-section-types.md`](../reference/cloth-section-types.md) (completeness caveat; §4395 and §4658 decoded write-ups; §4356 `MeshMappingsCount`; new "Sections GRB uses that ATK does not model" section with the 22-type size profile and the 4403–4410 analysis), [`tools/motioncloth.py`](../tools/motioncloth.py) (`SECTION_NAMES` synced to all 64 ATK classes — was missing 37 — plus a new `UNMODELED_BY_ATK` set; round-trip re-verified byte-exact), [`meta/next-session.md`](next-session.md).
 
 ---
 
