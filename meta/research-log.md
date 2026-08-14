@@ -1108,6 +1108,72 @@ a local ATK install. The dictionary itself is **not committed** (it is ATK's dat
 
 ---
 
+## Entry — 2026-08-14 (sixth) — GRB-specific bone names recovered from their hashes
+
+### What I did
+ATK's dictionary only covers its Assassin's Creed lineage (4 % of GRB's bone hashes), so I went
+looking for a GRB source. Two approaches: **harvest** literal strings and CRC32-match them, then
+**generate** candidates from the grammar the harvest revealed. Crucially, I also ran a **null
+experiment** to measure how many "hits" brute force produces by chance. **Read-only throughout.**
+
+### VERIFIED (new)
+- **Targets:** 2,491 distinct bone hashes across all 205 physics-carrying skeletons — 2,484
+  declared in bone lists, 649 referenced by Reflex3 constraints.
+- **Harvest sources:** `GRB.exe` (536 MB → ~892,000 strings), all **370,259** forge entry names, and
+  every string inside a skeleton payload (32,305). Matching those literally resolved **63** hashes
+  and, more importantly, exposed the naming grammar.
+- **⚠️ Measured false-positive rate.** Replaying the generator against **2,491 random hashes**
+  produced **20 spurious "hits" per 18.7 M candidates**. Generated matches are therefore worthless
+  on their own — a fact that changed how the whole result is reported.
+- **Three independent evidence types**, and only names carrying at least one are shipped:
+  - **`literal` (70)** — read verbatim from GRB.exe / a forge entry name / a skeleton payload.
+  - **`family` (51)** — member of a numbered run of ≥3 (`T_Zipper01`…`T_Zipper07`,
+    `T_Strap01`…`06`). Per stem we test ~24 variants at P≈1.4 × 10⁻⁵; a six-long run is not chance.
+  - **`context` (16)** — the name's distinctive token matches a skeleton that *uses* that hash:
+    `RFX_Watch` and `T_Watch` in **`Watch_Skeleton`**, `T_Scarf` in **`TPri_CIN_Hawkins_Scarf`**,
+    `RFX_BackPack`/`T_BackPack` in backpack rigs, `DRN_UGV_Goliath-Rig-{FL,FR,BL,BR}` in
+    **`DRN_UGV_Goliath`**. This evidence is independent of the hash entirely.
+- **93 isolated generated hits were discarded** as probable collisions — consistent with the
+  measured null rate.
+- **Result: 126 names, 43 of them Reflex3 physics bones** →
+  [`reference/grb-bone-names.tsv`](../reference/grb-bone-names.tsv), with the evidence tier recorded
+  per row.
+- **The naming grammar, which is the more reusable finding:**
+  - **`RFX_`** = **Reflex — the physics bones** (`RFX_LeftShoulderRoll`, `RFX_Watch`, `RFX_BackPack`)
+  - `T_` = targets/attachment points (`T_Strap01…06`, `T_Zipper01…07`, `T_Scarf`)
+  - `L_` = link/no-roll helpers (`L_LeftArmNoRoll`, `L_NeckNoRoll`)
+  - `Prop_` = prop attach points; `Reflex_<bone>_Sphere` = collision primitives
+  - unprefixed = standard biped (`Hips`, `Spine2`, `LeftForeArm`, `RightHandRing2`)
+- `RBTYPE_LEFTFOREARM` in `AnvilToolkit.dll` (noted last entry) fits this scheme as a rigid-body
+  type enum, not a bone.
+
+### INFERRED (new)
+- The `T_` prefix reads as "target" and `RFX_` as "Reflex", from context rather than documentation.
+- `rfx_l_topwristctrl_1…7` and `SIM_TORCH02_*` survive on family coherence and are probably real,
+  but their exact casing is a guess — the generator tests exact/lower/upper and the lower-case form
+  is what hit.
+
+### Questions answered / opened
+- **Answered — a GRB bone-name source exists**: GRB.exe's own string table plus the forge entry
+  names, and they are enough to recover the grammar even where they don't contain a given name.
+- **Opened — the long tail.** 2,365 of 2,491 hashes are still numbers, including most per-garment
+  dangle bones (coat panels, hair strands). Nothing searched so far contains them. Remaining ideas:
+  an ATK **GLB skeleton export** (ATK names GLB nodes via `GetHashedString`, so an export would only
+  echo hashes it already knows — probably a dead end), a modder's original Blender/FBX rig, or an
+  animation-side resource that stores track names as strings.
+- **Methodological note worth keeping:** any future hash-cracking in this KB should run the null
+  experiment first. Without it, this session's 214 raw "hits" would have been reported as fact when
+  ~40 % were noise.
+
+### Docs written this session
+New: [`reference/grb-bone-names.tsv`](../reference/grb-bone-names.tsv) (126 names with per-row
+evidence). Updated: [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md)
+(method, the null-run caveat, the evidence table, the naming grammar),
+[`tools/reflex3.py`](../tools/reflex3.py) (`--names` now also accepts the TSV),
+[`tools/README.md`](../tools/README.md), [`meta/next-session.md`](next-session.md).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>

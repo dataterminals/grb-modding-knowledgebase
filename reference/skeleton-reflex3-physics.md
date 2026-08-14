@@ -186,6 +186,51 @@ and an end-to-end check on the whole decode chain — forge → skeleton → con
 hash → name. The unresolved hashes are the rig's *own* invented bones (coat panels, hair strands),
 which only a GRB-specific name source would cover.
 
+### GRB's own bone names — recovered from the hashes
+
+ATK's dictionary covers the Assassin's Creed lineage, not GRB's bespoke rigs. Those names were
+recovered separately and are shipped as
+[`reference/grb-bone-names.tsv`](grb-bone-names.tsv) — **126 names, 43 of them physics bones.**
+
+**Method, and its limits.** Two sources: *harvesting* literal strings (GRB.exe — 536 MB, ~892,000
+strings — plus all 370,259 forge entry names and every string in a skeleton payload) and CRC32
+matching them; then *generating* candidates from the naming grammar the harvest revealed.
+
+> ⚠️ **Brute force against a 2,491-hash target set produces collisions.** A **null run** — the same
+> generator pointed at 2,491 *random* hashes — scored **20 spurious hits per 18.7 M candidates**.
+> Generated hits therefore mean nothing on their own, and **93 isolated ones were discarded.**
+
+Every shipped name carries one of three independent kinds of evidence:
+
+| Evidence | Count | What it means |
+| --- | ---: | --- |
+| `literal` | 70 | The name was **read verbatim** from GRB.exe, a forge entry name, or a skeleton payload. It was not guessed. |
+| `family` | 51 | Part of a numbered run of ≥3 sharing a stem — `T_Zipper01`…`T_Zipper07`. For one stem we test ~24 variants at P≈1.4 × 10⁻⁵ each; a six-long run cannot be chance. |
+| `context` | 16 | The name's distinctive token matches a skeleton that **actually uses that hash** — evidence independent of the hash itself. |
+
+The `context` hits are the most satisfying:
+
+| Name | Found in |
+| --- | --- |
+| `RFX_Watch`, `T_Watch` | `Watch_Skeleton` |
+| `T_Scarf` | `TPri_CIN_Hawkins_Scarf` |
+| `RFX_BackPack`, `T_BackPack` | backpack rigs |
+| `DRN_UGV_Goliath-Rig-{FL,FR,BL,BR}` | `DRN_UGV_Goliath` |
+
+**The naming grammar.** GRB bones fall into families, and the prefixes are the useful discovery:
+
+| Prefix | Role | Examples |
+| --- | --- | --- |
+| **`RFX_`** | **Reflex — the physics bones themselves** | `RFX_LeftShoulderRoll`, `RFX_Watch`, `RFX_BackPack` |
+| `T_` | targets / attachment points | `T_Strap01`…`06`, `T_Zipper01`…`07`, `T_Scarf`, `T_BackPack` |
+| `L_` | link / no-roll helpers | `L_LeftArmNoRoll`, `L_NeckNoRoll` |
+| `Prop_` | prop attach points | `Prop_LeftHand2`, `Prop_Head` |
+| `Reflex_…_Sphere` | collision primitives | `Reflex_Spine1_Sphere` |
+| (none) | standard biped | `Hips`, `Spine2`, `LeftForeArm`, `RightHandRing2` |
+
+**Coverage is 126 / 2,491 (5 %)** — 43 of 649 physics bones. The bulk of each rig's own dangle
+bones (coat panels, hair strands) are still bare numbers, and no source found so far contains them.
+
 ### It reads like authored animation data
 
 `Tsec_Herzog_Hair_Skeleton`, first four records — each record's parent **is the previous record's

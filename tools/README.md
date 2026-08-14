@@ -355,3 +355,16 @@ attachment points, which is what you want to know:
 | Watch | `LeftForeArm` |
 
 A watch on the left forearm, a coat on the spine. **Read-only** on the toolkit.
+
+For GRB's *own* bone names — the ones ATK never had — this repo ships
+[`../reference/grb-bone-names.tsv`](../reference/grb-bone-names.tsv) (126 names
+recovered from their hashes, each tagged with the evidence behind it). `--names`
+accepts it directly:
+
+```
+python reflex3.py Tsec_Trench_AddonSkeleton.data --names ..\reference\grb-bone-names.tsv
+```
+
+The prefixes are the part worth memorising: **`RFX_`** is Reflex — the physics
+bones themselves — `T_` are targets/attachment points, `L_` are no-roll helpers,
+`Prop_` are prop attach points, and unprefixed names are the standard biped.

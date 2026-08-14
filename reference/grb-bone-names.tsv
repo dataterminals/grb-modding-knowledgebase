@@ -1,0 +1,132 @@
+# GRB bone names recovered from CRC32 hashes.
+# evidence: literal = read verbatim from GRB.exe / a forge entry name /
+#           a skeleton payload;  family = member of a numbered run of >=3;
+#           context = name token matches a skeleton that uses the hash.
+# used_by:  physics = drives a Reflex3 constraint;  skeleton = declared in a bone list.
+hash	name	evidence	used_by	context_skeleton
+3223589195	BURGESS_05	context	skeleton	Tsec_Head_Stephanie_Burgess
+3936136876	Door-FL_LOD0	literal	skeleton	
+3544239431	Door-FR_LOD0	literal	skeleton	
+3920232647	DRN_CIV-Carrier_LOD0	literal+context	skeleton	DRN_CIV_Carrier-Arm
+3541460107	DRN_UGV_Goliath-Rig-BL	literal+context	skeleton	DRN_UGV_Goliath
+689527272	DRN_UGV_Goliath-Rig-BR	literal+context	skeleton	DRN_UGV_Goliath
+3078267279	DRN_UGV_Goliath-Rig-FL	literal+context	skeleton	DRN_UGV_Goliath
+1299553516	DRN_UGV_Goliath-Rig-FR	literal+context	skeleton	DRN_UGV_Goliath
+2314866335	FrontProtection	literal+context	physics+skeleton	Male_Heavy_FrontProtection
+130111906	Head	literal+context	physics+skeleton	TP_Head_Nelson
+3738240529	Hips	literal	physics+skeleton	
+3124814289	Holster_Chest	literal+context	skeleton	Player_Holster_Tactical-Human_Addon
+755618910	Jerrycans-Frame-B	literal	skeleton	
+3041493284	L_LeftArmNoRoll	literal	physics+skeleton	
+2489893254	L_r_LeftHand_1	literal	physics+skeleton	
+4119078070	L_RightArmNoRoll	literal	physics+skeleton	
+3951233754	LeftArm	literal	physics+skeleton	
+1486391408	LeftFoot	literal	physics+skeleton	
+2310617728	LeftForeArm	literal	physics+skeleton	
+3061183340	LeftHand	literal	physics+skeleton	
+510107344	LeftHandIndex1	family	skeleton	
+2272186218	LeftHandIndex2	literal	skeleton	
+4033478652	LeftHandIndex3	family	skeleton	
+2434775759	LeftHandMiddle1	family	skeleton	
+135719797	LeftHandMiddle2	literal	skeleton	
+2131876835	LeftHandMiddle3	family	skeleton	
+4104580540	LeftHandPinky1	family	skeleton	
+1840233478	LeftHandPinky2	literal	skeleton	
+447253648	LeftHandPinky3	family	skeleton	
+3544205519	LeftHandRing1	family	skeleton	
+1246304629	LeftHandRing2	literal	skeleton	
+1028532707	LeftHandRing3	family	skeleton	
+2029314476	LeftHandThumb1	family	skeleton	
+3791499286	LeftHandThumb2	family	skeleton	
+2532999296	LeftHandThumb3	family	skeleton	
+101577729	LeftLeg	literal	physics+skeleton	
+759586984	LeftShoulder	literal	physics+skeleton	
+3109065953	LeftToeBase	literal	skeleton	
+392266736	LeftUpLeg	literal	physics+skeleton	
+2149808493	Neck	literal	physics+skeleton	
+2237016924	Prop_LeftHand	literal	skeleton	
+2022569465	Prop_LeftHand2	family	skeleton	
+260752751	Prop_LeftHand3	family	skeleton	
+2448314572	Prop_LeftHand4	family	skeleton	
+1393778244	Prop_RightHand	literal	skeleton	
+1798777050	Prop_RightHand2	family	skeleton	
+472913996	Prop_RightHand3	family	skeleton	
+2186579439	Prop_RightHand4	family	skeleton	
+743623600	Reference	literal	skeleton	
+2887715230	Reflex_Spine1_Sphere	literal	skeleton	
+2719157795	RFX_BackPack	context	physics+skeleton	BP_NO_BACKPACK_R6_Thatcher
+2515828295	rfx_l_topwristctrl_1	family	skeleton	
+217919485	rfx_l_topwristctrl_2	family	skeleton	
+2079989611	rfx_l_topwristctrl_3	family	skeleton	
+3852372680	rfx_l_topwristctrl_4	family	skeleton	
+194046948	rfx_l_topwristctrl_6	family	skeleton	
+2090326898	rfx_l_topwristctrl_7	family	skeleton	
+662214901	RFX_LeftShoulder	literal	physics+skeleton	
+2396247224	RFX_LeftShoulderRoll	literal	physics+skeleton	
+4015340025	RFX_Watch	context	physics+skeleton	Watch_Skeleton
+128153709	Rifleman_Gun_Attachement	literal+context	skeleton	Rifleman_Gun_Attachement
+1806956327	RightArm	literal	physics+skeleton	
+2601793068	RightFoot	literal	physics+skeleton	
+1918345642	RightForeArm	literal	physics+skeleton	
+1979272496	RightHand	literal	physics+skeleton	
+4273652147	RightHandIndex1	family	skeleton	
+1739821065	RightHandIndex2	literal	skeleton	
+280273055	RightHandIndex3	family	skeleton	
+1162106738	RightHandMiddle1	family	skeleton	
+3696035528	RightHandMiddle2	literal	skeleton	
+2873767518	RightHandMiddle3	family	skeleton	
+343651039	RightHandPinky1	family	skeleton	
+2373116773	RightHandPinky2	literal	skeleton	
+4202025971	RightHandPinky3	family	skeleton	
+3690345925	RightHandRing1	family	skeleton	
+1124033663	RightHandRing2	literal	skeleton	
+905467113	RightHandRing3	family	skeleton	
+2552872655	RightHandThumb1	family	skeleton	
+18935669	RightHandThumb2	family	skeleton	
+1982324707	RightHandThumb3	family	skeleton	
+2252147196	RightLeg	literal	physics+skeleton	
+4127606757	RightShoulder	literal	physics+skeleton	
+1119752139	RightToeBase	literal	skeleton	
+1971262097	RightUpLeg	literal	physics+skeleton	
+1165961005	Roof	literal	skeleton	
+4238106888	Roofrack	literal	skeleton	
+3607608684	SIM_TORCH02_01	family	skeleton	
+956947520	SIM_TORCH02_03	family	skeleton	
+1231235279	SIM_TORCH02_06	family	skeleton	
+1046747225	SIM_TORCH02_07	family	skeleton	
+414588491	SpareWheel	literal	skeleton	
+680026973	SpareWheel-Frame	literal	skeleton	
+1393476043	Spine	literal	physics+skeleton	
+2402941518	Spine1	literal	physics+skeleton	
+372288500	Spine2	literal	physics+skeleton	
+3469563787	T_BackPack	literal+context	skeleton	BP_NO_BACKPACK_GRFS_ScottMitchel
+1900904953	T_LeftForeArmHandOffset	literal	skeleton	
+3262753161	T_LeftRFXCalfTarget	literal	skeleton	
+1710599334	T_RightRFXCalfTarget	literal	skeleton	
+298007296	T_Scarf	context	skeleton	TPri_CIN_Hawkins_Scarf
+501097491	T_Strap01	family	physics+skeleton	
+2228712873	T_Strap02	family	physics+skeleton	
+4090512703	T_Strap03	family	physics+skeleton	
+1840566428	T_Strap04	family	physics+skeleton	
+447995914	T_Strap05	family	physics+skeleton	
+2210050480	T_Strap06	family	physics+skeleton	
+3788421082	T_TacticalVest	literal	skeleton	
+3323187881	T_TrapezeTarget	literal	skeleton	
+3771087559	T_Watch	context	physics+skeleton	Watch_Skeleton
+62080531	T_Zipper01	family	physics+skeleton	
+2595887017	T_Zipper02	family	physics+skeleton	
+3988596543	T_Zipper03	family	physics+skeleton	
+1943646876	T_Zipper04	family	physics+skeleton	
+81691146	T_Zipper05	family	physics+skeleton	
+2648167344	T_Zipper06	family	physics+skeleton	
+3939558182	T_Zipper07	family	physics+skeleton	
+546111199	Trunk-L-Armour	literal	skeleton	
+1237179846	Trunk-R-Armour	literal	skeleton	
+3820300608	wb-gunroot	literal+context	physics+skeleton	WI_gunroot
+1758917057	wb-HandLeft	literal	skeleton	
+1362661446	wb-HandLeft_SYM	literal	skeleton	
+2075244611	wb-HandRight_SYM	literal	skeleton	
+2145833486	Window-B_LOD0	literal	skeleton	
+3833040920	Window-F_LOD0	literal	skeleton	
+283267453	Window-FL_LOD0	literal	skeleton	
+691942038	Window-FR_LOD0	literal	skeleton	

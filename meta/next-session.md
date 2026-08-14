@@ -186,9 +186,20 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
      Assassin's Creed lineage, so it resolves **4 %** of GRB's bone hashes — but those are the
      **attachment points**: the trench coat and the scarf hang off `Spine2`, the watch off
      `LeftForeArm`. GRB's own dangle-bone names are still bare numbers.
-     - **Open:** find a GRB-specific bone-name source (an ATK GLB skeleton export, a modder's
-       Blender rig, an animation-side resource). CRC32 is trivial to check once you have candidate
-       strings.
+     - ~~**Open:** find a GRB-specific bone-name source.~~ **PARTLY DONE 2026-08-14** — GRB.exe's
+       own string table + the 370,259 forge entry names yielded
+       [`reference/grb-bone-names.tsv`](../reference/grb-bone-names.tsv): **126 names, 43 of them
+       physics bones**, each tagged with its evidence. More useful than the names is the **grammar**:
+       `RFX_` = the Reflex physics bones, `T_` = targets/attachment points, `L_` = no-roll helpers,
+       `Prop_` = prop attach points, unprefixed = standard biped.
+     - ⚠️ **If you extend this, run a null experiment first.** Brute-forcing candidates against
+       2,491 target hashes scores ~20 chance hits per 18.7 M tries; 93 of this session's raw hits
+       were discarded as collisions. Only ship names backed by a literal string, a numbered family
+       of ≥3, or a contextual match to the skeleton that uses them.
+     - **Still open — the long tail:** 2,365 hashes remain bare numbers, including most per-garment
+       dangle bones. An ATK GLB export is probably a dead end (ATK names GLB nodes from the same
+       dictionary). A modder's original Blender/FBX rig, or an animation resource storing track
+       names as strings, are the better bets.
 4. Then: a new mesh weight-painted to a physics-carrying rig. That step **is** the project goal,
    reached without touching `.cloth` at all.
 

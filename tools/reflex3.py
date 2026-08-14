@@ -139,13 +139,21 @@ def parse_blob(blob):
 
 
 def load_name_dictionary(path):
-    """CRC32 -> name, built the way ATK does it (exact, lower- and upper-case)."""
+    """CRC32 -> name. Accepts either a plain name-per-line list (atk_hashes.py
+    output) or a `hash<TAB>name<TAB>...` table (reference/grb-bone-names.tsv).
+    Plain lists are hashed exact/lower/upper, the way ATK builds its map."""
     out = {}
     with open(path, "r", encoding="utf-8", errors="replace") as f:
         for line in f:
             s = line.rstrip("\r\n")
-            if not s:
+            if not s or s.startswith("#"):
                 continue
+            if "\t" in s:                       # pre-resolved table
+                a, b = s.split("\t")[:2]
+                if a.isdigit():
+                    out.setdefault(int(a), b)
+                    continue
+                s = b
             for v in (s, s.lower(), s.upper()):
                 out.setdefault(zlib.crc32(v.encode("utf-8")) & 0xFFFFFFFF, v)
     return out
