@@ -926,6 +926,74 @@ skeleton build sheet with physics sizes.
 
 ---
 
+## Entry — 2026-08-14 (third) — The Reflex3 constraint blob is DECODED
+
+### What I did
+Took the open lead from this morning's entry ("finish the blob decode"). Rather than eyeball hex,
+used structural detectors: a 4×4-affine validator (orthonormal 3×3 + `(0,0,0,1)` bottom row), a
+type-byte survey across every blob, and an exact-consumption walk as the acid test. Corpus = **205
+unique non-empty blobs** (the earlier "512" counted shadow duplicates across forges; 205 is the
+distinct count). **Read-only throughout.**
+
+### VERIFIED (new)
+- **Blob grammar:**
+  `blob := u32 magic 0x12341234 | u32 version 3012000 | record*`, and
+  `record := u8 type | u8×(H−1) header | M × 64-byte 4×4 affine | tail`.
+- **`H` and `M` are constant per type.** Every blob's first record is unambiguous (starts at byte
+  8), giving 205 independent samples — **the vote was unanimous for all nine types**:
+  H = 9 for types 5/6/7/19/20/21/24, **10** for type 9, **5** for type 23; M = 4 for most,
+  **5** for type 21, **1** for type 23.
+- **The type byte is genuinely the constraint type.** Three of the nine observed values land
+  exactly on ATK's `Reflex3ConstraintTypeRegistry`: **6 = HingeVector, 7 = LookAt, 9 = Orientation**.
+  The other six (5, 19, 20, 21, 23, 24) are types GRB uses that ATK never modelled.
+- **Acid test: the walk consumes 204 of 205 blobs EXACTLY** — landing on the final byte with
+  nothing left over.
+- **The matrices are 4×4 row-major affines** — orthonormal 3×3, translation in column 3, bottom row
+  `(0,0,0,1)`. The first probe missed most of them because it wrongly demanded zero translation.
+- **Type 21 is the physics record, decoded field by field and validated over all 1,354 in the
+  game:** `tail := u8×3 flags | { u8 gate ; if gate: f32 lo, f32 hi }* | f32×9 params`.
+  - **`param[4]` == 9.8 in 1,344/1,354 (99.3 %)** → `Reflex3Physics.Gravity`, whose ATK default is
+    `9.8f`. `param[5]`/`param[6]` == 1.0 in 1,344/1,338; `param[7]`/`param[8]` == 0.0 in
+    1,353/1,349; `param[0]` == 0.2 in 1,096; `param[2]` takes 0.95/0.98 — damping-shaped.
+  - **The limits are radians.** Values include exactly `−1.5708` (−π/2) and `3.1416` (π), the range
+    is `[−π, +π]`, and the **median |limit| is 15.00°**. 44 % of pairs are symmetric.
+  - Gate counts: **2 pairs in 1,262 records**, 1 in 72, 0 in 20 — matching the bool-gated model.
+- **Real readings.** `Player_Kilt_Addon` = one bone swinging **±15° and ±5°**, gravity 9.8, damping
+  0.2, 394/394 bytes accounted. `Tsec_Trench_AddonSkeleton` = **48 records — 36 HingeVector, 2
+  Orientation, 10 Physics** — the physics bones limited −20°→0° and 0°→+20° (panels hinging fore and
+  aft), 43,494/43,494 bytes accounted.
+- **Correction to this morning's entry:** the "constant 9-byte record preamble" is really
+  `u8 type + 8 more header bytes`, and it is **not** constant — type 9 uses 10 and type 23 uses 5.
+  The earlier claim came from sampling only types whose H happens to be 9.
+
+### INFERRED (new)
+- The 8 bytes after the type byte are high-entropy and read most naturally as a **bone-name hash**.
+  **Not checked** against a real bone hash from the same skeleton — that is the next cheap test.
+- `param[0]` ≈ damping, `param[1]` ≈ stiffness, `param[2]` ≈ a damping coefficient (0.95/0.98 are
+  the classic values). Shape-guesses from value distributions, not confirmed.
+- Record boundaries for types other than 21/23 come from a forward-scan heuristic. It yields exact
+  *total* consumption, which is good evidence, but individual boundaries are not independently
+  verified, and those types' tails (hundreds to thousands of bytes) are undecoded.
+
+### Questions answered / opened
+- **Answered — the blob is readable.** GRB's per-bone physics can now be inspected in engineering
+  units: which constraint type, how many bones, what angular limits in degrees, what gravity.
+- **Opened — the write side.** Reading is done; nothing here has been *written* back yet, and the
+  hang-on-load and forge-shadow hazards from the cloth work all still apply to skeletons.
+- **Opened — confirm the bone hash**, then constraint records can be tied to named bones, which is
+  what a rebind ultimately needs.
+- **Opened — decode the non-21 tails**, especially type 9 (Orientation, 1,400 records — the most
+  common in the game) and type 6 (HingeVector, 472 — 36 of them in the trench coat alone).
+
+### Docs written this session
+New: [`tools/reflex3.py`](../tools/reflex3.py) — decodes a skeleton's constraints and prints swing
+limits in degrees, gravity and damping. Updated:
+[`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md) (full grammar,
+the type/H/M table, the type-21 field table with per-field evidence counts, sample output),
+[`tools/README.md`](../tools/README.md), [`meta/next-session.md`](next-session.md).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>

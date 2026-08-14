@@ -172,10 +172,17 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
 2. **The goal-shaped experiment:** add or re-point a skeleton record in the **player** template
    aiming at a physics-carrying add-on rig, copying the kilt/scarf entries as the pattern. First
    end-to-end test of route 2B.
-3. **Finish the constraint-blob decode** — the 9-byte record preamble, then the per-constraint
-   framing — so the physics itself becomes readable and tunable rather than just assignable.
+3. ~~**Finish the constraint-blob decode.**~~ **DONE 2026-08-14.** The blob is readable —
+   [`tools/reflex3.py`](../tools/reflex3.py) prints swing limits in degrees, gravity and damping,
+   and the record walk accounts for every byte in 204 of 205 skeletons. What's left inside it:
+   confirm the 8-byte header is a **bone-name hash** (cheap, and needed to tie constraints to named
+   bones), then decode the tails of type 9 (Orientation, 1,400 records) and type 6 (HingeVector,
+   472 — 36 of them in the trench coat).
 4. Then: a new mesh weight-painted to a physics-carrying rig. That step **is** the project goal,
    reached without touching `.cloth` at all.
+
+> **Reading is done; writing is not.** Nothing has been written back to a skeleton yet, and any
+> skeleton edit inherits the forge-shadow and hang-on-load hazards from the cloth work.
 
 ⚠️ Skeletons are **forge-shadowed** exactly like cloths (`Player_Kilt_Addon` sits in both
 `DataPC.forge` and `DataPC_TGT_WorldMap_Bootstrap_Split.forge`). Any override must patch **both**

@@ -278,3 +278,36 @@ to do it in hex. Record format and the evidence:
 
 Without `--install` it still lists the raw ClassIDs and slots — you just don't get
 names or physics sizes. **Read-only.**
+
+---
+
+## 🪢 Reflex3 Decoder — read a skeleton's bone physics in degrees
+
+`skeleton_reflex.py` tells you *whether* a rig has bone physics. This one tells
+you **what the physics actually says**.
+
+```
+python reflex3.py 1889064665537_-_Player_Kilt_Addon.data
+```
+
+```
+  1 constraint record(s); 394/394 bytes accounted for
+  by type: 21=1 (Physics (swing/gravity))
+       #  swing limits (degrees)              gravity  damping/stiffness
+       0  [  -15.0,   +15.0]  [   -5.0,    +5.0]    9.800  0.2, 0, 0, 0
+```
+
+The kilt is one bone that swings ±15° one way and ±5° the other, under normal
+gravity. The Bodark trench coat is **36 hinges plus 10 swinging bones**, half
+limited −20°→0° and half 0°→+20° — panels hinging fore and aft.
+
+Add `--raw` for every record including the non-physics constraint types.
+
+**ATK cannot do this.** Its Reflex3 parser checks Mirage's magic numbers and is
+gated behind `Version != Game.Mirage`, so for Breakpoint it keeps the whole thing
+as an opaque Base64 lump. Format, and the evidence behind it:
+[`../reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
+
+⚠️ Reading is solid — the record walk accounts for every byte in 204 of 205
+skeletons. **Writing is not implemented**, and any skeleton edit inherits the
+forge-shadow and hang-on-load hazards documented for cloth. **Read-only.**

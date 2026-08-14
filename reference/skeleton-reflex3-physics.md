@@ -78,22 +78,92 @@ Immediately after the class hash comes an `int32` blob length
 > (`if (!ExportConstraints || base.Version != Game.Mirage) return;`), so **the GRB variant was
 > never validated**. For GRB, ATK slurps the blob opaquely and round-trips it as Base64 in XML.
 
-### Blob body — partially decoded
+### Blob body — decoded
 
-> **Verified:** past the 8-byte header sits a **constant 9-byte record preamble**, then a run of
-> `4×4` little-endian `float32` matrices. Two independent specimens:
->
-> | Skeleton | preamble bytes at `0x08` |
-> | --- | --- |
-> | `Player_Kilt_Addon` (394 B) | `15 25 b5 9c b9 b9 1b 94 92` |
-> | `TP_HunterScarf_A_Skeleton` (9,991 B) | `05 6f e3 82 aa 1f b7 69 7d` |
->
-> The matrices are orthonormal with a `(0,0,0,1)` final row — i.e. **bone transforms**. In the
-> kilt the first two matrices are byte-identical (plausibly a rest/current pair).
+*Cracked 2026-08-14. Read it with [`tools/reflex3.py`](../tools/reflex3.py).*
 
-> **Inferred, not confirmed:** the 9 bytes read most naturally as `uint64` (high-entropy, bone- or
-> object-name-hash shaped) + one tag/type byte. **Do not build on this until it is checked against
-> a bone-name hash from the same skeleton.**
+```
+blob   := u32 magic 0x12341234 | u32 version 3012000 | record*
+
+record := u8  type
+          u8 × (H(type) − 1)          rest of the header
+          M(type) × 64-byte matrix    4×4 row-major affine: orthonormal 3×3,
+                                      translation in column 3, bottom row (0,0,0,1)
+          tail                        type-specific
+```
+
+`H` and `M` are **constant per type**. Every blob's *first* record is unambiguous (it starts at
+byte 8), giving 205 independent samples — and the vote was **unanimous for every type**:
+
+| type | H | M | ATK's `Reflex3ConstraintTypeRegistry` | first-records |
+| ---: | ---: | ---: | --- | ---: |
+| 5 | 9 | 4 | — | 11 |
+| 6 | 9 | 4 | **HingeVector** | 3 |
+| 7 | 9 | 4 | **LookAt** | 4 |
+| 9 | 10 | 4 | **Orientation** | 133 |
+| 19 | 9 | 4 | — | 2 |
+| 20 | 9 | 4 | — | 6 |
+| **21** | **9** | **5** | — → **the physics record** | 38 |
+| 23 | 5 | 1 | — | 4 |
+| 24 | 9 | 4 | — | 4 |
+
+> **Why this is convincing:** three of the nine type bytes — 6, 7 and 9 — land exactly on
+> `HingeVector`, `LookAt` and `Orientation` in ATK's registry. That the byte is the constraint
+> **type** is not a guess. The other six are types GRB uses that ATK never modelled — the same
+> species of blind spot as the 22 unmodeled MotionCloth sections.
+
+**Acid test:** walking every blob with this model consumes **204 of 205 exactly**, landing on the
+final byte with nothing left over.
+
+### The physics record (type 21) — field by field
+
+> **Verified** against **all 1,354 type-21 records in the game.**
+
+```
+tail := u8 × 3                          flags
+        { u8 gate ; if gate==1: f32 lo, f32 hi }*   angular limits, RADIANS
+        f32 × 9                         parameter block
+```
+
+| Evidence | Result |
+| --- | --- |
+| `param[4]` | **9.8 in 1,344 / 1,354 records (99.3 %)** — this is `Reflex3Physics.Gravity`, whose ATK default is `9.8f` |
+| `param[5]`, `param[6]` | `1.0` in 1,344 / 1,338 |
+| `param[7]`, `param[8]` | `0.0` in 1,353 / 1,349 |
+| `param[0]` | `0.2` in 1,096 (then 5.0, 0.8, 0.5, 0.4) — damping-shaped |
+| `param[1]` | `0.0` in 1,231, else 25.0 / 20.0 / 100.0 — stiffness-shaped |
+| `param[2]` | `0.0` in 1,306, else 1.0 / **0.95** / **0.98** — classic damping coefficients |
+| gate count | **2 pairs in 1,262 records**, 1 pair in 72, 0 in 20 |
+| limit values | exactly `−1.5708` (−π/2), `3.1416` (π), `−0.4363` (−25°), `0.6109` (35°); range `[−π, +π]`; **median \|limit\| = 15.00°** |
+
+The limits are **unmistakably radians** — the constants are π and π/2 to four decimals, and the
+median is a round 15°. 44 % of pairs are symmetric (`lo == −hi`).
+
+> **Still inferred:** the 8 bytes after the type byte (the rest of the header) are high-entropy and
+> read most naturally as a bone-name hash — **not yet checked against a real bone hash from the same
+> skeleton.** The meanings of `param[0..3]` and `param[5..8]` are shape-guesses from their value
+> distributions, not confirmed. And tails for types other than 21 and 23 are large and variable and
+> remain undecoded; their record boundaries come from the forward-scan heuristic, which yields exact
+> total consumption but is not independently verified per boundary.
+
+### What it reads like
+
+```
+$ python reflex3.py Player_Kilt_Addon.data
+  1 constraint record(s); 394/394 bytes accounted for
+  by type: 21=1 (Physics (swing/gravity))
+       #  swing limits (degrees)              gravity  damping/stiffness
+       0  [  -15.0,   +15.0]  [   -5.0,    +5.0]    9.800  0.2, 0, 0, 0
+
+$ python reflex3.py Tsec_Trench_AddonSkeleton.data
+  48 constraint record(s); 43,494/43,494 bytes accounted for
+  by type: 6=36 (HingeVector), 9=2 (Orientation), 21=10 (Physics (swing/gravity))
+       0  [  -20.0,    +0.0]                    9.800  0.2, 0, 0, 0
+       3  [   +0.0,   +20.0]                    9.800  0.2, 0, 0, 0
+```
+
+The kilt is one bone swinging ±15° and ±5°. The coat is **36 hinges plus 10 swinging bones**,
+half limited −20°→0° and half 0°→+20° — panels hinging fore and aft.
 
 ---
 
@@ -292,9 +362,9 @@ Read-only; touches nothing in the install.
 
 ## Open questions
 
-1. **Finish the blob decode.** Identify the 9-byte preamble (bone hash?), then the per-constraint
-   record framing, then map it onto `Reflex3ConstraintTypeRegistry` so `Reflex3Physics` fields
-   become readable. ATK has every reader already written — it is a **port**, not a reverse.
+1. ~~**Finish the blob decode.**~~ **Done 2026-08-14** — see "Blob body — decoded" above. What
+   remains inside it: the 8-byte header remainder (bone hash?), the meanings of `param[0..3]` /
+   `param[5..8]`, and the tails of types 5, 6, 7, 9, 19, 20, 24.
 2. **Is `Tsec_Trench_AddonSkeleton` re-targetable?** Can a new mesh be weight-painted to its bones
    and shipped, keeping the coat's motion? This is the project-goal experiment.
 3. **Constraint type ids 2, 4, 5, 8** — unmapped by ATK; check whether GRB uses them.
