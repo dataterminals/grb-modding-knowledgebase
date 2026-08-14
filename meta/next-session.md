@@ -180,9 +180,15 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
    each skeleton's real bone list at **≈99.7 %** vs a 0.000 % null control. What's left inside the
    blob: the tails of type 9 (Orientation, 1,402 records) and type 6 (HingeVector, 472 — 36 of them
    in the trench coat), and the meanings of `param[0..3]` / `param[5..8]`.
-   - **Cheap win available:** ATK embeds `AnvilToolkit.Resources.hashes.hl`, a hash→string table,
-     and exposes `Name.GetHashedString()`. Extract it and every bone hash in the tooling becomes a
-     readable name.
+   - ~~**Cheap win available:** extract ATK's `hashes.hl` name table.~~ **DONE 2026-08-14** —
+     [`tools/atk_hashes.py`](../tools/atk_hashes.py) pulls 276,087 names out of a local ATK install
+     (Fast-LZMA2 text, one name per line), and `reflex3.py --names` uses it. ⚠️ It only covers ATK's
+     Assassin's Creed lineage, so it resolves **4 %** of GRB's bone hashes — but those are the
+     **attachment points**: the trench coat and the scarf hang off `Spine2`, the watch off
+     `LeftForeArm`. GRB's own dangle-bone names are still bare numbers.
+     - **Open:** find a GRB-specific bone-name source (an ATK GLB skeleton export, a modder's
+       Blender rig, an animation-side resource). CRC32 is trivial to check once you have candidate
+       strings.
 4. Then: a new mesh weight-painted to a physics-carrying rig. That step **is** the project goal,
    reached without touching `.cloth` at all.
 

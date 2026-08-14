@@ -148,6 +148,44 @@ skeleton's real bone list:
 1,274-hash bone-name set). Type 9 initially scored 0 % because its bone IDs sit one byte later; that
 single extra `0x01` byte is what makes its header 10 rather than 9.
 
+### Turning the hashes back into names
+
+ATK ships the reverse lookup: `AnvilToolkit.Resources.hashes.hl`, an embedded
+**Fast-LZMA2-compressed plain-text list**, one name per line. `HashedData.CheckStrings()`
+decompresses it via `Libs/fast-lzma2.dll` and keys it by `CRC32` of each line plus its lower- and
+upper-case forms. Extract it from your own install with
+[`tools/atk_hashes.py`](../tools/atk_hashes.py):
+
+```
+1,294,015 B compressed  ->  6,610,946 B  =  276,087 names
+```
+
+> **The dictionary is ATK's data and is not redistributed here** — run the extractor against your
+> own copy.
+
+**Coverage is partial, and the shape of the gap is the useful part.** The list is built for ATK's
+primary games (the Assassin's Creed line), so it resolves the **standard biped bones** GRB shares
+with them and not GRB's bespoke dangle bones:
+
+| | resolved |
+| --- | --- |
+| GRB skeleton-declared bone hashes | **51 / 1,274 (4 %)** |
+| Reflex3 constraint bones (the dangle bones themselves) | 0 |
+
+That sounds bleak until you look at *which* ones resolve — they are exactly the **attachment
+points**:
+
+| Rig | Constraint parent |
+| --- | --- |
+| `Tsec_Trench_AddonSkeleton` | **`Spine2`** |
+| `TP_HunterScarf_A_Skeleton` (5 records) | **`Spine2`** |
+| `Watch_Skeleton` | **`LeftForeArm`** |
+
+A coat and a scarf hang off the spine; a watch hangs off the left forearm. Anatomically correct,
+and an end-to-end check on the whole decode chain — forge → skeleton → constraint record → bone
+hash → name. The unresolved hashes are the rig's *own* invented bones (coat panels, hair strands),
+which only a GRB-specific name source would cover.
+
 ### It reads like authored animation data
 
 `Tsec_Herzog_Hair_Skeleton`, first four records — each record's parent **is the previous record's

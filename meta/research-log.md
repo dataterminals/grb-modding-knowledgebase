@@ -1055,6 +1055,59 @@ the grammar, the CRC32 proof, the per-type resolution table, the hair-strand wal
 
 ---
 
+## Entry — 2026-08-14 (fifth) — Extracted ATK's hash→name dictionary; bone names resolve
+
+### What I did
+Took the "cheap win" flagged in the previous entry: get `AnvilToolkit.Resources.hashes.hl` out of
+ATK and use it to turn Reflex3 bone hashes into names. **Read-only on the toolkit.**
+
+### VERIFIED (new)
+- **Format, from ATK's `HashedData.CheckStrings()`:** `hashes.hl` is an embedded, **Fast-LZMA2**
+  compressed **plain-text list, one name per line**. ATK decompresses it by P/Invoking
+  `Libs/fast-lzma2.dll` (`FL2_findDecompressedSize` + `FL2_decompressMt`) and keys it by `CRC32`
+  of each line **plus its lower- and upper-case forms** — which is why a name can resolve under
+  three different hashes.
+- **Extracted: 1,294,015 B compressed → 6,610,946 B → 276,087 names.** Two independent routes agree
+  **byte-for-byte**: a C# `System.Reflection.Metadata` reader (exact, via the ManifestResource
+  table) and a pure-Python scan of the PE's Resources data directory. The Python one is what ships.
+- **Coverage against GRB is partial and its shape is informative.** The list targets ATK's primary
+  games (the Assassin's Creed line): **51 of 1,274** GRB skeleton-declared bone hashes resolve
+  (4 %), and **none** of the Reflex3 constraint bones themselves. But the ones that resolve are
+  exactly the **attachment points**:
+  - `Tsec_Trench_AddonSkeleton` → parent **`Spine2`**
+  - `TP_HunterScarf_A_Skeleton` (5 records) → parent **`Spine2`**
+  - `Watch_Skeleton` → parent **`LeftForeArm`**
+
+  A coat and a scarf hanging off the spine, a watch off the left forearm. Anatomically correct, and
+  an **end-to-end check on the whole chain** — forge → skeleton → constraint record → bone hash →
+  name.
+- The unresolved hashes are each rig's *own* invented bones (coat panels, hair strands). Only a
+  GRB-specific name source would cover those; ATK's dictionary never will.
+
+### INFERRED (new)
+- Nothing material. The one judgement call: the extractor identifies the dictionary by
+  *decompressing candidates and checking the output is a newline-separated ASCII list*, because no
+  ranking heuristic survived a 14 MB resource directory — random bytes in the metadata tables make
+  `FL2_findDecompressedSize` report plausible sizes, and the real blob ranked 69th by size. The
+  exhaustive check is slower (~108 s) but deterministic.
+
+### Questions answered / opened
+- **Answered — the hash dictionary is obtainable**, and bone names resolve for the standard biped.
+- **Opened — a GRB-specific name list.** Every dangle bone in the game is currently a bare number.
+  Anything that yields real GRB bone-name strings (an ATK GLB skeleton export, a modder's Blender
+  file, an animation-side resource) would fill the gap; the CRC32 is trivial to invert once the
+  candidate string exists.
+- **Unchanged:** tails for types other than 21/23 are undecoded, and nothing is written back.
+
+### Docs written this session
+New: [`tools/atk_hashes.py`](../tools/atk_hashes.py) — extracts and decompresses the dictionary from
+a local ATK install. The dictionary itself is **not committed** (it is ATK's data). Updated:
+[`tools/reflex3.py`](../tools/reflex3.py) (`--names` flag), [`tools/README.md`](../tools/README.md),
+[`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md),
+[`meta/next-session.md`](next-session.md).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>

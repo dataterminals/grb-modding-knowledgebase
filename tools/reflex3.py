@@ -9,6 +9,11 @@ in degrees, plus its gravity and damping parameters.
 
     python reflex3.py 1889064665537_-_Player_Kilt_Addon.data
     python reflex3.py Tsec_Trench_AddonSkeleton.data --raw     # per-record detail
+    python reflex3.py Watch_Skeleton.data --names hashes.txt   # bone NAMES, not numbers
+
+`--names` takes the plain-text dictionary produced by atk_hashes.py. It resolves
+the standard biped bones (Spine2, LeftForeArm, Head) but not GRB's bespoke
+dangle-bone names - enough to see what a rig ATTACHES to.
 
 READ-ONLY.
 
@@ -50,7 +55,7 @@ Type 21 tail (386-byte record; decoded and validated over all 1,354 in the game)
                                             (1262 records carry 2 pairs, 72 carry 1)
     f32 x9                    param block; param[4] is GRAVITY - 9.8 in 1344/1354
 """
-import sys, os, struct, math
+import sys, os, struct, math, zlib
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 if _HERE not in sys.path:
@@ -133,6 +138,19 @@ def parse_blob(blob):
         pos = end
 
 
+def load_name_dictionary(path):
+    """CRC32 -> name, built the way ATK does it (exact, lower- and upper-case)."""
+    out = {}
+    with open(path, "r", encoding="utf-8", errors="replace") as f:
+        for line in f:
+            s = line.rstrip("\r\n")
+            if not s:
+                continue
+            for v in (s, s.lower(), s.upper()):
+                out.setdefault(zlib.crc32(v.encode("utf-8")) & 0xFFFFFFFF, v)
+    return out
+
+
 def bone_name_hashes(payload, before):
     """The uint32 Bone.Name of every bone declared before `before` in a Skeleton payload."""
     out, pos = set(), 0
@@ -183,12 +201,15 @@ def main(argv):
     raw_mode = "--raw" in argv
     if raw_mode:
         argv.remove("--raw")
-    override = None
+    override = names_path = None
     if "--oodle" in argv:
         k = argv.index("--oodle"); override = argv[k + 1]; del argv[k:k + 2]
+    if "--names" in argv:
+        k = argv.index("--names"); names_path = argv[k + 1]; del argv[k:k + 2]
     if len(argv) < 2:
         print(__doc__)
         return
+    dictionary = load_name_dictionary(names_path) if names_path else {}
 
     path = argv[1]
     oodle = Oodle(find_oodle(path, override))
@@ -229,8 +250,12 @@ def main(argv):
 
     phys = [r for r in recs if r["type"] == PHYSICS_TYPE and not r.get("error")]
     if phys:
+        def label(v):
+            return dictionary.get(v, str(v)) if dictionary else str(v)
+
+        wid = 22 if dictionary else 11
         print(f"\n  {len(phys)} PHYSICS constraint(s) - each drives one bone:")
-        print(f"    {'#':>4}  {'bone (CRC32)':>11} {'<- parent':>11}  "
+        print(f"    {'#':>4}  {'bone':>{wid}} {'<- parent':>{wid}}  "
               f"{'swing limits (degrees)':<34} {'gravity':>8}  damping/stiffness")
         for n, r in enumerate(phys if raw_mode else phys[:20]):
             lim = "  ".join(f"[{math.degrees(lo):+7.1f}, {math.degrees(hi):+7.1f}]"
@@ -238,7 +263,8 @@ def main(argv):
             p = r.get("params") or ()
             extra = ", ".join(f"{v:g}" for v in p[:4]) if p else ""
             mark = "*" if bones and r.get("bone") in bones else " "
-            print(f"    {n:>4}{mark} {r.get('bone', 0):>11} {r.get('parent_bone', 0):>11}  "
+            print(f"    {n:>4}{mark} {label(r.get('bone', 0)):>{wid}} "
+                  f"{label(r.get('parent_bone', 0)):>{wid}}  "
                   f"{lim:<34} {r.get('gravity', float('nan')):>8.3f}  {extra}")
         if not raw_mode and len(phys) > 20:
             print(f"    ... and {len(phys) - 20} more (--raw for all)")

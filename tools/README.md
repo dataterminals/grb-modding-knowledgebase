@@ -325,3 +325,33 @@ as an opaque Base64 lump. Format, and the evidence behind it:
 ⚠️ Reading is solid — the record walk accounts for every byte in 204 of 205
 skeletons. **Writing is not implemented**, and any skeleton edit inherits the
 forge-shadow and hang-on-load hazards documented for cloth. **Read-only.**
+
+---
+
+## 🔤 ATK Hash Dictionary — turn bone numbers into bone names
+
+Anvil names things by **CRC32 of the name**, so a skeleton stores `LeftForeArm`
+as `220238864`. ATK ships the reverse lookup as a compressed resource inside its
+own assembly. This pulls it out of **your** install:
+
+```
+python atk_hashes.py "E:\Anvil Toolkit" -o hashes.txt
+python reflex3.py Watch_Skeleton.data --names hashes.txt
+```
+
+276,087 names, ~2 minutes. The dictionary is ATK's data and is **not shipped with
+this repo** — extract your own.
+
+⚠️ **Coverage is partial, and usefully so.** The list targets ATK's primary games
+(the Assassin's Creed line), so it resolves the **standard biped bones** GRB
+shares with them — about 4% of GRB's skeleton bone hashes — but not GRB's own
+dangle-bone names (coat panels, hair strands). The ones it does resolve are the
+attachment points, which is what you want to know:
+
+| Rig | hangs off |
+| --- | --- |
+| Bodark trench coat | `Spine2` |
+| Hunter scarf | `Spine2` |
+| Watch | `LeftForeArm` |
+
+A watch on the left forearm, a coat on the spine. **Read-only** on the toolkit.
