@@ -86,11 +86,17 @@ Immediately after the class hash comes an `int32` blob length
 blob   := u32 magic 0x12341234 | u32 version 3012000 | record*
 
 record := u8  type
-          u8 × (H(type) − 1)          rest of the header
+          [u8 0x01]                   type 9 only — one extra byte
+          u32 BoneID                  CRC32 of the driven bone's name
+          u32 ParentBoneID            CRC32 of its parent's name
           M(type) × 64-byte matrix    4×4 row-major affine: orthonormal 3×3,
-                                      translation in column 3, bottom row (0,0,0,1)
+                                      translation in column 3, bottom row (0,0,0,1).
+                                      The first is Reflex3BoneInfo.InitTransform.
           tail                        type-specific
 ```
+
+That head is exactly ATK's `Reflex3BoneInfo`:
+`{ uint BoneID; uint ParentBoneID; Matrix4x4 InitTransform }`.
 
 `H` and `M` are **constant per type**. Every blob's *first* record is unambiguous (it starts at
 byte 8), giving 205 independent samples — and the vote was **unanimous for every type**:
@@ -114,6 +120,50 @@ byte 8), giving 205 independent samples — and the vote was **unanimous for eve
 
 **Acid test:** walking every blob with this model consumes **204 of 205 exactly**, landing on the
 final byte with nothing left over.
+
+### Bone names are `CRC32(exact-case name)` — and the record head is two of them
+
+> **Verified 2026-08-14.** ATK's `Bone.Name` is a `uint32`, i.e. a hash. GRB bakes that hash into
+> its collider names — `TP_WalkerCoat_Ragdoll_LeftForeArm_**2310617728**` — so the names are their
+> own Rosetta stone. **CRC32 matched 9 of 9** (`Head`, `Neck`, `LeftArm`, `LeftForeArm`, `LeftHand`,
+> `LeftShoulder`, `RightArm`, `RightForeArm`, `RightHand`), while crc32-lower, crc32-upper,
+> CRC-32/BZIP2 and no-final-xor each matched **0 of 9**.
+
+Every `Skeleton` payload declares its bones before the constraint blob; `Bone.Name` sits **4 bytes
+after** the `Bone` class hash (`2507411529`). Checking each record's `BoneID` against its own
+skeleton's real bone list:
+
+| type | records | BoneID resolves | ParentBoneID resolves |
+| ---: | ---: | ---: | ---: |
+| 5 | 185 | 96.2 % | 96.2 % |
+| 6 | 472 | 99.8 % | 99.8 % |
+| 7 | 265 | **100.0 %** | **100.0 %** |
+| **9** | 1,402 | **100.0 %** | 99.9 % *(at header offset +1 — the extra `0x01` byte)* |
+| 19 | 115 | **100.0 %** | 93.0 % |
+| 20 | 48 | **100.0 %** | 70.8 % |
+| 21 | 1,354 | **100.0 %** | 99.9 % |
+| 24 | 19 | **100.0 %** | **100.0 %** |
+
+**≈99.7 % overall**, against a **0.000 %** null control (random `uint32` values never hit the
+1,274-hash bone-name set). Type 9 initially scored 0 % because its bone IDs sit one byte later; that
+single extra `0x01` byte is what makes its header 10 rather than 9.
+
+### It reads like authored animation data
+
+`Tsec_Herzog_Hair_Skeleton`, first four records — each record's parent **is the previous record's
+bone**, i.e. a hair strand:
+
+| # | bone | ← parent | swing limits | damping |
+| ---: | ---: | ---: | --- | ---: |
+| 0 | 877775753 | 2908265011 | ±10° / 0…+25° | 0.4 |
+| 1 | 1129773855 | **877775753** | ±15° / −1…+30° | 0.3 |
+| 2 | 3711069884 | **1129773855** | ±20° / −3…+35° | 0.2 |
+| 3 | 79239470 | **3711069884** | ±25° / −5…+40° | 0.1 |
+| 4 | 3135163498 | 601333200 | ±10° / 0…+25° | 0.4 ← a new strand begins |
+
+The limits **widen** down the chain while damping **falls** — stiff at the root, floppy at the tip.
+That is how an animator authors hair, and it is strong evidence the decode is reading real fields
+rather than coincidental bytes.
 
 ### The physics record (type 21) — field by field
 
@@ -139,12 +189,12 @@ tail := u8 × 3                          flags
 The limits are **unmistakably radians** — the constants are π and π/2 to four decimals, and the
 median is a round 15°. 44 % of pairs are symmetric (`lo == −hi`).
 
-> **Still inferred:** the 8 bytes after the type byte (the rest of the header) are high-entropy and
-> read most naturally as a bone-name hash — **not yet checked against a real bone hash from the same
-> skeleton.** The meanings of `param[0..3]` and `param[5..8]` are shape-guesses from their value
-> distributions, not confirmed. And tails for types other than 21 and 23 are large and variable and
-> remain undecoded; their record boundaries come from the forward-scan heuristic, which yields exact
-> total consumption but is not independently verified per boundary.
+> **Still inferred:** the meanings of `param[0..3]` and `param[5..8]` are shape-guesses from their
+> value distributions, not confirmed — though `param[0]`/`param[3]` behave like damping in the hair
+> chain above. Tails for types other than 21 and 23 are large and variable and remain undecoded;
+> their record boundaries come from the forward-scan heuristic, which yields exact total consumption
+> but is not independently verified per boundary. Type 23's header is only 5 bytes, so it holds one
+> `uint32`, not a bone/parent pair.
 
 ### What it reads like
 

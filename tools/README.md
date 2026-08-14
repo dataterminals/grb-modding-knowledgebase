@@ -293,13 +293,27 @@ python reflex3.py 1889064665537_-_Player_Kilt_Addon.data
 ```
   1 constraint record(s); 394/394 bytes accounted for
   by type: 21=1 (Physics (swing/gravity))
-       #  swing limits (degrees)              gravity  damping/stiffness
-       0  [  -15.0,   +15.0]  [   -5.0,    +5.0]    9.800  0.2, 0, 0, 0
+  skeleton declares 4 bone(s); 1/1 constraint BoneIDs resolve to one of them
+       #  bone (CRC32)   <- parent  swing limits (degrees)      gravity  damping
+       0*  3114054949  2459179961  [ -15.0, +15.0] [ -5.0, +5.0]  9.800  0.2
 ```
 
 The kilt is one bone that swings ±15° one way and ±5° the other, under normal
 gravity. The Bodark trench coat is **36 hinges plus 10 swinging bones**, half
 limited −20°→0° and half 0°→+20° — panels hinging fore and aft.
+
+Bone IDs are **CRC32 of the bone's name**, so a rig's structure comes out too.
+Hair reads as a chain — each record's parent is the previous record's bone, with
+limits widening and damping falling toward the tip:
+
+```
+  0*   877775753  2908265011  [ -10.0, +10.0] [ +0.0, +25.0]  9.800  0.4
+  1*  1129773855   877775753  [ -15.0, +15.0] [ -1.0, +30.0]  9.800  0.3
+  2*  3711069884  1129773855  [ -20.0, +20.0] [ -3.0, +35.0]  9.800  0.2
+  3*    79239470  3711069884  [ -25.0, +25.0] [ -5.0, +40.0]  9.800  0.1
+```
+
+Stiff at the root, floppy at the tip — exactly how an animator authors hair.
 
 Add `--raw` for every record including the non-physics constraint types.
 

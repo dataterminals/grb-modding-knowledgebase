@@ -173,11 +173,16 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
    aiming at a physics-carrying add-on rig, copying the kilt/scarf entries as the pattern. First
    end-to-end test of route 2B.
 3. ~~**Finish the constraint-blob decode.**~~ **DONE 2026-08-14.** The blob is readable —
-   [`tools/reflex3.py`](../tools/reflex3.py) prints swing limits in degrees, gravity and damping,
-   and the record walk accounts for every byte in 204 of 205 skeletons. What's left inside it:
-   confirm the 8-byte header is a **bone-name hash** (cheap, and needed to tie constraints to named
-   bones), then decode the tails of type 9 (Orientation, 1,400 records) and type 6 (HingeVector,
-   472 — 36 of them in the trench coat).
+   [`tools/reflex3.py`](../tools/reflex3.py) prints the driven bone, its parent, swing limits in
+   degrees, gravity and damping; the walk accounts for every byte in 204 of 205 skeletons.
+   ~~confirm the 8-byte header is a bone-name hash~~ **also DONE** — it is
+   `u32 BoneID | u32 ParentBoneID`, both **CRC32 of the exact-case bone name**, resolving against
+   each skeleton's real bone list at **≈99.7 %** vs a 0.000 % null control. What's left inside the
+   blob: the tails of type 9 (Orientation, 1,402 records) and type 6 (HingeVector, 472 — 36 of them
+   in the trench coat), and the meanings of `param[0..3]` / `param[5..8]`.
+   - **Cheap win available:** ATK embeds `AnvilToolkit.Resources.hashes.hl`, a hash→string table,
+     and exposes `Name.GetHashedString()`. Extract it and every bone hash in the tooling becomes a
+     readable name.
 4. Then: a new mesh weight-painted to a physics-carrying rig. That step **is** the project goal,
    reached without touching `.cloth` at all.
 

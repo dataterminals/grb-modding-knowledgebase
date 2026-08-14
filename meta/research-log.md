@@ -994,6 +994,67 @@ the type/H/M table, the type-21 field table with per-field evidence counts, samp
 
 ---
 
+## Entry — 2026-08-14 (fourth) — CONFIRMED: the record head is `BoneID | ParentBoneID`, and bone names are CRC32
+
+### What I did
+Closed the one item the previous entry left marked *inferred*. Four independent lines of evidence,
+then a fix to the one type that didn't fit. **Read-only throughout.**
+
+### VERIFIED (new)
+- **ATK settles the shape.** `Reflex3BoneInfo` is
+  `{ uint BoneID; uint ParentBoneID; Matrix4x4 InitTransform }` and `Bone.Name` is a `uint32` —
+  exactly the "8 bytes then a 64-byte matrix" observed in the blob. The first matrix in every record
+  is `InitTransform`.
+- **Bone names are `CRC32(exact-case name)` — 9 of 9.** GRB bakes the hash into its collider names
+  (`TP_WalkerCoat_Ragdoll_LeftForeArm_2310617728`), so they are self-verifying. All nine
+  (`Head`, `Neck`, `LeftArm`, `LeftForeArm`, `LeftHand`, `LeftShoulder`, `RightArm`, `RightForeArm`,
+  `RightHand`) matched plain CRC32. **crc32-lower, crc32-upper, CRC-32/BZIP2 and no-final-xor each
+  matched 0 of 9.**
+- **`Bone.Name` sits 4 bytes after the `Bone` class hash (`2507411529`)** in a Skeleton payload —
+  found by scanning candidate offsets and taking the one that resolves the constraint IDs.
+  `Player_Kilt_Addon`: **1/1** BoneID and **1/1** ParentBoneID. `Tsec_Herzog_Hair_Skeleton`:
+  **28/28 and 28/28**.
+- **Game-wide, by record type:** BoneID resolves **100.0 %** for types 7, 9, 19, 20, 21, 24;
+  **99.8 %** for type 6; **96.2 %** for type 5. **≈99.7 % overall (3,850-ish of 3,860)** against a
+  **0.000 %** null control — random `uint32`s never hit the 1,274-hash bone-name set.
+- **Type 9 explained.** It initially scored **0 %** — because its bone IDs sit at header offset **+1**,
+  behind one extra constant `0x01` byte. At +1 it scores **100.0 % / 99.9 %**. That single byte is
+  precisely why type 9's header is 10 bytes while every other type's is 9. The anomaly and the fix
+  are the same fact.
+- **The decode produces authored-looking data.** `Tsec_Herzog_Hair_Skeleton`'s records form
+  **bone chains** — each record's `ParentBoneID` is the previous record's `BoneID` — and down each
+  4-bone strand the swing limits **widen** (±10° → ±15° → ±20° → ±25°) while damping **falls**
+  (0.4 → 0.3 → 0.2 → 0.1), then reset when a new strand starts. Stiff at the root, floppy at the
+  tip: that is how an animator authors hair, and it is much stronger evidence than byte statistics.
+- Across all types, 364/3,655 consecutive record pairs chain (10 %) — high within hair/strand rigs,
+  low in rigs whose bones hang in parallel.
+
+### INFERRED (new)
+- The earlier "body-skeleton" explanation for the missing 36 % was **wrong** — only 1 of 1,403
+  misses resolved in a body/reflex rig. The real cause was the type-9 offset, now fixed.
+- `param[0]` and `param[3]` behave like damping terms (they vary smoothly down a hair strand), but
+  the naming is still a shape-guess.
+- `RBTYPE_LEFTFOREARM` exists as a string inside `AnvilToolkit.dll` — a rigid-body type enum,
+  presumably the ragdoll capsule taxonomy. Not pursued; noted because it is the only ragdoll-shaped
+  identifier found in the toolkit.
+
+### Questions answered / opened
+- **Answered — the record head is `BoneID | ParentBoneID`, both CRC32 of the bone name.** Constraints
+  can now be tied to named bones, which is what a rebind needs.
+- **Opened — a bone-name dictionary.** ATK embeds `AnvilToolkit.Resources.hashes.hl` (a hash→string
+  table) and exposes `Name.GetHashedString()`. Extracting it would turn every hash in the tooling
+  into a readable bone name. Not attempted — it is an embedded .NET resource, not a loose file.
+- **Unchanged:** tails for types other than 21/23 are undecoded, and nothing is written back yet.
+
+### Docs written this session
+Updated: [`tools/reflex3.py`](../tools/reflex3.py) (extracts BoneID/ParentBoneID incl. the type-9
+offset, reads the skeleton's real bone list, flags which constraints resolve),
+[`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md) (record head in
+the grammar, the CRC32 proof, the per-type resolution table, the hair-strand walkthrough),
+[`tools/README.md`](../tools/README.md), [`meta/next-session.md`](next-session.md).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
