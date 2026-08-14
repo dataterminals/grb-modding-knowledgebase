@@ -832,6 +832,100 @@ hashes), [`meta/next-session.md`](next-session.md).
 
 ---
 
+## Entry — 2026-08-14 (second) — The layer above the skeleton: `EntityBuilder` names it by 64-bit ID
+
+### What I did
+Raven asked in `#shit-talk` (17:18 ET) — of the earlier Reflex3 finding — "yes but it must inherit
+those physics from something," and Sylvia asked what the next step up the hierarchy is. Answered it
+**empirically instead of by inference**: since Anvil stores cross-resource references as bare
+little-endian `uint64` ClassIDs, whatever assigns a skeleton must contain that skeleton's ID
+verbatim. Decompressed **every resource in `DataPC.forge`, `DataPC_extra.forge` and both patches —
+66,899 resources, 8 unreadable** — and searched for the IDs of four skeletons. Then decoded the
+record the ID sits in, and validated the decode. **Read-only throughout.**
+
+### VERIFIED (new)
+- **The physics is not inherited. It is embedded in the skeleton resource itself** (established in
+  the previous entry: `Reflex3SkeletonConstraints` is an *inline* object, `ObjectPtr` tag 0/4).
+  What gets assigned is the **skeleton**.
+- **`EntityBuilder` is the assigning layer — nothing else assigns a skeleton.** 37 references
+  found; **32 of the 35 non-`Entity` hits are `EntityBuilder`s** (the rest: 3 `Entity`, 2
+  `#1767772698` cinematic configs). No standalone `BuildTable` references any of the four.
+- **The typed reference record, decoded:**
+  ```
+  u32  TypeHash   0x24AECB7C == CRC32("Skeleton")   (0xEC6AC357 = GraphicObject, …)
+  u16  0x0000
+  u8   0x12                                          record tag
+  6×   0x00
+  u64  ClassID                                       the referenced resource
+  u32  Slot                                          attachment slot index
+  ```
+  **Validated, not assumed:** extracting *every* `Skeleton`-typed record from two builders gave
+  **16 records → 16 ClassIDs → 16/16 resolving to real skeletons** in the independent
+  2,469-skeleton sweep. **Zero false positives.**
+- **A character is a base rig plus a stack of physics-carrying add-on rigs.** `TSec_MIS_Blake(184)`
+  assigns 5 skeletons: `Regular_Male_Body_Skl` (no physics), `Regular_Male_Reflex_SklAdd`
+  (107,350 B), `Skeleton_IanBlake_Head`, `Player_Props_Addon`, and **`Tsec_Trench_AddonSkeleton`
+  (43,494 B) at slot 5, sitting beside `Tsec_IanBlake_Trench_Mcloth_MISSION`**. `PLAYER_Template`
+  assigns 11, of which 5 carry physics — including `Watch_Skeleton` (5,556 B),
+  `Tpri_Schultz_Beard_Addon` (2,710 B) and `Tpri_Schultz_gloves_addon` (1,166 B).
+- **`TEAMMATE_Template` contains a node literally named `PLAYER_SkelAddons`** (at payload offset
+  `0x00f35f`), with `Regular_Male_Reflex_SklAdd`'s reference 602 bytes later. Item-level skeleton
+  references sit inside the item's own node — the kilt's 803 B after the string `TP_PANT_Kilt`,
+  the scarf's after `TP_FullMask_Flycatcher`.
+- **`EntityBuilder` is editable through supported tooling.** `EntityBuilder.SupportedGames`
+  includes `Game.GhostReconBreakpoint` and its `FileActionType` is **`Xml`** — ATK exports the
+  builder to XML and re-imports it. The class is BuildTable-shaped (`BuildColumns`/`BuildRows`)
+  **plus** `Template`, `ReplicaTemplate`, `TemplateOverrides`, `Tables`, `Dependencies`, so
+  [`buildtable-xml.md`](../reference/buildtable-xml.md) largely applies.
+- **⚠️ The trench rig is NPC-only.** `Tsec_Trench_AddonSkeleton` is referenced by exactly three
+  builders — `TSec_MIS_Blake(184)`, `TSec_CIN_Blake(184)`, `MIS_Y2E4_Wassili_Kropotkine` — and
+  **never** by `PLAYER_Template` or `TEAMMATE_Template`. It is wired into characters, not into a
+  wearable gear slot. The player-wearable precedents are `Player_Kilt_Addon` and
+  `TP_HunterScarf_A_Skeleton`, both of which **are** in `TEAMMATE_Template`.
+
+### INFERRED (new)
+- Which `EntityBuilder` field the records live in is not pinned down — `Dependencies`
+  (`List<ulong>`) and the `BuildRows` object graph are both candidates. The record shape is
+  verified; its *owning field* is not. Getting an ATK XML export of `PLAYER_Template` would settle
+  it immediately and is the cheapest next check.
+- `Slot` values are mostly small (1–12) but some are large and byte-aligned (2816, 3328, 4864,
+  1792 = multiples of 256). Plausibly a packed slot+flags word rather than a plain index.
+  Unconfirmed.
+
+### Questions answered / opened
+- **Answered — the hierarchy question.** Full chain:
+  `EntityBuilder → (Skeleton, 64-bit ClassID, slot) record → add-on Skeleton → inline Reflex3
+  constraints`. Raven's instinct was half right: something *does* assign it, but the physics data
+  itself is not inherited from anywhere.
+- **Answered — is it re-pointable?** Yes in principle: it is a plain 64-bit ID at a fixed offset in
+  a fixed-shape record — the same shape as the community's documented hex item swaps — and ATK
+  supports XML round-trip on EntityBuilders for GRB, so it need not be done in hex.
+- **Answered — parked lead #10** (which property a BuildTable uses to reference a resource) is
+  substantially resolved for skeletons: typed reference records inside the `EntityBuilder`. The
+  cloth half is still open, but `TP_TACVEST_Walker_Coat_Cloth` and
+  `Tsec_IanBlake_Trench_Mcloth_MISSION` both appear as named nodes in the same builders, so the
+  same method will find it.
+- **Opened — the goal-shaped experiment.** Add (or re-point) a skeleton record in the **player**
+  template aiming at a physics-carrying add-on rig, copying the kilt/scarf entries as the pattern.
+  That is the first end-to-end test of route 2B.
+- **Opened — `data_inspect.py` mis-parses large EntityBuilder containers.** On
+  `TEAMMATE_Template.data` (5.65 MB payload, 173 file blocks) its resource-record walker desyncs
+  after the first resource and reports a garbage name and an impossible ClassID
+  (`11812857376716750848`). Harmless here — it did surface the `PLAYER_SkelAddons` string — but the
+  walker needs a bounds/sanity check.
+- **Unchanged:** whether a modified skeleton or builder actually loads is still untested, and
+  inherits the shadow-copy and hang-on-load hazards from the cloth work.
+
+### Docs written this session
+Updated: [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md) (new
+"The layer above" section — how the reference was found, the record format, the validation, two
+build sheets, the full chain, and the NPC-only caveat on the trench rig),
+[`meta/next-session.md`](next-session.md), [`tools/README.md`](../tools/README.md). New:
+[`tools/entity_skeletons.py`](../tools/entity_skeletons.py) — prints a character's or item's
+skeleton build sheet with physics sizes.
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>

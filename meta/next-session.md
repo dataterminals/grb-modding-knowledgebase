@@ -146,10 +146,36 @@ What changed:
   rigs, backpack straps, and `Player_Kilt_Addon` (394 B — the kilt has bone physics *as well as*
   its cloth).
 
-**Do next:** (1) finish the blob decode — the 9-byte record preamble, then the per-constraint
-framing; (2) then test whether a new mesh weight-painted to `Tsec_Trench_AddonSkeleton`'s bones
-keeps the coat's motion. That second step **is** the project goal, reached without touching
-`.cloth` at all.
+**The layer above is solved too** (2026-08-14, second session). An **`EntityBuilder`** assigns
+skeletons — nothing else does; confirmed by decompressing all 66,899 resources in `DataPC`/`extra`
++ patches and finding every reference. The record is:
+
+```
+u32 TypeHash(0x24AECB7C = Skeleton) | u16 0000 | u8 0x12 | 6x 00 | u64 ClassID | u32 Slot
+```
+
+validated 16/16 against the skeleton sweep. So **a rig assignment is a plain 64-bit ID** — the same
+shape as the community's hex item swaps — and `EntityBuilder` is `FileActionType.Xml` with GRB in
+`SupportedGames`, so ATK can round-trip it as XML instead.
+
+⚠️ **But the trench rig is NPC-only.** `Tsec_Trench_AddonSkeleton` is referenced by
+`TSec_MIS_Blake(184)`, `TSec_CIN_Blake(184)` and `MIS_Y2E4_Wassili_Kropotkine` — **never** by
+`PLAYER_Template` or `TEAMMATE_Template`. The player-wearable precedents are `Player_Kilt_Addon`
+and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a node named
+`PLAYER_SkelAddons`).
+
+**Do next, in order:**
+
+1. **Get an ATK XML export of `PLAYER_Template`.** Cheapest possible check — it settles which
+   `EntityBuilder` field the reference records live in, and gives an editable round-trip path. Use
+   [`tools/entity_skeletons.py`](../tools/entity_skeletons.py) first to see the build sheet.
+2. **The goal-shaped experiment:** add or re-point a skeleton record in the **player** template
+   aiming at a physics-carrying add-on rig, copying the kilt/scarf entries as the pattern. First
+   end-to-end test of route 2B.
+3. **Finish the constraint-blob decode** — the 9-byte record preamble, then the per-constraint
+   framing — so the physics itself becomes readable and tunable rather than just assignable.
+4. Then: a new mesh weight-painted to a physics-carrying rig. That step **is** the project goal,
+   reached without touching `.cloth` at all.
 
 ⚠️ Skeletons are **forge-shadowed** exactly like cloths (`Player_Kilt_Addon` sits in both
 `DataPC.forge` and `DataPC_TGT_WorldMap_Bootstrap_Split.forge`). Any override must patch **both**

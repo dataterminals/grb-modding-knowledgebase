@@ -168,6 +168,99 @@ Full table: regenerate with the sweep described below.
 
 ---
 
+## The layer above: how an `EntityBuilder` names a skeleton
+
+*Answered 2026-08-14, empirically.* The physics is **not inherited** — it is embedded in the
+skeleton resource itself. What gets assigned is the **skeleton**, and the thing that assigns it is
+an **`EntityBuilder`**, not a standalone BuildTable.
+
+### How it was found
+
+Rather than guess, every resource in `DataPC.forge`, `DataPC_extra.forge` and both patches
+(**66,899 resources**) was decompressed and searched for the raw little-endian `uint64` ClassID of
+four skeletons. Anvil stores cross-resource references as bare 64-bit IDs, so whatever points at a
+skeleton contains its ID verbatim. **37 references found, and 32 of 35 non-`Entity` hits are
+`EntityBuilder`s** — no other resource type assigns a skeleton.
+
+| Skeleton | Referenced by |
+| --- | --- |
+| `Regular_Male_Reflex_SklAdd` | `PLAYER_Template`, `TEAMMATE_Template`, and ~20 character builders |
+| `Player_Kilt_Addon` | `TEAMMATE_Template` |
+| `TP_HunterScarf_A_Skeleton` | `TEAMMATE_Template`, `MIS_Rosebud`, several NPCs |
+| **`Tsec_Trench_AddonSkeleton`** | **`TSec_MIS_Blake(184)`, `TSec_CIN_Blake(184)`, `MIS_Y2E4_Wassili_Kropotkine`** — character builders only, **never** a player template |
+
+### The reference record
+
+> **Verified.** Hand-aligned on four samples, then validated by extracting **every**
+> `Skeleton`-typed record from two EntityBuilders: **16 records, 16 IDs, 100 % resolving to real
+> skeletons** in the independent 2,469-skeleton sweep. Zero false positives.
+
+```
+u32  TypeHash     0x24AECB7C  == CRC32("Skeleton")   (0xEC6AC357 = GraphicObject, etc.)
+u16  0x0000
+u8   0x12                                            record tag
+6 x  0x00
+u64  ClassID      the resource being referenced
+u32  Slot         attachment slot index
+```
+
+**A skeleton assignment is a plain 64-bit ID at a fixed offset in a fixed-shape record.** That is
+the same shape as the community's documented hex item swaps
+([`buildtable-xml.md`](buildtable-xml.md)) — and it does not have to be done in hex:
+`EntityBuilder.SupportedGames` **includes `Game.GhostReconBreakpoint`** and its
+`FileActionType` is **`Xml`**, so ATK exports the whole builder to XML and re-imports it.
+
+### What a build sheet actually looks like
+
+Extracting all `Skeleton` records from two builders reads like a parts list — and shows exactly
+where the physics enters:
+
+**`TSec_MIS_Blake(184)`**
+
+| Slot | Skeleton | Physics |
+| ---: | --- | ---: |
+| 4 | `Regular_Male_Body_Skl` | none — the plain rig |
+| 1 | `Regular_Male_Reflex_SklAdd` | **107,350 B** |
+| 4 | `Skeleton_IanBlake_Head` | none |
+| 2816 | `Player_Props_Addon` | none |
+| **5** | **`Tsec_Trench_AddonSkeleton`** | **43,494 B** — sits beside `Tsec_IanBlake_Trench_Mcloth_MISSION` |
+
+**`PLAYER_Template`**
+
+| Slot | Skeleton | Physics |
+| ---: | --- | ---: |
+| 4 | `Regular_Male_Body_Skl` | none |
+| 1 | `Regular_Male_Reflex_SklAdd` | **107,350 B** |
+| 12 | `BodyUp_Skeleton` | **10,443 B** |
+| 11 | `Watch_Skeleton` | **5,556 B** |
+| 1792 | `Tpri_Schultz_Beard_Addon` | **2,710 B** |
+| 3328 | `Tpri_Schultz_gloves_addon` | **1,166 B** |
+| 10 | `Hat_Skeleton` | none |
+| 5 / 3 | `Skeleton_Schultz_Head`, `TPri_CIN_Hawkins_Head` | none |
+| 4864 | `WeaponsAttachment_NoBackPack_Addon` | none |
+
+A character is a **plain base rig plus a stack of add-on rigs**, each carrying its own physics.
+Blake's coat is one entry in that stack.
+
+### The full chain
+
+```
+EntityBuilder  (PLAYER_Template / TEAMMATE_Template / a named character)
+   └── typed reference record  (Skeleton, <64-bit ClassID>, slot)
+          └── add-on Skeleton resource
+                 └── inline Reflex3SkeletonConstraints   <- the physics lives HERE
+```
+
+> ⚠️ **One caveat that shapes the plan.** `Tsec_Trench_AddonSkeleton` is referenced **only by
+> character builders (Blake, Kropotkine)** — never by `PLAYER_Template` or `TEAMMATE_Template`. The
+> flowing-coat rig is wired into specific NPCs, not into a wearable gear slot. The
+> player-wearable precedents are `Player_Kilt_Addon` and `TP_HunterScarf_A_Skeleton`, which **are**
+> in `TEAMMATE_Template`. So the goal-shaped experiment is: **add a skeleton record to the player
+> template pointing at a physics-carrying add-on rig**, using the kilt/scarf entries as the
+> template to copy.
+
+---
+
 ## Related class hashes (new to this KB)
 
 | Hash (dec) | Class | Present in GRB? |

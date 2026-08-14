@@ -246,3 +246,35 @@ What the report means:
 ⚠️ Skeletons are **forge-shadowed** like cloths — the same ID lives in
 `DataPC.forge` *and* a WorldMap `_Split` base. An override must go into **both**
 families' patch forges.
+
+---
+
+## 🧍 Entity Skeletons — what rigs does this character or item use?
+
+Reads a character's or item's **`EntityBuilder`** and prints its skeleton build
+sheet: every rig it pulls in, and which of those carry bone physics.
+
+```
+python entity_skeletons.py 1536663434687_-_PLAYER_Template.data ^
+    --install "H:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint"
+```
+
+```
+ slot  skeleton                          bone physics   assigned near
+    1  Regular_Male_Reflex_SklAdd           107,350 B   TP_Blake_Skeleton
+    4  Regular_Male_Body_Skl                        -   TP_Blake_Skeleton
+    5  Tsec_Trench_AddonSkeleton             43,494 B   Tsec_IanBlake_Trench_Mcloth_MISSION
+```
+
+A character is a plain base rig **plus a stack of add-on rigs**, and the ones with
+physics are the parts that move — hair, straps, a beard, a coat. Blake's trench
+coat is one line in that list.
+
+**Why it matters:** the assignment is a plain 64-bit ID sitting at a fixed offset
+in a fixed-shape record, so it's re-pointable — the same trick as the community's
+hex item swaps. And ATK exports `EntityBuilder` to XML for GRB, so you don't have
+to do it in hex. Record format and the evidence:
+[`../reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
+
+Without `--install` it still lists the raw ClassIDs and slots — you just don't get
+names or physics sizes. **Read-only.**
