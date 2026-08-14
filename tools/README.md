@@ -208,3 +208,41 @@ Reads a whole `.forge` by its **index only** (no unpacking, no Oodle), so even t
 
 Background: [`../docs/06-game-load-and-reassembly.md`](../docs/06-game-load-and-reassembly.md),
 [`../reference/resource-type-ids.md`](../reference/resource-type-ids.md).
+
+---
+
+## 🦴 Skeleton Reflex Scanner — which skeletons carry **bone physics**?
+
+Not every flowing thing in GRB is cloth. Hair, ponytails, backpack straps, weapon
+slings, scarves — and the **Bodark trench coat** — move via **Reflex3**, Anvil's
+per-bone secondary-motion system (swing/slide constraints with gravity and wind).
+This tool tells you which skeletons carry it and how much.
+
+**Why you care:** `.cloth` is welded to one specific mesh's vertices, so it can't
+be moved to a new garment. **Bone physics can** — you weight-paint the new mesh to
+the same bones. That makes Reflex3 the practical route for "put this coat's motion
+on my mesh." Full write-up:
+[`../reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
+
+```
+python skeleton_reflex.py "H:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint"
+python skeleton_reflex.py DataPC.forge --csv skeletons.csv
+python skeleton_reflex.py 1889064665537_-_Player_Kilt_Addon.data
+```
+
+Reads forge indexes directly (no unpacking) and decompresses only the skeleton
+entries, so a whole install scans in a couple of minutes. Needs the game's
+`oo2core_7_win64.dll` — auto-found next to the forge, or pass `--oodle`.
+**Read-only; it never writes to the game.**
+
+What the report means:
+
+- **blob = 8 B** → header only → that skeleton has **no** bone physics.
+- **blob > 8 B** → real per-bone constraints. Bigger = more constrained bones.
+- Names ending `_Reflex` or `_Addon` are the physics layer for a character or a
+  garment — `Tsec_Trench_AddonSkeleton` (43,494 B) is a vanilla flowing coat done
+  entirely with bones.
+
+⚠️ Skeletons are **forge-shadowed** like cloths — the same ID lives in
+`DataPC.forge` *and* a WorldMap `_Split` base. An override must go into **both**
+families' patch forges.

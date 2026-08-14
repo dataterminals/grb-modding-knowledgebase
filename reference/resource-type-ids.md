@@ -47,8 +47,27 @@ Values are decimal (as stored) and hex. Full map: `ScimitarClassRegistry` in the
 | `4238218645` | `0xFC9E1595` | CompiledMesh |
 | `105229237` | `0x0645ABB5` | MeshData |
 | `615435132` | `0x24AECB7C` | **Skeleton** |
+| `2507411529` | `0x95741049` | Bone |
 | `1373399936` | `0x51DC6B80` | LODSelector |
 | `3571030336` | `0xD4D99940` | FacialSolverData |
+
+### Skeleton bone-physics (Reflex3)
+These are **nested** classes — they live *inside* a `Skeleton` resource as inline objects, so they
+never appear as a forge entry's `Extension`. Full write-up:
+[`skeleton-reflex3-physics.md`](skeleton-reflex3-physics.md).
+
+| ID (dec) | ID (hex) | Type | In GRB? |
+| ---: | --- | --- | --- |
+| `2386539642` | `0x8E3FB47A` | **Reflex3SkeletonConstraints** | ✅ inline in **all 2,469** skeletons; 512 hold real data |
+| `3558325132` | `0xD417BB8C` | ReflexSystem | field is read for GRB, never seen inline |
+| `3371740159` | `0xC8F8ABFF` | SkeletonPoseGroup | not inline in sampled skeletons |
+| `547156082` | `0x209CF072` | SkeletonPose | ” |
+| `119336528` | `0x071CEE50` | SkeletonPoseBone | ” |
+| `2299544533` | `0x891043D5` | LiteRagdoll | ❌ **never** — `SupportedGames` excludes GRB |
+| `2371068428` | `0x8D53A20C` | LiteRagdollCapsule | ❌ never |
+| `572675924` | `0x22225754` | LiteRagdollShape | ❌ never |
+| `333476854` | `0x13E073F6` | LiteRagdollCapsuleGroupFlags | ❌ never |
+| `2408076648` | `0x8F885568` | LiteRagdollExternalCapsule | ❌ never |
 
 ### Textures & materials
 | ID (dec) | ID (hex) | Type |

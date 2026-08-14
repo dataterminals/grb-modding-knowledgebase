@@ -14,13 +14,21 @@ for the current state.
 
 | Lane | State | What it is |
 | --- | --- | --- |
-| **1 — Community tutorial absorption** | **LIVE** — the last two sessions | Working the *Tier 1 Imports* `#mod-tutorials` forum into the KB, thread by thread |
-| **2 — Cloth→mesh rebind** | **PARKED** since 2026-07-09 | Sami's actual goal. Blocked on an in-game test that is staged but never run |
+| **1 — Community tutorial absorption** | idle since 2026-08-09 | Working the *Tier 1 Imports* `#mod-tutorials` forum into the KB, thread by thread |
+| **2A — Cloth→mesh rebind** | **PARKED** since 2026-07-09 | Blocked on an in-game test that is staged but never run |
+| **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14** | Same goal, different mechanism. Now has a format, a corpus, and a vanilla flowing-coat exemplar |
 
-Lane 1 is not a detour. It is turning the only real primary documentation GRB modding has into
-something durable, and it has already produced independent corroboration of the 64-bit ID model
-from a direction (hex editing) that had nothing to do with ATK. But **lane 2 is the north star**,
-and lane 1 must not be allowed to quietly become the whole project.
+Lane 1 is not a detour — it turns the only real primary documentation GRB modding has into
+something durable, and it produced independent corroboration of the 64-bit ID model from a
+direction (hex editing) that had nothing to do with ATK. But **lane 2 is the north star**, and
+lane 1 must not be allowed to quietly become the whole project.
+
+**2026-08-14 changed which sub-lane is live.** Chasing an unrelated community question about
+ragdolls surfaced **Reflex3**, GRB's per-bone physics system: present in every skeleton, carrying
+real data in 512 of them, fully typed in ATK's source, and already used by vanilla to drive a
+**flowing trench coat** with bones instead of cloth. Because bones are re-bindable by
+weight-painting and cloth is not, **2B is now the shortest path to Sami's goal**. See
+[`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
 
 ---
 
@@ -117,11 +125,35 @@ has never been validly tested.
 coat's vertices; a poncho needs its binding recomputed. Blocked on cracking the wrap/binding
 encoding **and** on STEP 1. Only pursue heavily if STEP 1 says modified cloths can load.
 
-**(B) The `.skeleton` bone-cloth path — likely the more practical route.** Sami's key lead: GRB's
-`.skeleton` secondary-motion (rigid hanging items like thermoses) **transfers to new meshes via
-weight-paint**, and **ATK can read GRB skeletons** (unlike cloth). Can a *flowing* garment be
-approximated with a chain of jiggle-bones the poncho weight-paints to? This sidesteps the `.cloth`
-rebind entirely. **Start here** — it's in tractable, ATK-supported territory.
+**(B) The `.skeleton` bone-physics path — ⭐ START HERE. As of 2026-08-14 this has a name, a
+format, and a vanilla exemplar.** Sami's key lead: GRB's `.skeleton` secondary-motion **transfers
+to new meshes via weight-paint**, and **ATK can read GRB skeletons** (unlike cloth). That system is
+called **Reflex3**, and it is now characterized —
+see [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
+
+What changed:
+
+- **Every** GRB skeleton carries an inline `Reflex3SkeletonConstraints` (hash `2386539642`);
+  **512 of 2,469** hold real per-bone constraint data.
+- The GRB blob header is `magic 0x12341234` + `version 3012000`, identical across all 512 — and it
+  does **not** match ATK's Mirage constants, which is exactly why ATK stores it as an opaque
+  Base64 blob instead of parsing it.
+- `Reflex3Physics` (constraint type `10`) is fully typed in ATK source: constrained bone, swing
+  axis, slide limits, **`Gravity`**, gravity node, **`WindFactor`**, collision toggle. Decoding the
+  GRB blob is a **port of readers ATK already has**, not a reverse from nothing.
+- **`Tsec_Trench_AddonSkeleton` carries 43,494 B of it** — a vanilla flowing trench coat driven
+  entirely by bones, on an **addon** skeleton. Also `TP_HunterScarf_A_Skeleton` (9,991 B), hair
+  rigs, backpack straps, and `Player_Kilt_Addon` (394 B — the kilt has bone physics *as well as*
+  its cloth).
+
+**Do next:** (1) finish the blob decode — the 9-byte record preamble, then the per-constraint
+framing; (2) then test whether a new mesh weight-painted to `Tsec_Trench_AddonSkeleton`'s bones
+keeps the coat's motion. That second step **is** the project goal, reached without touching
+`.cloth` at all.
+
+⚠️ Skeletons are **forge-shadowed** exactly like cloths (`Player_Kilt_Addon` sits in both
+`DataPC.forge` and `DataPC_TGT_WorldMap_Bootstrap_Split.forge`). Any override must patch **both**
+families, and "does a modified skeleton even load?" is as untested as STEP 1 is for cloth.
 
 ---
 
@@ -163,12 +195,27 @@ payoff.
 
 **On the skeleton path (route B):**
 
-5. **Golem Cape is the ready path-B exemplar.** It visibly flows but has **no `Cloth`/`SoftBody`
-   resource** (07-02) → it's skeleton secondary-motion on flowing geometry. Decompile ATK's
-   `Skeleton`/bone-physics classes against it.
-6. **Ragdoll bone-collider list** in `TP_WalkerCoat_Cloth`'s editor data (`Ragdoll_Head…;LeftArm…`
-   string, flagged 06-30, never decoded) — names the skeleton bones the cloth collides against;
-   relevant to binding a cloth to a character in either route.
+5. **Golem Cape** — still the interesting path-B exemplar: it visibly flows but has **no
+   `Cloth`/`SoftBody` resource** (07-02). ⚠️ The 2026-08-14 all-skeleton sweep found **no skeleton
+   entry named `*Cape*`/`*Golem*` anywhere**, so the cape's rig is named something else. Find its
+   actual skeleton (via its BuildTable / mesh), then check its Reflex3 blob with the method in
+   [`skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md). *(ATK's
+   `Skeleton`/`Reflex3` classes are now decompiled and written up — that half of the lead is done.)*
+6. ~~**Ragdoll bone-collider list** in `TP_WalkerCoat_Cloth`'s editor data.~~ **CLOSED 2026-08-14.**
+   Decoded: a 536-char semicolon-separated list of **13 garment-owned capsule colliders**, every one
+   prefixed `TP_WalkerCoat_`, covering **upper body only** (Head, Neck, L/R Arm, ForeArm, Hand,
+   LeftShoulder ×4 — no spine, pelvis or legs). It is the coat cloth's collision proxy set, named
+   after the bones it follows. **Not** a death-ragdoll rig, and not a binding mechanism.
+
+**Do not re-chase — the community ragdoll question (2026-08-14):**
+
+Releptive asked in `#shit-talk` whether GRB deaths could ragdoll instantly the way hostage-guard
+kills do. **Answer: not with today's data surface, and the reason is absence, not difficulty.**
+GRB ships **no `LiteRagdoll` resource** (ATK's `SupportedGames` excludes GRB; zero entries anywhere),
+and **no combat animations at all** — all 1,564 `Animation` resources are ambient NPC acting clips,
+and sweeps of all 415,177 forge entry names return zero hits for `ragdoll`, `hitreact`, `flinch`,
+`stagger`, `getup`. Death-anim selection and ragdoll blend-out live in an animation state machine
+that is not a forge resource. Full detail in the 2026-08-14 research-log entry.
 
 **Prerequisite / infrastructure:**
 

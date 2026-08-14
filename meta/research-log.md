@@ -719,6 +719,119 @@ Updated: [`reference/cloth-section-types.md`](../reference/cloth-section-types.m
 
 ---
 
+## Entry — 2026-08-14 — Chasing a ragdoll question, found route B's mechanism: **Reflex3 skeleton bone-physics**
+
+### What I did
+Started from a community question, not from the KB's own backlog. In *Tier 1 Imports* `#shit-talk`
+(2026-08-14, ~15:11 ET) **Releptive** observed that Bodarks standing over hostages "legit js DROP…
+full on ragdoll drop" when shot, and asked why normal deaths can't do that; **96kamisama** noted
+Ready or Not achieves it "not really altering the animation, but it makes the animation transition
+faster into ragdolling." The user asked whether it's possible.
+
+Two questions fell out, and both got answered: **(a)** is there any *data surface* in GRB for
+death-ragdoll behaviour, and **(b)** what physics systems does GRB actually expose on skeletons.
+Method: an index-only sweep of **all 27 forges / 415,177 entries**, a full `ilspycmd -p` decompile
+of `AnvilToolkit.dll` v1.3.1, then targeted extraction and Oodle-decompression of real skeleton and
+cloth resources straight out of the `.forge` files. **Read-only throughout — nothing in the install
+was modified.**
+
+### VERIFIED (new)
+
+**On the ragdoll question — the answer is negative, and cleanly so:**
+- **GRB ships no ragdoll resource.** ATK registers `LiteRagdoll` (`2299544533`) plus
+  `LiteRagdollCapsule` / `Shape` / `CapsuleGroupFlags` / `ExternalCapsule`, but
+  `LiteRagdoll.SupportedGames` lists twelve Assassin's Creed titles and **excludes
+  `Game.GhostReconBreakpoint`**. Zero forge entries carry any of those type ids, and none appear
+  inside any sampled skeleton payload.
+- **No combat animations exist as forge resources.** All **1,564** `Animation` entries
+  (`262342271`) are ambient NPC "acting" clips — prefixes `milM`/`CivM`/`civM`/`homM`/`homF`/`outM`/
+  `kidM` plus a few creature idles (`Ogre`, `SkyCherubim`, `AirDroidMed`). **0 of 1,564** fall
+  outside that set. Keyword sweeps over all 415,177 entry names return **zero** hits for `ragdoll`,
+  `hitreact`, `flinch`, `stagger`, `getup`, `takedown`, `rappel`, `aimdown`; `death` matches only
+  `[VE] AI_…` **voice** events and DB records. The player/enemy locomotion-death-reaction bank is
+  not in the forges.
+- **Parked lead #6 is CLOSED.** The `Ragdoll_…` string in `TP_WalkerCoat_Cloth` is a
+  semicolon-separated list of **garment-owned collider names**:
+  `Ragdoll_Head_130111906;TP_WalkerCoat_Ragdoll_Head_…;…_LeftArm_…;_LeftForeArm_…;_LeftHand_…;
+  _LeftShoulder_…(×4);_Neck_…;_RightArm_…;_RightForeArm_…;_RightHand_…` (536 chars, 13 entries).
+  Every collider is prefixed **`TP_WalkerCoat_`** and the set is **upper-body only** — no spine,
+  pelvis or legs. These are capsule colliders the *coat's cloth* collides against, named after the
+  bones they follow. Ubisoft's naming, not a death-ragdoll rig.
+
+**On skeletons — a whole system this KB had never seen:**
+- **Every GRB `Skeleton` carries an inline `Reflex3SkeletonConstraints` object** (hash
+  `2386539642`). `Skeleton.SupportedGames` includes GRB, and `Skeleton.Read()` reads the field
+  under an explicit `version == Game.GhostReconBreakpoint` branch. Confirmed in **all 2,469**
+  skeletons across all forges.
+- **512 of 2,469 skeletons carry real constraint data** (blob > 8 B); the other 1,957 hold the
+  8-byte header only.
+- **The GRB blob header is a new constant**: all 512 begin byte-identically with
+  `34 12 34 12 a0 f5 2d 00` = `uint32` magic **`0x12341234`** + `uint32` version **`3012000`**.
+- **This is exactly why ATK can't read it.** ATK validates
+  `Reflex3SkeletonConstraintMagic = 19620929`, `Version = 2`, `ConstraintMagic = 5000004` — none of
+  which occur anywhere in GRB's blobs — and gates the parse behind
+  `base.Version != Game.Mirage`, so the GRB variant was never validated. ATK still **reads,
+  round-trips and Base64-exports** the blob for GRB; it just doesn't interpret it.
+- **The constraint model is fully typed in ATK.** `Reflex3ConstraintTypeRegistry`:
+  `0` Attachment, `1` BallJoint, `3` BoundingVolume, `6` HingeVector, `7` LookAt, `9` Orientation,
+  **`10` Physics**, `11` Position (ids `2`,`4`,`5`,`8` unmapped). `Reflex3Physics` carries
+  `ConstrainedObject` (the bone), `UseSwing`, `SwingAxis`, `UseSlide` + `SlideMin`/`SlideMax`,
+  **`Gravity`** (default `9.8`), `UseGravityNode`/`GravityNode`/`IsGravityLocal`,
+  `UseCollisionInfo`, **`WindFactor`**, and optimized slide/swing info blocks. A complete
+  jiggle-bone description.
+- **Blob body, partially decoded:** an 8-byte header, then a **constant 9-byte record preamble**,
+  then `4×4` `float32` matrices, orthonormal with a `(0,0,0,1)` final row — bone transforms.
+  Preamble differs per skeleton (`Player_Kilt_Addon`: `15 25 b5 9c b9 b9 1b 94 92`;
+  `TP_HunterScarf_A_Skeleton`: `05 6f e3 82 aa 1f b7 69 7d`).
+- **The corpus points straight at the project goal.** `Tsec_Trench_AddonSkeleton` carries
+  **43,494 B** of bone constraints — **a flowing trench coat driven entirely by bones, on an
+  *addon* skeleton.** Also: `TP_HunterScarf_A_Skeleton` 9,991 B, hair rigs 10–12 KB, backpacks with
+  straps 48–62 KB, character `*_Reflex` layers 99–114 KB, and **`Player_Kilt_Addon` 394 B — the
+  kilt has bone physics *as well as* its `.cloth`.**
+- **Skeletons are forge-shadowed exactly like cloths** — `Player_Kilt_Addon` (id
+  `1889064665537`) appears in both `DataPC.forge` and
+  `DataPC_TGT_WorldMap_Bootstrap_Split.forge`, byte-identical. Any skeleton override must patch
+  both families.
+
+### INFERRED (new)
+- The 9-byte preamble reads most naturally as a `uint64` (high-entropy, bone-name-hash shaped) plus
+  one tag/type byte. **Unconfirmed** — needs checking against a real bone-name hash from the same
+  skeleton.
+- In `Player_Kilt_Addon` the first two 4×4 matrices are byte-identical; plausibly a rest/current
+  pair, but that is a guess from one specimen.
+- Why the hostage-guard kill ragdolls while a normal death plays a canned animation is still
+  unexplained by anything on disk. The likeliest reading — a scripted pose with no matching death
+  animation falling through to physics — remains **speculation**; no data was found either way.
+
+### Questions answered / opened
+- **Answered — ragdoll-on-death is not moddable with today's data surface.** Not "hard": the
+  resources aren't there. No `LiteRagdoll`, no death animations, no hit-reaction data in any forge.
+  It would need the animation state machine, which isn't shipped as a forge resource. This closes
+  the community question honestly rather than leaving it as a maybe.
+- **Answered — parked lead #6** (`Ragdoll_…` bone-collider string): decoded, it's garment cloth
+  collision, not a ragdoll rig. Remove from the parked list.
+- **Opened — ⭐ the strongest route-B lead this project has had.** `Reflex3` is a *bone*-driven
+  physics system, and bones are re-bindable by weight-painting — the exact thing `.cloth` cannot
+  do. `Tsec_Trench_AddonSkeleton` is a vanilla flowing coat implemented this way. The decode is a
+  **port of readers ATK already has**, not a reverse from nothing.
+- **Opened — finish the blob decode**: identify the 9-byte preamble, then the per-constraint record
+  framing, then map onto `Reflex3ConstraintTypeRegistry` so `Reflex3Physics` fields become
+  readable/writable.
+- **Opened — constraint type ids 2, 4, 5, 8** are unmapped by ATK. Same species of blind spot as
+  the 22 unmodeled MotionCloth sections.
+- **Unchanged:** lane 2 STEP 1 (the both-patch kilt repack) is still un-run. Whether a modified
+  *skeleton* loads is a separate, equally untested question — and it inherits the same
+  shadow-copy and hang-on-load hazards.
+
+### Docs written this session
+New: [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md) (the whole
+Reflex3 write-up — GRB blob header, constraint type table, `Reflex3Physics` field list, the
+512-skeleton corpus, class-hash table, reproduction steps). Updated:
+[`reference/resource-type-ids.md`](../reference/resource-type-ids.md) (Reflex3/ragdoll/skeleton
+hashes), [`meta/next-session.md`](next-session.md).
+
+---
+
 > **Template for future entries:**
 > ```
 > ## Entry — YYYY-MM-DD — <topic>
