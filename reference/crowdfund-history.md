@@ -183,7 +183,7 @@ Every entry has a dated `@everyone` in `#announcements`. Names in *(parentheses)
 | 25 | 2025-08-14 | AKM w/ KPYK parts | Agent/07 |
 | 26 | 2025-08-18 | White Moon | YourMomsChestHair |
 | 27 | 2025-09-17 | **Snake Eater** | YourMomsChestHair |
-| 28 | 2025-09-23 | *(unnamed — "Agent, back at it again")* | Agent/07 |
+| 28 | 2025-09-23 | **Steyr** | Agent/07 |
 | 29 | 2025-10-13 | **Operation Mother's Chest Hair** | YourMomsChestHair |
 | 30 | 2025-11-07 | **Crowd Control** *(Mercer's debut)* | MercerBlack™ |
 | 31 | 2025-11-09 | **Enfield Tea Set** | — |
@@ -280,7 +280,31 @@ Mean 102, median 72, range 48–275. All tallies finalized.
 
 ---
 
-## 6. What could not be recovered, and why
+## 6. Where Tier 1 Imports came from
+
+Tier 1 Imports was created **2024-11-02**. It did not appear out of nothing: **The Bivouac** (guild `981599102523539466`), a Ghost Recon: Breakpoint modding community running since **mid-2022**, is where much of its early membership already was.
+
+> **Verified — the two servers are directly linked in the record:**
+>
+> | Date | Event | Source |
+> | --- | --- | --- |
+> | 2024-11-02 | Tier 1 Imports created. Day one, its founder states the plan: *"my idea for this server was to have this be a storefront of sorts for crowdfunding mod projects."* | T1 msg `1302414873325604945` |
+> | 2024-11-06 | The Bivouac's ownership transfers to **Sixthburrito**. The announcement names no outgoing owner and signals no conflict. | Bivouac msg `1303731106599796817` |
+> | 2024-11-08 | **McC00CHIEMAN** posts into the Bivouac's `#grb-talk`: *"I'm the co-creator of Tier 1 Imports"*, with an invite link. He is not removed for it. | Bivouac msg `1304532626023120966` |
+> | 2024-11-23 | **ViruS**, from inside the Bivouac, routes people to Tier 1 for crowdfunds: *"check nexusmods, put up a comission here, or make a request for a crowdfund mod … over at the tier1 server."* | Bivouac msg `1309919966497214525` |
+> | 2026-05-11 | *"Just go to Tier 1 Imports server, this one is dead."* The Bivouac still exists but is largely inactive. | Bivouac msg `1503318552331948113` |
+
+Several people who became Tier 1 regulars were active Bivouac members at the time — ViruS, DA 𝕃𝕒𝕜𝕖𝕣_Man𝟚𝟛𝟚, SamiPuma, Seven, ryan1662, wabbit, Ransu.
+
+### The difference that actually matters
+
+> **Verified:** The Bivouac's channel list still carries `#request-commission` and `#commission-guidelines`. It runs **commissions** — one person pays one modder for one job. Tier 1 was built, on its first day, to **split that cost across many people**. That is what a crowdfund is, and it is the structural reason the second server exists.
+
+> **Inferred / unresolved:** whether Tier 1 was a deliberate *split* from The Bivouac. The founding, the ownership handover and the open recruitment all fall inside one week, which is suggestive — but **no message states a cause**, and the recruitment being public and tolerated argues against an acrimonious break. A long-standing member of either server could settle this in a sentence; the record cannot.
+
+---
+
+## 7. What could not be recovered, and why
 
 > **⚠️ `#crowdfund-projects` does not keep its history.** The channel holds **six posts**, the oldest from 2026-04-12. Everything older is gone: `before=` paging and `around=` jumps both return nothing, and roughly 20 `@everyone` posts in `#announcements` still link to crowdfund posts that **no longer exist**.
 >
@@ -289,7 +313,7 @@ Mean 102, median 72, range 48–275. All tallies finalized.
 Consequences:
 
 1. **👍 counts exist only for live crowdfunds.** For all 51 completed ones the commitment count is gone permanently. The figures in §5 are a four-project snapshot, not a history.
-2. **Eight System 2 crowdfunds cannot be named** (#28, #39–#42, #46 and the two others marked unnamed). Their date and often their creator are solid; the name died with the post.
+2. **Five System 2 crowdfunds cannot be named** (#39–#42, #46), plus three in System 1 (#3, #7, #8). Their date and often their creator are solid; the name died with the post. *(#28 was recovered on 2026-08-23 — see §7 — leaving eight unnamed in total.)*
 3. **System 1 has no reliable count.** `#crowdfund-projects-legacy` and `#crowdfund-votes` (`1303906293219856477`) both return `forbidden` — as do individual System 1 project channels (`1370158615473946667` tested). The 23 in §4 are what could be reconstructed from public chat; **the true figure is higher.** Six of the 23 were found only because someone mentioned them in passing.
 4. **Role membership is not readable.** Discord does not expose role-member counts to a member account, so "how many people hold the Lioness role" is bounded (≥275) but not known.
 
@@ -298,7 +322,8 @@ Consequences:
 1. **How many System 1 crowdfunds were there really?** Answerable by anyone with access to `#crowdfund-projects-legacy` or `#crowdfund-votes`, or by a moderator with the audit log.
 2. **The eight unnamed System 2 projects.** A member holding those roles would see the names immediately — the role name *is* the crowdfund name.
 3. **Did the March 2025 leak cause the system change?** §2 flags this as inferred. A moderator could confirm or kill it in one sentence.
-4. **Full public/supporters split across all 55.** Only 11 are measurable from this account; a member with more roles could extend the table in §5 and turn the "two thirds stay private" estimate into a real figure.
+4. **Names from outside the server.** #28 was recovered by searching *The Bivouac*, not Tier 1 — a member there listing what was live on 2025-09-24: *"the Metal Gear Solid/XOF and the Steyr Crowdfund"* (msg `1420518885261836368`). Adjacent communities remember what a self-deleting channel does not; the remaining eight may be recoverable the same way.
+5. **Full public/supporters split across all 55.** Only 11 are measurable from this account; a member with more roles could extend the table in §5 and turn the "two thirds stay private" estimate into a real figure.
 
 ---
 

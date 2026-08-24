@@ -1232,6 +1232,23 @@ guild search on "buy-in" / "crowdfund project" / "unconfirmed". New doc:
   those roles could name them instantly, since the role name *is* the crowdfund name.
 - ❌ Release split across all 55 — only 11 measurable from this account.
 
+### Follow-up (same day) — The Bivouac, and a name recovered from outside
+- **Tier 1 grew out of The Bivouac** (guild `981599102523539466`), a GRB modding community running
+  since mid-2022. **Verified:** T1 founded 2024-11-02; the Bivouac's ownership transfers to
+  Sixthburrito 2024-11-06 (msg `1303731106599796817`); T1's co-creator posts an invite into the
+  Bivouac's own chat 2024-11-08 (msg `1304532626023120966`) and is not removed for it; ViruS routes
+  Bivouac members to T1 for crowdfunds 2024-11-23 (msg `1309919966497214525`). The Bivouac is now
+  largely inactive (msg `1503318552331948113`).
+- **The structural difference is the funding model, and it is still visible in the channel lists.**
+  The Bivouac runs commissions — `#request-commission`, `#commission-guidelines` — one person paying
+  one modder. T1 was built on day one to split that cost across many. **Inferred / unresolved:**
+  whether T1 was a deliberate *split*. Founding, handover and recruitment fall inside one week, but
+  no message states a cause and the recruitment was public and tolerated.
+- **Method worth reusing: adjacent communities remember what a self-deleting channel does not.**
+  Crowdfund #28, unnamed since its post was lost, was recovered by searching *The Bivouac* — a member
+  there listing what was live on 2025-09-24: *"the Metal Gear Solid/XOF and the Steyr Crowdfund"*
+  (msg `1420518885261836368`). Eight crowdfunds remain unnamed; the same trick may reach some of them.
+
 ### Docs written this session
 New: [`reference/crowdfund-history.md`](../reference/crowdfund-history.md). Updated:
 [`README.md`](../README.md) (link).
