@@ -1172,6 +1172,77 @@ evidence). Updated: [`reference/skeleton-reflex3-physics.md`](../reference/skele
 [`tools/reflex3.py`](../tools/reflex3.py) (`--names` now also accepts the TSV),
 [`tools/README.md`](../tools/README.md), [`meta/next-session.md`](next-session.md).
 
+## Entry — 2026-08-23 — Tier 1 Imports crowdfund history; the two funding systems
+
+### What I did
+Not a game-file session. Documented the **funding and distribution system** behind a large slice of
+the mod corpus, because folder names in [`examples/mod-catalog.md`](../examples/mod-catalog.md)
+(`CFLIONNESS_*`, `acostabisonbattlebelt_*`, `AKM_KYPK`, `Kalashnikova_SR1`, `SA58`) are crowdfund
+output and nothing here explained what that meant. Read *Tier 1 Imports* (guild `1302392670181916722`)
+through the Discord bridge as `@blkdnm`: `#announcements` end to end (94 messages, 2024-12-03 →
+2026-08-19), `#crowdfund-projects`, the 11 readable `*-confirmed` channels, `#kingslayer-polls`, and
+guild search on "buy-in" / "crowdfund project" / "unconfirmed". New doc:
+[`reference/crowdfund-history.md`](../reference/crowdfund-history.md).
+
+### VERIFIED (new)
+- **Two systems, changeover dateable to 2025-07-29.** System 1 ("buy-in", 2024-11 → 2025-07):
+  variable price set per project as a *share of the modder's commission* ($60 gun / 12 people / $5
+  each — msg `1302780729121570906`), opt in by voting in `#crowdfund-votes`, manual channel adds.
+  System 2 ("Smiley's way", 2025-07-29 →): flat $10 minimum, 👍 reaction grants a
+  `<Name> unconfirmed` role, payment swaps it for `<Name>` plus the `-confirmed` channel and the
+  permanent **Supporter** role.
+- **The changeover was never announced.** `#announcements` was read in full and contains no post
+  describing it; the new channel and post format simply appeared.
+- **Reaction-role automation is T1 Carl** (`235148962103951360`), the sole bot reactor on every
+  crowdfund post — which also means every raw 👍 count is inflated by exactly one.
+- **Per-project roles are public on the profile**, and the community polices "unconfirmed" tags
+  socially (msgs `1441914698940284990`, `1432329575764856934`, `1442081888226246750`). This replaced
+  System 1's only lever, which was threatening bans (msg `1313256555994681406`).
+- **Tier naming changed twice.** The crowdfund reward was "Tier 1 Armory" (Mar 2025) → "Tier 2"
+  (May 2025) → **Supporter**; the earned role became **Kingslayer** by poll on 2026-03-24, 149 votes
+  (msg `1485007498162475028`). Pre-mid-2025 "T1 Armory" references mean today's supporter armoury.
+- **`#crowdfund-projects` does not keep its history** — it holds six posts, oldest 2026-04-12;
+  `before=`/`around=` return nothing past that, and ~20 `@everyone` links into it are dead.
+  **Corrected later the same day:** I first wrote that CYBERSAMI and Heavy Metal were *deleted*
+  between 08-19 and 08-23 and called it observed. It was not — a `limit=4` query mistaken for the
+  channel's contents. Both are still posted. No deletion has been observed; the mechanism (rolling
+  removal vs. a one-off purge) is **unestablished**, and two of the six are months past their end
+  date and still up. Caught only because `tools/refresh.py` re-read the board with a real limit —
+  a reminder that a query bound is not a measurement.
+- **Release votes are readable and are a hard floor on paid membership** (only payers can see the
+  channel). 11 measured: 1,118 votes total, range 48–275. **7 of 11 voted to stay supporter-only** —
+  i.e. roughly two thirds of crowdfunded work never reaches Nexus, which is the answer to "why can't
+  I find this mod publicly".
+- **Backer base is wide and shallow.** Exact reactor lists for all six posted crowdfunds: **812
+  distinct humans, 1,318 sign-ups, 67.9% backed only one**, and just 14 people are on all six.
+
+### INFERRED (new)
+- The **March 2025 leak** ("an edgelord tried to leak buy in mods", msg `1352106850715308134`; buy-ins
+  halted same day, msg `1351884110330859531`) plausibly drove the move to auditable per-project roles.
+  Adjacent in time and theme; **no message states the causal link.** Flagged as hypothesis in the doc.
+- System 1 item #12 (SC Wolves / Wolves Overhaul) may be the same project as #10 (Shadow Rusher) —
+  SamiPuma linked the Shadow Rusher channel while naming it "SC Wolves".
+
+### Questions answered / opened
+- ✅ What the two systems were, and exactly how each worked.
+- ✅ Provenance for the `CF*`-prefixed corpus folders.
+- ❌ **How many System 1 crowdfunds existed** — 23 recovered, true count higher.
+  `#crowdfund-projects-legacy` and `#crowdfund-votes` (`1303906293219856477`) both return `forbidden`.
+- ❌ **Eight System 2 crowdfunds cannot be named** — post deleted, channel invisible. Anyone holding
+  those roles could name them instantly, since the role name *is* the crowdfund name.
+- ❌ Release split across all 55 — only 11 measurable from this account.
+
+### Docs written this session
+New: [`reference/crowdfund-history.md`](../reference/crowdfund-history.md). Updated:
+[`README.md`](../README.md) (link).
+
+Also published the live panel — **[dataterminals/t1-crowdfunds](https://github.com/dataterminals/t1-crowdfunds)**
+→ <https://dataterminals.github.io/t1-crowdfunds/> — which renders this dataset and carries
+`tools/refresh.py` to re-pull sign-ups and backer overlap from the bridge. The narrative stays here;
+the panel is the living view of it.
+
+---
+
 ---
 
 > **Template for future entries:**
