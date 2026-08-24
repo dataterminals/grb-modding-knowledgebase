@@ -27,7 +27,7 @@ This file documents the **funding and distribution system**, not the modding pip
 
 Tier 1 Imports has run **at least 55 crowdfunds** since the server was founded on **2024-11-02**, under **two distinct systems**:
 
-| | **System 1 — "buy-in"** | **System 2 — "Smiley's way"** |
+| | **System 1 — "buy-in"** | **System 2 — the reaction-role system** |
 | --- | --- | --- |
 | **Ran** | 2024-11 → 2025-07 | 2025-07-29 → present |
 | **Announced in** | `#crowdfund-projects-legacy`, `#crowdfund-votes`, sometimes `#on-topic` | `#crowdfund-projects` (`1399641218610233427`) |
@@ -45,7 +45,7 @@ The user's recollection is correct on every point: the second system is roles, u
 
 ## 2. System 1 — the "buy-in" era (2024-11 → 2025-07)
 
-> **Verified:** The server was built *for* this. On its first full day, founder **McC00CHIEMAN** wrote: *"my idea for this server was to have this be a storefront of sorts for crowdfunding mod projects"* (`#on-topic`, msg `1302414873325604945`, 2024-11-02). The guild snowflake dates creation to the same day.
+> **Verified:** The server was built *for* this. On its first full day, the founder wrote: *"my idea for this server was to have this be a storefront of sorts for crowdfunding mod projects"* (`#on-topic`, msg `1302414873325604945`, 2024-11-02). The guild snowflake dates creation to the same day.
 
 ### The pricing model
 
@@ -56,7 +56,7 @@ Crowdfunds started as **split commissions**, not a flat fee. **YourMomsChestHair
 
 So the buy-in was **a share of the modder's commission price**, and the project needed a **minimum number of participants** to go ahead. That is the single biggest structural difference from System 2, where $10 is a floor rather than a share.
 
-> **Verified:** Amounts genuinely varied per project as late as May 2025 — *"its a dope mod and the min buy in is $5"* (msg `1371750407612665856`), against $10 elsewhere. **SexyCouchPotato** confirms the rule: *"There is a minimum buy in depending on the scope of the project or costs of the assets"* (msg `1384961275628490754`, 2025-06-18).
+> **Verified:** Amounts genuinely varied per project as late as May 2025 — *"its a dope mod and the min buy in is $5"* (msg `1371750407612665856`), against $10 elsewhere. A member confirms the rule: *"There is a minimum buy in depending on the scope of the project or costs of the assets"* (msg `1384961275628490754`, 2025-06-18).
 
 ### The flow
 
@@ -67,17 +67,17 @@ So the buy-in was **a share of the modder's commission price**, and the project 
 5. Once the modder confirms payment you are added to a **confirmation channel** (msg `1384961275628490754`).
 6. At the end, **buyers vote** whether the mod goes public or stays private (msg `1312514949058400346`).
 
-> **Verified:** The public/private release vote — the mechanic that still runs today — existed from the very first weeks. **wognog**, 2024-11-30: *"at the end of every crowd fund there's a vote held for the people who bought in for it to stay private or be released"* (msg `1312514949058400346`).
+> **Verified:** The public/private release vote — the mechanic that still runs today — existed from the very first weeks. A member, 2024-11-30: *"at the end of every crowd fund there's a vote held for the people who bought in for it to stay private or be released"* (msg `1312514949058400346`).
 
 ### The flake problem, and the leak
 
-Non-payment was a problem from the start. **McC00CHIEMAN**, 2024-12-02 (msg `1313256555994681406`):
+Non-payment was a problem from the start. The founder, 2024-12-02 (msg `1313256555994681406`):
 
 > "we've been having issues with people not following through with committing to the 'buy-ins' WITHOUT TELLING US THEY NO LONGER WISH TO 'BUY-IN'. If you continuously vote to 'buy-in' for a CROWDFUND and don't communicate that you no longer want to, you WILL be kicked from the server."
 
 Then, in March 2025, someone leaked paid mods:
 
-> "Basically an edgelord tried to leak buy in mods" — DA 𝕃𝕒𝕜𝕖𝕣_Man𝟚𝟛𝟚, `#on-topic`, msg `1352106850715308134`, 2025-03-19
+> "Basically an edgelord tried to leak buy in mods" — a moderator, `#on-topic`, msg `1352106850715308134`, 2025-03-19
 
 YourMomsChestHair posted *"Im halting all buy ins atm"* the same day (msg `1351884110330859531`). SamiPuma, days later: *"we don't really know what the rules are yet, all of this is new, we're really jus trying to make sure the people from going into T1 wont be trying to leak stuff"* (msg `1353223879530647574`).
 
@@ -85,19 +85,19 @@ YourMomsChestHair posted *"Im halting all buy ins atm"* the same day (msg `13518
 
 ---
 
-## 3. System 2 — "Smiley's way" (2025-07-29 → present)
+## 3. System 2 — the reaction-role system (2025-07-29 → present)
 
-> **Verified:** The changeover is dateable to **2025-07-29**. `#crowdfund-projects` (`1399641218610233427`) is created, the old channel is renamed to `#crowdfund-projects-legacy`, and **SMilEY** posts the first announcement in the new format (msg `1399642502708858933`). SMilEY had taken over `@everyone` duty one day earlier (msg `1399335541346140210`, 2025-07-28).
+> **Verified:** The changeover is dateable to **2025-07-29**. `#crowdfund-projects` (`1399641218610233427`) is created, the old channel is renamed to `#crowdfund-projects-legacy`, and a moderator posts the first announcement in the new format (msg `1399642502708858933`). The same moderator had taken over `@everyone` duty one day earlier (msg `1399335541346140210`, 2025-07-28).
 
 > **Verified:** There was **no announcement of the change itself.** The entire `#announcements` channel was read end to end (94 messages, 2024-12-03 → 2026-08-19); it contains no "new crowdfund system" post. The system simply appeared as a new channel with a new post format.
 
 ### The flow, as the community explains it
 
-The canonical description, **BlackWolf025** in `#on-topic`, 2025-08-26 (msg `1409849246219370558`):
+The canonical description, from a member in `#on-topic`, 2025-08-26 (msg `1409849246219370558`):
 
 > "react to the project that interests you, and you'll be added to an 'unconfirmed' channel which shows that you're interested in the mod and you intend to fund the project. Once funds are confirmed by the modder, you'll be added to the 'confirmed' channel for that mod and receive early/exclusive access to that project's mods."
 
-And **Makiatto**, 2025-11-12 (msg `1438273489294459001`):
+And a member, 2025-11-12 (msg `1438273489294459001`):
 
 > "When you click the emoji you get the (CF name) unconfirmed role, once you pay and show proof of payment you get the actual role and access to the respective channel"
 
@@ -118,11 +118,11 @@ So, precisely:
 
 The per-project roles are **public on your profile in the server**, and the community reads them. Examples:
 
-- *"btw do you know that you have 4 unconfirmed crowdfund tags?"* — Ethan0403 (msg `1441914698940284990`)
-- *"Seeing as you're unconfirmed for two projects, you're not off to a good start."* — BlackWolf025 (msg `1432329575764856934`)
-- *"It just gets annoying with how many 'unconfirmed' roles that I come across for projects that have been released for months."* — BlackWolf025 (msg `1442081888226246750`)
+- *"btw do you know that you have 4 unconfirmed crowdfund tags?"* — a member (msg `1441914698940284990`)
+- *"Seeing as you're unconfirmed for two projects, you're not off to a good start."* — a member (msg `1432329575764856934`)
+- *"It just gets annoying with how many 'unconfirmed' roles that I come across for projects that have been released for months."* — a member (msg `1442081888226246750`)
 
-> This is the system's real innovation. System 1 had a flake problem it could only address by threatening bans. System 2 makes flaking **permanently legible on the flake's own profile**, and enforcement becomes social rather than administrative. BlackWolf025 even proposed formalising it: *"if you go unconfirmed throughout a project and release … you should forfeit the access to that project altogether"* (msg `1442079358293508186`, 2025-11-23).
+> This is the system's real innovation. System 1 had a flake problem it could only address by threatening bans. System 2 makes flaking **permanently legible on the flake's own profile**, and enforcement becomes social rather than administrative. The member quoted above even proposed formalising it: *"if you go unconfirmed throughout a project and release … you should forfeit the access to that project altogether"* (msg `1442079358293508186`, 2025-11-23).
 
 ### The tier roles
 
@@ -133,7 +133,7 @@ The per-project roles are **public on your profile in the server**, and the comm
 
 > **Verified:** T1 Carl's canned explainer (msg `1486172833552928954`): *"The supporter role is granted to users that have helped the Tier 1 team make mods via supporting crowdfunds… The Kingslayer role is for members who have been around a while, supported projects or just generally had a good influence on the community. This isn't a level up system, you don't 'earn' the roles, they're given as they're given."*
 
-> **Verified:** "Tier 1" was renamed to **Kingslayer** on **2026-03-24** by community poll — 149 votes: Kingslayers 81, Vanguard 40, Pathfinders 26, The Bulwark 2 (`#kingslayer-polls`, msg `1485007498162475028`; result msg `1486094687105318985`; SMilEY's *"~~Tier 1~~ Kingslayer"* msg `1486095571730042960`).
+> **Verified:** "Tier 1" was renamed to **Kingslayer** on **2026-03-24** by community poll — 149 votes: Kingslayers 81, Vanguard 40, Pathfinders 26, The Bulwark 2 (`#kingslayer-polls`, msg `1485007498162475028`; result msg `1486094687105318985`; a moderator's *"~~Tier 1~~ Kingslayer"* msg `1486095571730042960`).
 
 > **⚠️ Naming trap for anyone reading old messages.** The tier labels **swapped meaning** during System 1. In March 2025 SamiPuma described the crowdfund reward as the *"Tier 1 Armory"* (msg `1347339972801466430`); by May 2025 the same reward was *"Tier 2"*, with Tier 1 as the earned role (msg `1375616498579800065`). Pre-mid-2025 references to "T1 Armory" usually mean **what is now the Supporter armoury**.
 
@@ -267,7 +267,7 @@ The public/supporters vote runs inside the **confirmed** channel, so **only peop
 
 Mean 102, median 72, range 48–275. All tallies finalized.
 
-> **⚠️ Read the scope before reading the outcome.** The vote does not always cover the whole crowdfund. **Snake Eater's** poll asked *"Where to share the XOF Outfits?"* — one item — and SMilEY says so in-channel: *"MOST of the items in this crowdfund are supporter items, the XOF suit is what will be made public from this crowdfund"* (msg `1426355642410467368`). **Bad Boys'** was scoped to *"the Exfil Helmets, Police Vests and Belt"*. The other nine read as whole-project. So "4 public / 7 supporters" describes **the voted portion**, not the crowdfund.
+> **⚠️ Read the scope before reading the outcome.** The vote does not always cover the whole crowdfund. **Snake Eater's** poll asked *"Where to share the XOF Outfits?"* — one item — and a moderator says so in-channel: *"MOST of the items in this crowdfund are supporter items, the XOF suit is what will be made public from this crowdfund"* (msg `1426355642410467368`). **Bad Boys'** was scoped to *"the Exfil Helmets, Police Vests and Belt"*. The other nine read as whole-project. So "4 public / 7 supporters" describes **the voted portion**, not the crowdfund.
 
 ### The four places content actually ends up
 
@@ -275,7 +275,7 @@ Mean 102, median 72, range 48–275. All tallies finalized.
 | --- | --- | --- |
 | **Public** | Anyone | `#mod-releases`, usually Nexus too. |
 | **Supporter armoury** | Anyone who has backed *any* crowdfund | `#supporter-armory`. Called the **Tier 2 Armory** until March 2026 — and the **Tier 1 Armory** before that. |
-| **Crowdfund exclusive** | Backers of that one crowdfund | Never leaves the crowdfund's own channel. *"Exclusives don't go public they are a treat from the modders to the people that contributed to the CF"* — Shadadi_, msg `1498457727851298858`. |
+| **Crowdfund exclusive** | Backers of that one crowdfund | Never leaves the crowdfund's own channel. *"Exclusives don't go public they are a treat from the modders to the people that contributed to the CF"* — a member, msg `1498457727851298858`. |
 | **Private** | Nobody further | An option on Snake Eater's poll (5 votes). Has never won. |
 
 > **Not a crowdfund destination:** the **Kingslayer armoury** (`#kingslayer–armory`). That is the *earned* role's own track — modders post there directly, threads titled *"Kingslayer Exclusive"* (e.g. *HK416D SMR | Final Edition | Kingslayer Exclusive*). Nothing arrives there by crowdfund vote. It is easy to confuse with the supporter armoury precisely because the latter used to be called "Tier 1 Armory".
@@ -322,12 +322,12 @@ Tier 1 Imports was created **2024-11-02**. It did not appear out of nothing: **T
 > | Date | Event | Source |
 > | --- | --- | --- |
 > | 2024-11-02 | Tier 1 Imports created. Day one, its founder states the plan: *"my idea for this server was to have this be a storefront of sorts for crowdfunding mod projects."* | T1 msg `1302414873325604945` |
-> | 2024-11-06 | The Bivouac's ownership transfers to **Sixthburrito**. The announcement names no outgoing owner and signals no conflict. | Bivouac msg `1303731106599796817` |
-> | 2024-11-08 | **McC00CHIEMAN** posts into the Bivouac's `#grb-talk`: *"I'm the co-creator of Tier 1 Imports"*, with an invite link. He is not removed for it. | Bivouac msg `1304532626023120966` |
+> | 2024-11-06 | The Bivouac's ownership transfers to a new owner. The announcement names no outgoing owner and signals no conflict. | Bivouac msg `1303731106599796817` |
+> | 2024-11-08 | The founder posts into the Bivouac's `#grb-talk`: *"I'm the co-creator of Tier 1 Imports"*, with an invite link. He is not removed for it. | Bivouac msg `1304532626023120966` |
 > | 2024-11-23 | **ViruS**, from inside the Bivouac, routes people to Tier 1 for crowdfunds: *"check nexusmods, put up a comission here, or make a request for a crowdfund mod … over at the tier1 server."* | Bivouac msg `1309919966497214525` |
 > | 2026-05-11 | *"Just go to Tier 1 Imports server, this one is dead."* The Bivouac still exists but is largely inactive. | Bivouac msg `1503318552331948113` |
 
-Several people who became Tier 1 regulars were active Bivouac members at the time — ViruS, DA 𝕃𝕒𝕜𝕖𝕣_Man𝟚𝟛𝟚, SamiPuma, Seven, ryan1662, wabbit, Ransu.
+Several people who went on to become Tier 1 regulars — including the modders ViruS and SamiPuma — were active Bivouac members at the time.
 
 ### The difference that actually matters
 

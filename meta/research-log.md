@@ -1188,7 +1188,7 @@ guild search on "buy-in" / "crowdfund project" / "unconfirmed". New doc:
 - **Two systems, changeover dateable to 2025-07-29.** System 1 ("buy-in", 2024-11 → 2025-07):
   variable price set per project as a *share of the modder's commission* ($60 gun / 12 people / $5
   each — msg `1302780729121570906`), opt in by voting in `#crowdfund-votes`, manual channel adds.
-  System 2 ("Smiley's way", 2025-07-29 →): flat $10 minimum, 👍 reaction grants a
+  System 2 ("the reaction-role system's way", 2025-07-29 →): flat $10 minimum, 👍 reaction grants a
   `<Name> unconfirmed` role, payment swaps it for `<Name>` plus the `-confirmed` channel and the
   permanent **Supporter** role.
 - **The changeover was never announced.** `#announcements` was read in full and contains no post
@@ -1235,7 +1235,7 @@ guild search on "buy-in" / "crowdfund project" / "unconfirmed". New doc:
 ### Follow-up (same day) — The Bivouac, and a name recovered from outside
 - **Tier 1 grew out of The Bivouac** (guild `981599102523539466`), a GRB modding community running
   since mid-2022. **Verified:** T1 founded 2024-11-02; the Bivouac's ownership transfers to
-  Sixthburrito 2024-11-06 (msg `1303731106599796817`); T1's co-creator posts an invite into the
+  a new owner 2024-11-06 (msg `1303731106599796817`); T1's co-creator posts an invite into the
   Bivouac's own chat 2024-11-08 (msg `1304532626023120966`) and is not removed for it; ViruS routes
   Bivouac members to T1 for crowdfunds 2024-11-23 (msg `1309919966497214525`). The Bivouac is now
   largely inactive (msg `1503318552331948113`).
