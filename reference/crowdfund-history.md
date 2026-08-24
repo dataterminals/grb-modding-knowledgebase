@@ -2,9 +2,9 @@
 
 > **Live panel:** <https://dataterminals.github.io/t1-crowdfunds/> — the same dataset, kept current, with the registry sortable and filterable. This file is the narrative and the citations; the panel is the living view.
 >
-> **On names:** modders appear as **Modder A–Q**, assigned by first appearance and stable throughout this file. The labels are used rather than handles so the analysis stays checkable — that one modder ran a quarter of all crowdfunds is visible without naming them. Everyone else is referred to by role. Message IDs are unchanged, so every claim remains verifiable against the source. Creator credits do appear under their real handles on the [live panel](https://dataterminals.github.io/t1-crowdfunds/), which is where attribution belongs.
+> **On names:** modders appear as **Modder A–R**, assigned by first appearance and stable throughout this file. The labels are used rather than handles so the analysis stays checkable — that one modder ran a quarter of all crowdfunds is visible without naming them. Everyone else is referred to by role. Message IDs are unchanged, so every claim remains verifiable against the source. Creator credits do appear under their real handles on the [live panel](https://dataterminals.github.io/t1-crowdfunds/), which is where attribution belongs.
 >
-> **Status:** First comprehensive pass, 2026-08-23. Compiled by reading *Tier 1 Imports* (guild `1302392670181916722`) directly through an authenticated Discord bridge as `@blkdnm`. Every claim below cites the message it came from. Provenance: [`../meta/research-log.md`](../meta/research-log.md).
+> **Status:** First comprehensive pass, 2026-08-23; names swept again 2026-08-24, when the last five unnamed System 2 crowdfunds were recovered (§4, §7). Compiled by reading *Tier 1 Imports* (guild `1302392670181916722`) directly through an authenticated Discord bridge as `@blkdnm`. Every claim below cites the message it came from. Provenance: [`../meta/research-log.md`](../meta/research-log.md).
 
 ## Why this is in a modding knowledgebase
 
@@ -39,7 +39,7 @@ Tier 1 Imports has run **at least 55 crowdfunds** since the server was founded o
 | **Channels per project** | One project channel (+ a confirmation channel by mid-2025) | **Two:** `#<name>` (unconfirmed) → `#<name>-confirmed` |
 | **Roles per project** | None | **`<Name> unconfirmed` → `<Name>`**, both visible on your profile |
 | **Reward tier** | "Tier 1 Armory", later "Tier 2" | **Supporter** (renamed from Tier 2, 2026-03-24) |
-| **Named crowdfunds recoverable** | **23** (floor — see §6) | **32** (believed complete) |
+| **Named crowdfunds recoverable** | 23 rows, **22 distinct projects**, 2 of them still unnamed — and a floor, not a count (§7) | **32 of 32**, complete since 2026-08-24 |
 
 The user's recollection is correct on every point: the second system is roles, unconfirmed→confirmed, and the paid-up role showing on your profile in the server.
 
@@ -143,20 +143,20 @@ The per-project roles are **public on your profile in the server**, and the comm
 
 ## 4. The catalogue
 
-### System 1 (2024-11 → 2025-07) — 23 recovered, **not complete**
+### System 1 (2024-11 → 2025-07) — 23 rows, 22 distinct projects, **not complete**
 
 Entries marked ★ were announced only in chat and have **no `@everyone`**, which is why any count built from `#announcements` alone undercounts this era.
 
 | # | Date | Crowdfund | Creator | Source |
 | --- | --- | --- | --- | --- |
 | 1 ★ | ≤2024-11 | **Night War Ghost** full outfit | Modder B | First completed crowdfund; released public, Nexus mod 1090 (msg `1310097291587223553`) |
-| 2 | 2024-11-17 | **Alex "Echo 3-1"** gear pack (CoD MW19) | Modder B | msg `1307805326631768124` (`#on-topic`) |
+| 2 | 2024-11-17 | **Alex "Echo 3-1"** gear pack (CoD MW19) | Modder E | msg `1307805326631768124` (`#on-topic`) names no modder; the release announcement does — *"The Alex Crowdfund by the legendary [Modder E] is now live on nexus"*, msg `1320181570610659340`, Nexus mod 1128 |
 | 3 ★ | 2024-11-23 | *(unnamed project by Modder D)* | Modder D | msg `1309770589795520592` |
 | 4 ★ | 2024-12-02 | **Shadow Company Heavy Outfit** | — | msg `1313256555994681406`; $10 buy-in |
 | 5 ★ | ≤2024-12 | **Price Ghillie** | — | msgs `1318754880512327691`, `1350822574468370493` |
-| 6 ★ | ≤2024-12 | **GZW assortment** | — | msgs `1318754880512327691`, `1322527000925307053`; stayed private over asset copyright (`1349505166176555060`) |
+| 6 ★ | 2024-12-12 | **GZW assortment** — *same project as #8* | Modder E | msgs `1318754880512327691`, `1322527000925307053`; stayed private over asset copyright (`1349505166176555060`) |
 | 7 | 2024-12-11 | *(unnamed new weapon)* | Modder B | msg `1316621603978874991` |
-| 8 | 2024-12-16 | *(unnamed gear pack)* | Modder E | msg `1316829668674109511` |
+| 8 | 2024-12-12 | **GZW (Gray Zone Warfare) gear pack** — *the announced half of #6* | Modder E | msg `1316829668674109511` |
 | 9 | 2024-12-29 | **Daniel Defense DDM4V7** | Modder F | msg `1322878300007174144` |
 | 10 | 2025-01-14 | **Shadow Rusher** outfit | Modder B | msg `1328857878152613940` |
 | 11 | 2025-01-21 | **Chimera Bridge** | Modder F | msg `1331300784599728188` |
@@ -173,37 +173,43 @@ Entries marked ★ were announced only in chat and have **no `@everyone`**, whic
 | 22 | 2025-07-05 | **DS Arms SA 58 FAL** *(renewal)* | Modder K | msg `1391022434211069993` |
 | 23 | 2025-07-08 | **Commando Diving Drysuit**, a.k.a. **"Frogman"** | Modder B | msg `1392009113185030288`; "Frogman" per msgs `1398318235249672334`, `1399101991619399801` |
 
+> **Verified (2026-08-24) — #8 is the GZW gear pack.** The announcement calls it only *"a new gear pack by the one and only [Modder E]"*. Modder E names it himself ten days later: *"Ghost nightwar top and a mid sleeve top from **my gzw project**"* (msg `1320189637448433747`, 2024-12-22), having trailed it on 2024-11-09 — *"Gray Zone Warfare has some interesting looking vests that fit those two very well, that's all I'm saying for now"* (msg `1304937052088832092`).
+>
+> **Inferred (strong):** that makes **#6 and #8 the same crowdfund**, counted twice. On 2024-12-18 Modder B lists what is open — *"There are still three projects available for buy ins, price ghillie, shadow company heavy and **the latest** gzw assortment"* (msg `1318754880512327691`) — and "the latest" points back at the announcement six days earlier. Three open projects, no fourth: there was no separate Modder E gear pack running alongside a GZW one. #6 was reconstructed from chat and #8 from the announcement; they are one event seen from two directions. Both rows are kept so the citations survive, which is why this era now reads **23 rows, 22 distinct projects**.
+>
+> **Correction (2026-08-24) — #8's date.** It was listed as 2024-12-16; the announcement it cites is timestamped **2024-12-12T18:10Z**. Corrected.
+
 > **Inferred:** #12 may be the same project as #10 — Modder C linked channel `1328856903996018828` (created the same day as the Shadow Rusher announcement) while calling it *"the SC Wolves outfits"*. Both are Shadow Company content. Not resolvable without access to that channel; listed separately with the ambiguity flagged.
 
-### System 2 (2025-07-29 → present) — 32, believed complete
+### System 2 (2025-07-29 → present) — 32, believed complete, all 32 named
 
-Every entry has a dated `@everyone` in `#announcements`. Names in *(parentheses)* could not be recovered — see §6.
+Every entry has a dated `@everyone` in `#announcements`. **Every one is now named** — the last five fell on 2026-08-24; the method and the citations are in §7.
 
 | # | Date | Crowdfund | Creator |
 | --- | --- | --- | --- |
 | 24 | 2025-07-29 | Vulcan/Malyuk 7.62 Assault Rifle | Modder I |
 | 25 | 2025-08-14 | AKM w/ KPYK parts | Modder J |
-| 26 | 2025-08-18 | White Moon | Modder B |
+| 26 | 2025-08-18 | **To the Moon** | Modder B |
 | 27 | 2025-09-17 | **Snake Eater** | Modder B |
 | 28 | 2025-09-23 | **Steyr** | Modder J |
 | 29 | 2025-10-13 | **Operation Mother's Chest Hair** | Modder B |
 | 30 | 2025-11-07 | **Crowd Control** *(Mercer's debut)* | Modder L |
 | 31 | 2025-11-09 | **Enfield Tea Set** | — |
 | 32 | 2025-11-19 | **Bad Boys** | Modder B |
-| 33 | 2025-11-21 | **Dual Sig** | — |
-| 34 | 2025-12-15 / 20 | **Door Kicker** | — |
+| 33 | 2025-11-21 | **Dual Sig** | Modder O |
+| 34 | 2025-12-15 / 20 | **Door Kicker** | Modder L |
 | 35 | 2025-12-17 | **Lioness** | Modder B |
 | 36 | 2025-12-15 / 20 | **Kill Confirmed** | Modder M |
 | 37 | 2026-01-06 | **Ahead of Your Time** | Modder C |
 | 38 | 2026-01-18 | **Tip of the Spear** | Modder A |
-| 39 | 2026-01-30 | *(unnamed — Mercer, 🇿🇦)* | Modder L |
-| 40 | 2026-02-11 | *(unnamed)* | — |
-| 41 | 2026-02-17 | *(unnamed — "cold pasta")* | — |
-| 42 | 2026-02-23 | *(unnamed)* | — |
-| 43 | 2026-02-27 | **Crye Baby** | Modder B |
+| 39 | 2026-01-30 | **Recce** | Modder L |
+| 40 | 2026-02-11 | **Blackbird** | Modder O |
+| 41 | 2026-02-17 | **Cold Ops Carbonara** | Modder K |
+| 42 | 2026-02-23 | **Step Brothers in Arms** | Modder M + Modder R |
+| 43 | 2026-02-27 | **Crye Babies** | Modder B |
 | 44 | 2026-03-27 | **Spirited Away** | — |
 | 45 | 2026-03-31 | **Wolf Pack** | — |
-| 46 | 2026-04-07 | *(unnamed — Mercer, "FW" monogram)* | Modder L |
+| 46 | 2026-04-07 | **Forgotten Weapons** | Modder L |
 | 47 | 2026-04-12 | **CYBERSAMI** 🔴 *still posted* | Modder C |
 | 48 | 2026-05-11 | **Smokin Aces** | Modder N |
 | 49 | 2026-05-15 | **Breach & Clear** | — |
@@ -215,6 +221,26 @@ Every entry has a dated `@everyone` in `#announcements`. Names in *(parentheses)
 | 55 | 2026-08-19 | **Dealer's Choice** 🔴 *open* | Modder P |
 
 > Names for #43–#45, #48, #49 and #52 were recovered by **reading the announcement title-card graphics** posted in `#announcements` — the artwork spells the name out where the surviving text does not.
+
+> **#28** was named from *outside* the server, on 2026-08-23: a member of **The Bivouac** listing what was live on 2025-09-24 — *"the Metal Gear Solid/XOF and the Steyr Crowdfund"* (Bivouac msg `1420518885261836368`), which also confirms #27 by its subject matter.
+
+#### Where the last five names came from (2026-08-24)
+
+None of these five posts exists any more. Every name below is a **third party naming the crowdfund while it was live**, and where possible bound to that crowdfund's exact post id. Method in §7.
+
+| # | Name | The binding |
+| --- | --- | --- |
+| **39** | **Recce** | A moderator lists what is open on 2026-03-22: *"Tip of the Spear, Recce (maybe?), Cold Ops Carbonara, Cryebabies, Step Brothers-in-Arms are all open crowdfunds"* (msg `1485209464712859778`). Modder L, the announced creator, says *"the link is in the pins of Recce"* (`1474000605449158917`) and *"Part of the Recce CF exclusives"* (`1484765469213851790`). Its **role `1466647776396836874` was created 23 minutes before the post** and Modder L credits exactly that role when releasing *"a series of South African Weaponry and Gear"* — Vektor R4/SS-77, SANDF beret, Beretta 92F (`1490767344023371957`), which is what the 🇿🇦 flag on the announcement was pointing at. |
+| **40** | **Blackbird** | In `#on-topic`, 2026-03-18, a member says an optic is an *"Exclusive piece of Bon's latest crowdfund"* and another immediately posts **#40's own post link** in confirmation (`1483922818759528478`), adding *"if it's the project I sended then it's complete"*. Modder O — display name *Bonfire* — had posted *"BLACKBIRD EXCLUSIVE"* on 2026-02-19 (`1473890947162181723`). A member on 2026-03-16: *"i have the **blackbird role** now"* (`1483220369853648968`) — and a crowdfund's role carries the crowdfund's name. ⚠️ **Read "Blackbird" carefully in this server:** a member also goes by *BlackBird* and signs patch releases *"By BlackBird"* (e.g. `1425753643935727696`, October 2025). They are unrelated — the crowdfund is Modder O's, and it is *named* Blackbird rather than run by anyone of that name. |
+| **41** | **Cold Ops Carbonara** | Named **the day it was announced**: *"I want to support the crowdfunding Cold Ops Carbonara, but I don't have PayPal"* (msg `1473362715845070901`, 2026-02-17), and *"just started a fresh install right as carbonara got announced"* (`1473389751875670037`, same day). Modder K posts **#41's post link** and the name seconds apart in the same thread (`1484990875707637831` / `1484990912017993778`), then publishes it: *"# Public release of Cold Ops Carbonara"* (`1507031310512685106`, `1507047540111966240`). That also settles the *"Time for some cold pasta"* announcement. |
+| **42** | **Step Brothers in Arms** | One day after the announcement: *"the newest rn is step brother by my buddy [Modder M], tip of spear and ahead of time by [Modder C]"* (msg `1475996442270109739`, 2026-02-24). Modder R posts **#42's post link** in their own showcase thread (`1478232538240782428`). Modder M on release: *"# The first **tag-team** CF Project goes LIVE! … [Modder R] it was a blessing and an honor to work alongside you"* (`1502351245107789874`) — which is why the announcement led with a *"let's do this team"* GIF, and why this is the first crowdfund in the catalogue with two creators. |
+| **46** | **Forgotten Weapons** | Five minutes after the announcement, in `#shit-talk`: *"Forgotten Weapons? Ian's mustache will be included?"* (msg `1490990928406773921`) — Ian McCollum presents the *Forgotten Weapons* channel, and the announcement's title card is an **FW** monogram. Next day Modder L posts *"Exclusive to Forgotten Weapons CF"* **followed by #46's exact post link** (`1491516204358176919`), and on release thanks *"all those that supported the Forgotten Weapons CF"* over five obscure guns (`1503565360715141321`). |
+
+> **Correction (2026-08-24) — #26 is "To the Moon", not "White Moon".** The announcement reads *"Some beautiful White Moon assets being brought in by [Modder B]"* (msg `1407147347590250516`), and an earlier pass took "White Moon" for the project name. **White Moon Studio is the asset vendor** — a member describing a different project: *"The plan is to start the crowdfunding when I get a message from **White Moon Studio** with the first screenshots of the asset"* (msg `1327944649083584522`). The crowdfund itself is **To the Moon** everywhere else: a moderator answering a newcomer names both halves of the channel pair — *"**to-the-moon** base channel … and its sister channel the **to-the-moon-confirmed** channel"* (`1409115547068534904`) — and *"[Modder B] with his To the Moon Crowdfund"* links **#26's own post id** (`1409099156320161794`). Read the announcement as *assets from White Moon*, not *a crowdfund called White Moon*.
+
+> **Correction (2026-08-24) — #43 is "Crye Babies", not "Crye Baby".** The singular came from the announcement's attachment filename, `CRYE_BABY.png`. Modder B's own release header is plural: *"CRYE BABIES SUPPORTER RELEASE"* (msg `1487141790770532525`, 2026-03-27), and the community is unanimous — *"Currently an exclusive for the **Crye Babies** CF"* (`1478840232487944213`), *"crye babies is closed"* (`1495819342686847036`).
+
+> **Creators filled in (2026-08-24).** #33 **Dual Sig** → Modder O, named in a showcase thread: *"it was part of the crowdfund called 'Dual Sig' — you can ask [Modder O] for the SPC"* (msg `1472093680142778496`). #34 **Door Kicker** → Modder L, who runs its confirmed channel and its payments (`1459523762943824090`) and posts *"The **Door Kicker Crowdfund** has come to Tier 2"* (`1465710021294821556`). Both were already implied by the delivery table in §5; they are now cited.
 
 ---
 
@@ -250,7 +276,9 @@ Across those six posts: **812 distinct people, 1,318 sign-ups.**
 
 ### Release-vote turnout — a hard floor on paid supporters
 
-The public/supporters vote runs inside the **confirmed** channel, so **only people who paid can see or cast it.** Turnout is therefore a floor on that project's paying membership. Readable for the 11 projects this account holds:
+> **⚠️ Why 11 of 55 — the catalogue is complete, the depth is not.** These are two claims of different standing and they must not be read as one. **The catalogue in §4 is the population:** every System 2 crowdfund has a dated `@everyone`, and all 32 are now named. **This subsection and [the delivery counts below](#the-vote-is-not-the-end-of-it) are a sample of 11.** A crowdfund's release vote and its delivery record both live inside that crowdfund's own paid channel, readable only by people who backed it, so 11 is what one supporter's account can see — not a selection, just an accident of what this account paid for. Closing the gap needs someone who backed every crowdfund in the roles system, or a server admin. **Do not generalise the 11 to the 55**; where a rate is quoted below, it is a rate *within the sample*.
+
+Turnout is a **floor** on a project's paying membership, because only payers can see or cast the vote. Readable for the 11 projects this account holds:
 
 | Crowdfund | Turnout | Public | Supporters | Released to |
 | --- | ---: | ---: | ---: | --- |
@@ -284,7 +312,7 @@ Mean 102, median 72, range 48–275. All tallies finalized.
 
 ### The vote is not the end of it
 
-> **Verified:** every one of the 11 measurable crowdfunds kept delivering **after** its vote — **198 separate drops in total**, a median of **64 days** from first to last.
+> **Verified:** every one of the 11 measurable crowdfunds kept delivering **after** its vote — **198 separate drops in total**, a median of **64 days** from first to last. Same sample as the vote table above, and the same warning applies: **11 of 55, because delivery happens inside the paid channel.** "Every one" means every one of the 11 that can be read, not every one of the 55.
 
 | Crowdfund | Drops | Window | Principal creator |
 | --- | ---: | ---: | --- |
@@ -343,22 +371,41 @@ Several people who went on to become Tier 1 regulars — including the modders M
 
 > **⚠️ `#crowdfund-projects` does not keep its history.** The channel holds **six posts**, the oldest from 2026-04-12. Everything older is gone: `before=` paging and `around=` jumps both return nothing, and roughly 20 `@everyone` posts in `#announcements` still link to crowdfund posts that **no longer exist**.
 >
+> **Confirmed with a real probe (2026-08-24):** resolving five of those dead links by URL — #39, #40, #41, #42, #46 — returns not the post but the channel's *oldest surviving* message (CYBERSAMI, `1493032233727033454`) in every case. That is a fetch failing over to the channel floor, so the posts are genuinely unfetchable rather than merely un-paged. Independently, they are absent from the search index: a guild search for `ANNOUNCING OUR NEXT CROWDFUND PROJECT` scoped to that channel returns the six live posts and nothing else.
+>
 > **Correction (2026-08-23):** an earlier draft of this file claimed CYBERSAMI and Heavy Metal were deleted between 2026-08-19 and 2026-08-23, and called that a direct observation. It was not — it was a `limit=4` query mistaken for the channel's full contents. Both posts are still on the board. **No deletion has actually been observed.** Whether posts are removed as projects close, or the channel was purged once in a cleanup, is **not established** — two of the six are months past their stated end date and still posted.
 
 Consequences:
 
-1. **👍 counts exist only for live crowdfunds.** For all 51 completed ones the commitment count is gone permanently. The figures in §5 are a four-project snapshot, not a history.
-2. **Five System 2 crowdfunds cannot be named** (#39–#42, #46), plus three in System 1 (#3, #7, #8). Their date and often their creator are solid; the name died with the post. *(#28 was recovered on 2026-08-23 — see §7 — leaving eight unnamed in total.)*
-3. **System 1 has no reliable count.** `#crowdfund-projects-legacy` and `#crowdfund-votes` (`1303906293219856477`) both return `forbidden` — as do individual System 1 project channels (`1370158615473946667` tested). The 23 in §4 are what could be reconstructed from public chat; **the true figure is higher.** Six of the 23 were found only because someone mentioned them in passing.
+1. **👍 counts exist only for crowdfunds still on the board.** For the other **26** System 2 crowdfunds the commitment count went with the post — and System 1 never used this channel at all, so it has none. The figures in §5 are a six-project snapshot taken on one day, not a history.
+2. ~~**Five System 2 crowdfunds cannot be named**~~ — **closed 2026-08-24.** #39, #40, #41, #42 and #46 are now **Recce, Blackbird, Cold Ops Carbonara, Step Brothers in Arms** and **Forgotten Weapons**; the citations are in §4. Two **System 1** entries remain unnamed — **#3** (Modder D, msg `1309770589795520592`) and **#7** (Modder B, *"a new weapon"*, msg `1316621603978874991`). #8 was named in the same pass.
+3. **System 1 has no reliable count.** `#crowdfund-projects-legacy` (`1302441788585279570`) and `#crowdfund-votes` (`1303906293219856477`) both return `forbidden`; individual System 1 project channels are either `forbidden` (`1370158615473946667`) or **deleted outright** — `1309056687801503805`, linked as a live crowdfund on 2024-11-21 (msg `1309130622513577984`), now 404s. The 23 rows in §4 are what could be reconstructed from public chat, and at least two of them are the same project (#6/#8); **the true figure is higher** all the same. Six of the 23 were found only because someone mentioned them in passing.
 4. **Role membership is not readable.** Discord does not expose role-member counts to a member account, so "how many people hold the Lioness role" is bounded (≥275) but not known.
+5. **The 11-of-55 sample is structural, not fixable from here.** Worth restating here because the two halves of this file have different standing and must never be read as one claim: **the catalogue is complete; the depth is not.** §4 is the population — 55 crowdfunds, and as of 2026-08-24 every System 2 one is named. §5's vote table and delivery counts cover the **11** whose paid channels this account can read, which is an accident of what one supporter bought into, not a selection. Nothing in §5 licenses a claim about the other 44. Closing that gap needs someone who backed every crowdfund in the roles system, or a server admin.
+
+### How the last five names were recovered
+
+The write-up's own prescription — *adjacent communities remember what a self-deleting channel does not* — is what named #28 in 2025. It named none of these five, and the reason is worth recording: **there is no adjacent community left to ask.** All 85 guilds readable from this account were checked by channel listing, and exactly **two** are GRB communities — Tier 1 Imports and The Bivouac. The Bivouac's GRB traffic thins through 2025 (*"Just go to Tier 1 Imports server, this one is dead"*, msg `1503318552331948113`) and it mentions no 2026 crowdfund at all. That avenue is exhausted, not untried.
+
+What worked instead was **searching Tier 1 itself for people naming a crowdfund while it was running** — the same shape of evidence as the Bivouac quote, sourced from inside. Three query shapes did nearly all the work:
+
+- **Author-scoped search.** `content=crowdfund` across the guild returns hundreds of Carl-bot autoresponses a month. Scoping the same query to the handful of members who answer *"what's live"* — moderators, and the modders themselves — cuts the noise to nothing and surfaces exactly the messages that enumerate open projects. One such message named three of the five at once.
+- **Post-link search.** Searching for a crowdfund post's own URL finds every message that ever pointed at it. A deleted post keeps a stable id, so this bolts a name onto a *specific* crowdfund rather than onto a date — that is how #40 and #46 were pinned.
+- **Tight windows around the announcement.** Reading `#shit-talk`, `#on-topic` and `#supporter-chat` in the hours after each `@everyone`. #41 and #46 were named within minutes by people reacting to the post.
+
+Two indexing behaviours are worth knowing next time, both discovered here:
+
+> **Discord's search index covers forwarded-message snapshots.** A forwarded crowdfund post carries the original's full text, and that text stays searchable in the forwarder's message **after the original is deleted** — while the bridge renders such a message as empty content, so it is invisible unless you search for words it does not appear to contain. Six of these exist in Tier 1. Pairing a fixed stem with a candidate word (`ANNOUNCING OUR NEXT CROWDFUND PROJECT` + `crye`) turns them into an **oracle**: each probe answers which forwards contain that word. All six resolved to crowdfunds that were already named (Op Chesthair, Lioness ×2, Crye Babies, Rangers Lead The Way), so the trick named nothing new — but it is the only known route to a deleted post's *verbatim* text, and it is worth re-running whenever new forwards appear.
+>
+> **Forum thread names are indexed too.** A message whose body is nothing but a URL matched a search for words that appear only in its thread's title. That is how #42's post link was found sitting inside a thread named for Step Brothers in Arms.
 
 ### Open questions
 
 1. **How many System 1 crowdfunds were there really?** Answerable by anyone with access to `#crowdfund-projects-legacy` or `#crowdfund-votes`, or by a moderator with the audit log.
-2. **The eight unnamed System 2 projects.** A member holding those roles would see the names immediately — the role name *is* the crowdfund name.
+2. **#3 and #7 — the last two unnamed.** Both are System 1, both were announced without a name, and neither is named anywhere in public chat that search reaches. #3 is *"another crowdfund project that will be by [Modder D]"* (msg `1309770589795520592`) — Modder D was working on an HK437, an MCX Spear LT and a Rotex suppressor that month, none confirmed as the crowdfunded one. #7 is *"a new weapon done by none other [Modder B]"* (msg `1316621603978874991`) and is **absent from Modder B's own list of open buy-ins six days later** (*"There are still three projects available for buy ins, price ghillie, shadow company heavy and the latest gzw assortment"*, msg `1318754880512327691`), so it may have collapsed early — Modder B describes a crowdfund doing exactly that on 2024-12-19: *"the entire crowdfund for that has fallen short, had over 15 ppl vote yes and only a 4 ppl paid"* (msg `1319125305558040587`, said of the Shadow Company Heavy project). A member who was buying in that December could settle both in a sentence.
 3. **Did the March 2025 leak cause the system change?** §2 flags this as inferred. A moderator could confirm or kill it in one sentence.
-4. **Names from outside the server.** #28 was recovered by searching *The Bivouac*, not Tier 1 — a member there listing what was live on 2025-09-24: *"the Metal Gear Solid/XOF and the Steyr Crowdfund"* (msg `1420518885261836368`). Adjacent communities remember what a self-deleting channel does not; the remaining eight may be recoverable the same way.
-5. **Full public/supporters split across all 55.** Only 11 are measurable from this account; a member with more roles could extend the table in §5 and turn the "two thirds stay private" estimate into a real figure.
+4. **Full public/supporters split across all 55.** Only 11 are measurable from this account; a member with more roles could extend the table in §5 and turn "7 of the 11 sampled stayed supporter-only" into a population figure.
+5. **Is the role list readable another way?** The role name *is* the crowdfund name, so a single read of the guild's role list would have answered this whole session's question in one call — and would answer the System 1 question too, if those roles still exist. The Discord client caches **every** guild role, including ones the account does not hold; the bridge already reads that store to resolve role mentions but exposes no endpoint for the snapshot. One caution before anyone builds it: at least one crowdfund role has been deleted. #39's (`1466647776396836874`) renders unresolved in a message that mentions it, which is consistent with a moderator's *"when the CF ends we just delete the Unconfirmed role"* (msg `1459296798244868298`) going further than the unconfirmed half.
 
 ---
 

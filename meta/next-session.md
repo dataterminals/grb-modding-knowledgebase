@@ -1,27 +1,30 @@
 # Next session
 
-*Rewritten 2026-08-09. The previous version (2026-07-03) described only the cloth-rebind
-investigation, which has been parked since 2026-07-09 while two sessions went somewhere else
-entirely. Both lanes are now written down, so neither gets lost again.*
+*Rewritten 2026-08-09; lane 3 added 2026-08-24. The 2026-07-03 version described only the
+cloth-rebind investigation, which has been parked since 2026-07-09 while later sessions went
+somewhere else entirely. Every lane is written down now, so none of them gets lost again.*
 
 **Read [`project-goal.md`](project-goal.md) first** — Sami's north star, verbatim, and still the
 reason this repo exists. Then the two 2026-08-09 entries in [`research-log.md`](research-log.md)
-for the current state.
+for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-24 entries.
 
 ---
 
-## Two lanes. Know which one you're in.
+## Three lanes. Know which one you're in.
 
 | Lane | State | What it is |
 | --- | --- | --- |
 | **1 — Community tutorial absorption** | idle since 2026-08-09 | Working the *Tier 1 Imports* `#mod-tutorials` forum into the KB, thread by thread |
 | **2A — Cloth→mesh rebind** | **PARKED** since 2026-07-09 | Blocked on an in-game test that is staged but never run |
 | **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14** | Same goal, different mechanism. Now has a format, a corpus, and a vanilla flowing-coat exemplar |
+| **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-24 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo. **Panel is out of sync — fix that first.** |
 
 Lane 1 is not a detour — it turns the only real primary documentation GRB modding has into
 something durable, and it produced independent corroboration of the 64-bit ID model from a
-direction (hex editing) that had nothing to do with ATK. But **lane 2 is the north star**, and
-lane 1 must not be allowed to quietly become the whole project.
+direction (hex editing) that had nothing to do with ATK. Lane 3 is provenance, not engine work: it
+explains where a large slice of the catalogued mods came from and why so many of them never reached
+Nexus. But **lane 2 is the north star**, and neither of the others may be allowed to quietly become
+the whole project.
 
 **2026-08-14 changed which sub-lane is live.** Chasing an unrelated community question about
 ragdolls surfaced **Reflex3**, GRB's per-bone physics system: present in every skeleton, carrying
@@ -209,6 +212,81 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
 ⚠️ Skeletons are **forge-shadowed** exactly like cloths (`Player_Kilt_Addon` sits in both
 `DataPC.forge` and `DataPC_TGT_WorldMap_Bootstrap_Split.forge`). Any override must patch **both**
 families, and "does a modified skeleton even load?" is as untested as STEP 1 is for cloth.
+
+---
+
+## Lane 3 — the community record (crowdfunds)
+
+**What it is.** [`reference/crowdfund-history.md`](../reference/crowdfund-history.md) — the funding
+and distribution system behind a large slice of the mod corpus, with a Discord message id behind
+every claim. It is in this repo because it answers a provenance question the corpus keeps raising:
+*where did `CFLIONNESS_*` come from, and why can't I find it on Nexus?* The companion live panel is
+a **separate repo**, `dataterminals/t1-crowdfunds` →
+<https://dataterminals.github.io/t1-crowdfunds/>, which renders `data/crowdfunds.json`.
+
+**⚠️ The panel is currently out of sync with this repo.** The 2026-08-24 pass changed six names and
+two creators here and did not touch the panel. Bringing `data/crowdfunds.json` into line is the
+first thing to do in this lane:
+
+| `n` | field | from | to |
+| ---: | --- | --- | --- |
+| 26 | `name` | `"White Moon"` | `"To the Moon"` |
+| 39 | `name` / `creator` | `null` / MercerBlack | `"Recce"` / unchanged |
+| 40 | `name` / `creator` | `null` / `null` | `"Blackbird"` / 𝐵𝑂𝑁𝐹𝐼𝑅𝐸 |
+| 41 | `name` / `creator` | `null` / `null` | `"Cold Ops Carbonara"` / ᴇ Δ ᴡ ᴇ ʟ ʟ |
+| 42 | `name` / `creator` | `null` / `null` | `"Step Brothers in Arms"` / ViruS + SexyCouchPotato |
+| 43 | `name` | `"Crye Baby"` | `"Crye Babies"` |
+| 46 | `name` / `creator` | `null` / MercerBlack | `"Forgotten Weapons"` / unchanged |
+| 2 | `creator` | YourMomsChestHair | FlawlyBoy |
+| 8 | `name` / `date` | `null` / `2024-12-16` | GZW gear pack / `2024-12-12`, and note it is the same project as #6 |
+| 33 | `creator` | `null` | 𝐵𝑂𝑁𝐹𝐼𝑅𝐸 |
+| 34 | `creator` | `null` | MercerBlack |
+
+Names go on the panel under real handles; this repo keeps the Modder A–R pseudonyms. **Modder R is
+new** — SexyCouchPotato, co-creator of Step Brothers in Arms with Modder M, the first crowdfund with
+two creators. `tools/refresh.py` in the panel repo re-pulls sign-ups and backer overlap but
+deliberately never touches the catalogue, so all of the above is a hand edit.
+
+### What is actually left
+
+1. **#3 and #7 are the last two unnamed**, both System 1, both announced without a name. See
+   §7 open question 2 for what is known about each and why they resisted. Low expected yield from
+   more searching — the productive move is to ask a member who was buying in during December 2024.
+2. **⭐ The cheapest unexplored lever: read the guild role list.** A crowdfund's role carries the
+   crowdfund's *name*, and the Discord client caches **every** guild role — including ones the
+   account does not hold. The VesktopClaudeBridge plugin already reads that store
+   (`GuildRoleStore.getRolesSnapshot`, in `plugin/discord.ts`, used only to resolve `@role` mentions)
+   but exposes no RPC method or HTTP route for the snapshot itself. One small addition would have
+   answered this whole strand in a single call, and might reach System 1's roles too.
+   ⚠️ Not a complete answer: at least one crowdfund role has been deleted (#39's,
+   `1466647776396836874`, renders unresolved), so closed projects may be gone from the store.
+   ⚠️ Also a different repo and a plugin change — it needs an Equicord rebuild and a Discord reload.
+   Ask before starting it.
+3. **The 11-of-55 depth gap is structural.** Release votes and delivery records live inside each
+   crowdfund's paid channel. Nothing this account can do widens it; it takes a member with more
+   roles, or an admin. **Do not let a future pass quietly present the 11 as the 55** — the write-up
+   now says so in two places, and that distinction is the thing to preserve.
+4. **Re-run the forward oracle when new forwards appear.** Discord's search index covers forwarded
+   message snapshots, so a deleted post's verbatim text survives in whoever forwarded it. Method and
+   the six known forwards are in §7. It named nothing new this time; it is the only route to a
+   deleted post's exact wording if one is ever needed.
+
+### Don't repeat
+
+- **A query bound is not a measurement.** This cost the 2026-08-23 pass a false "the posts were
+  deleted this week" claim built on a `limit=4` read. Before calling an absence observed, probe it —
+  resolve the URL, search the channel, page with a real bound. The 2026-08-24 §7 note shows what an
+  actual absence proof looks like.
+- **An announcement's phrasing is not the crowdfund's name.** #26 was catalogued as "White Moon"
+  because the announcement said *"White Moon assets"*; White Moon is the asset **vendor** and the
+  crowdfund is **To the Moon**. #43 was catalogued as "Crye Baby" from an attachment *filename*;
+  it is **Crye Babies**. Confirm a name against how members and the modder write it, not against
+  the announcement alone.
+- **Don't count a chat-only entry and an announcement entry as two projects without checking.**
+  #6 and #8 are the same GZW crowdfund reached from two directions. #10/#12 may be another pair.
+- **Searching a bot-heavy guild by keyword mostly returns the bot.** Scope by author.
+- **The adjacent-community trick is exhausted.** All 85 readable guilds were enumerated; only Tier 1
+  Imports and The Bivouac are GRB, and the Bivouac has nothing from 2026. Don't re-run it hoping.
 
 ---
 

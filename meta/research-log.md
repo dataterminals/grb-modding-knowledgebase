@@ -1258,6 +1258,88 @@ Also published the live panel — **[dataterminals/t1-crowdfunds](https://github
 `tools/refresh.py` to re-pull sign-ups and backer overlap from the bridge. The narrative stays here;
 the panel is the living view of it.
 
+## Entry — 2026-08-24 — Naming the lost crowdfunds; how a deleted channel still talks
+
+### What I did
+Follow-up to the 2026-08-23 crowdfund work. Eight catalogue entries had `"name": null` because the
+crowdfund post was deleted and `#crowdfund-projects` is invisible from a member account. **Five of
+the eight are now named**, plus a sixth in System 1, plus two name corrections to entries that were
+never flagged as doubtful. Everything below is from *Tier 1 Imports* (`1302392670181916722`) and
+*The Bivouac* (`981599102523539466`) through the bridge as `@blkdnm`. Updated:
+[`reference/crowdfund-history.md`](../reference/crowdfund-history.md).
+
+### VERIFIED (new)
+- **The five unnamed System 2 crowdfunds.** #39 **Recce** (Modder L), #40 **Blackbird** (Modder O),
+  #41 **Cold Ops Carbonara** (Modder K), #42 **Step Brothers in Arms** (Modder M **+ Modder R** —
+  the first two-creator crowdfund on record), #46 **Forgotten Weapons** (Modder L). Each is a third
+  party naming the project while it ran; #40, #41, #42 and #46 are additionally bound to their own
+  post id by someone posting that link beside the name. Full citations in §4 of the write-up.
+- **#8 is the GZW (Gray Zone Warfare) gear pack.** Modder E calls it *"my gzw project"*
+  (msg `1320189637448433747`). **Inferred (strong):** #6 and #8 are therefore the same crowdfund
+  counted twice — Modder B lists exactly three open buy-ins on 2024-12-18 including *"the latest gzw
+  assortment"* (msg `1318754880512327691`), six days after #8's announcement, with no fourth project
+  running. Era 1 is now **23 rows, 22 distinct**.
+- **#26 is "To the Moon", not "White Moon".** The announcement says *"Some beautiful White Moon
+  assets"* (msg `1407147347590250516`) and an earlier pass read the vendor as the project name.
+  **White Moon Studio is an asset seller** (msg `1327944649083584522`). The channel pair, the role
+  and every member reference say *To the Moon* — including one that links #26's own post id
+  (msg `1409099156320161794`). A caution for this whole file: an announcement's phrasing is not
+  always the crowdfund's name.
+- **#43 is "Crye Babies", not "Crye Baby"** — the singular came from the attachment filename
+  `CRYE_BABY.png`; Modder B's own release header is *"CRYE BABIES SUPPORTER RELEASE"*
+  (msg `1487141790770532525`).
+- **#2's creator is Modder E, not Modder B.** The announcement names no modder; the release
+  announcement does — *"The Alex Crowdfund by the legendary [Modder E] is now live on nexus"*
+  (msg `1320181570610659340`). #33's creator is Modder O and #34's is Modder L, both now cited.
+- **The deletions are real, and this time actually probed.** Resolving the five dead post links by
+  URL returns the channel's *oldest surviving* message every time — a fetch falling through to the
+  channel floor, not a paging limit. They are absent from the search index too. This is the check
+  the 2026-08-23 `limit=4` mistake should have had.
+- **Only two GRB communities are readable from this account.** All 85 guilds were enumerated by
+  channel listing: Tier 1 Imports and The Bivouac, and the Bivouac mentions no 2026 crowdfund. The
+  "ask an adjacent community" method that named #28 is **exhausted, not untried** — worth stating so
+  nobody re-runs it hoping.
+
+### Method (new, reusable)
+- **Author-scoped search beats keyword search in a bot-heavy guild.** `content=crowdfund` returns
+  hundreds of Carl-bot autoresponses a month; the same query scoped to the five or six people who
+  answer *"what's live"* returns almost nothing but the enumerations. One such message named three
+  crowdfunds at once.
+- **Search a post's own URL** to find every message that ever pointed at it. A deleted post keeps a
+  stable id, so this attaches a name to a *specific* crowdfund instead of to a date.
+- **Discord's search index covers forwarded-message snapshots.** A forward carries the original's
+  full text and stays searchable after the original is deleted — while the bridge renders it as
+  empty content, so it is invisible unless you search for words it does not appear to contain.
+  Pairing a fixed stem with a candidate word turns the six forwards in Tier 1 into an oracle. All
+  six resolved to already-named crowdfunds, so it named nothing new, but it is the only known route
+  to a deleted post's verbatim text.
+- **Forum thread names are indexed as well** — a URL-only message matched words that appear only in
+  its thread's title.
+- **Announcement GIFs and title cards are the puzzle, not decoration.** "Time for some cold pasta" →
+  Cold Ops Carbonara; a *let's do this team* GIF → a two-modder crowdfund; an **FW** monogram →
+  Forgotten Weapons. Useful for generating a hypothesis, never sufficient to confirm one — each was
+  only accepted once a member had written the name down.
+
+### Questions answered / opened
+- ✅ All 32 System 2 crowdfunds are now named.
+- ❌ **#3 and #7 remain unnamed** (System 1, both announced without a name and never named in public
+  chat). #7 is missing from Modder B's own open-buy-ins list six days after its announcement, so it
+  may have collapsed early — one crowdfund is described doing exactly that that month.
+- ❌ How many System 1 crowdfunds existed. Unchanged: the legacy channels are `forbidden` and at
+  least one project channel is deleted outright (`1309056687801503805` now 404s).
+- 🆕 **The cheapest possible fix for all of this is a guild role-list read.** The role name *is* the
+  crowdfund name, and the Discord client caches every guild role including ones the account does not
+  hold — the bridge already reads that store for mention resolution but exposes no endpoint for the
+  snapshot. Caveat: at least one crowdfund role has since been deleted (#39's, `1466647776396836874`,
+  renders unresolved), so it would not be a complete answer for closed projects.
+
+### Docs written this session
+Updated: [`reference/crowdfund-history.md`](../reference/crowdfund-history.md) (§1 counts, §4 both
+tables plus a naming-provenance block, §5 and §7 coverage caveat, §7 rewritten),
+[`meta/next-session.md`](next-session.md). The panel repo
+**[dataterminals/t1-crowdfunds](https://github.com/dataterminals/t1-crowdfunds)** was left untouched
+and now lags this file by six names and two corrections — see next-session.
+
 ---
 
 ---
