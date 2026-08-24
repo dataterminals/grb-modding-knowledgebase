@@ -267,7 +267,40 @@ The public/supporters vote runs inside the **confirmed** channel, so **only peop
 
 Mean 102, median 72, range 48–275. All tallies finalized.
 
-> **This is the answer to "why isn't that mod on Nexus?"** — **7 of 11** measured projects voted to stay in the supporter armoury. Roughly two thirds of crowdfunded work is **not** publicly released.
+> **⚠️ Read the scope before reading the outcome.** The vote does not always cover the whole crowdfund. **Snake Eater's** poll asked *"Where to share the XOF Outfits?"* — one item — and SMilEY says so in-channel: *"MOST of the items in this crowdfund are supporter items, the XOF suit is what will be made public from this crowdfund"* (msg `1426355642410467368`). **Bad Boys'** was scoped to *"the Exfil Helmets, Police Vests and Belt"*. The other nine read as whole-project. So "4 public / 7 supporters" describes **the voted portion**, not the crowdfund.
+
+### The four places content actually ends up
+
+| Destination | Who can reach it | Notes |
+| --- | --- | --- |
+| **Public** | Anyone | `#mod-releases`, usually Nexus too. |
+| **Supporter armoury** | Anyone who has backed *any* crowdfund | `#supporter-armory`. Called the **Tier 2 Armory** until March 2026 — and the **Tier 1 Armory** before that. |
+| **Crowdfund exclusive** | Backers of that one crowdfund | Never leaves the crowdfund's own channel. *"Exclusives don't go public they are a treat from the modders to the people that contributed to the CF"* — Shadadi_, msg `1498457727851298858`. |
+| **Private** | Nobody further | An option on Snake Eater's poll (5 votes). Has never won. |
+
+> **Not a crowdfund destination:** the **Kingslayer armoury** (`#kingslayer–armory`). That is the *earned* role's own track — modders post there directly, threads titled *"Kingslayer Exclusive"* (e.g. *HK416D SMR | Final Edition | Kingslayer Exclusive*). Nothing arrives there by crowdfund vote. It is easy to confuse with the supporter armoury precisely because the latter used to be called "Tier 1 Armory".
+
+### The vote is not the end of it
+
+> **Verified:** every one of the 11 measurable crowdfunds kept delivering **after** its vote — **198 separate drops in total**, a median of **64 days** from first to last.
+
+| Crowdfund | Drops | Window | Principal creator |
+| --- | ---: | ---: | --- |
+| Operation Mother's Chest Hair | 39 | 64 d | YourMomsChestHair |
+| Ahead of Your Time | 36 | 141 d | SAMI TECH SUPUMA |
+| Door Kicker | 18 | 57 d | MercerBlack™ |
+| Lioness | 18 | 32 d | YourMomsChestHair |
+| Snake Eater | 16 | 169 d | YourMomsChestHair |
+| Crowd Control | 15 | 94 d | MercerBlack™ |
+| Dual Sig | 13 | 189 d | 𝐵𝑂𝑁𝐹𝐼𝑅𝐸 |
+| Kill Confirmed | 13 | 35 d | ViruS |
+| Tip of the Spear | 13 | 70 d | Acosta. |
+| Bad Boys | 11 | 25 d | YourMomsChestHair |
+| Enfield Tea Set | 6 | 48 d | Gazza2764 |
+
+**Each creator distributes differently**, which is why a single house format cannot be counted on: **MercerBlack** keeps one Google Drive folder and updates it in place (*"All mod files and updates will be in the Gdrive, as usual"*); **𝐵𝑂𝑁𝐹𝐼𝑅𝐸** ships versioned drops (MPX V1 → V1.1 → V2.0); **YourMomsChestHair**, **ViruS**, **SAMI TECH SUPUMA** and **Acosta** post discrete `MOD RELEASE` items.
+
+> **Method caveat:** a "drop" is a post from the crowdfund's principal creator carrying a download link or a replacement statement. An earlier count keyed on the literal `MOD RELEASE` heading and scored Crowd Control, Enfield Tea Set, Dual Sig and Door Kicker as **zero** — all four had in fact delivered, in other formats. That was a measurement artefact and is corrected here.
 
 ### Cadence
 
