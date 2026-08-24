@@ -2,6 +2,8 @@
 
 > **Live panel:** <https://dataterminals.github.io/t1-crowdfunds/> — the same dataset, kept current, with the registry sortable and filterable. This file is the narrative and the citations; the panel is the living view.
 >
+> **On names:** modders appear as **Modder A–Q**, assigned by first appearance and stable throughout this file. The labels are used rather than handles so the analysis stays checkable — that one modder ran a quarter of all crowdfunds is visible without naming them. Everyone else is referred to by role. Message IDs are unchanged, so every claim remains verifiable against the source. Creator credits do appear under their real handles on the [live panel](https://dataterminals.github.io/t1-crowdfunds/), which is where attribution belongs.
+>
 > **Status:** First comprehensive pass, 2026-08-23. Compiled by reading *Tier 1 Imports* (guild `1302392670181916722`) directly through an authenticated Discord bridge as `@blkdnm`. Every claim below cites the message it came from. Provenance: [`../meta/research-log.md`](../meta/research-log.md).
 
 ## Why this is in a modding knowledgebase
@@ -11,11 +13,11 @@ A large fraction of the mod corpus catalogued in [`../examples/mod-catalog.md`](
 | Corpus folder | Crowdfund it came from |
 | --- | --- |
 | `CFLIONNESS_JPCVest`, `CFLIONNESS_BangerJPC`, `CFLIONNESS_CondorTop`, `LIONNESS_Jeans`, `LIONNESS_RolledSlimShirt` | **Lioness** (`CF` = CrowdFund) |
-| `Acosta - The Bison Belt - Ferro Concepts`, `acostabisonbattlebelt_*`, `bisonbelt_datapc` | **Tip of the Spear** (Acosta) |
+| the `*bisonbelt*` set (Ferro Concepts Bison Belt) | **Tip of the Spear** (Modder A) |
 | `AKM_KYPK` | **AKM w/ KPYK parts** |
 | `Kalashnikova_SR1` | **Kalashnikov SR1** |
 | `SA58` | **DS Arms SA 58 FAL** |
-| `Vans Defcon - uormomchesthair`, various `Crye AVS` / `Crye JPC` variants | YourMomsChestHair crowdfunds |
+| `Vans Defcon`, various `Crye AVS` / `Crye JPC` variants | Modder B crowdfunds |
 
 So "where did this mod come from, and why can't I find it on Nexus?" is a **provenance question this file answers**. A mod that went to the supporter armoury instead of public release is not lost — it was a crowdfund that voted the other way. See §5.
 
@@ -49,7 +51,7 @@ The user's recollection is correct on every point: the second system is roles, u
 
 ### The pricing model
 
-Crowdfunds started as **split commissions**, not a flat fee. **YourMomsChestHair**, `#supporter-chat`, 2024-11-03:
+Crowdfunds started as **split commissions**, not a flat fee. Modder B, `#supporter-chat`, 2024-11-03:
 
 > "i was thinking for pricing those for guns at 60$ with $5 buy ins minimum of 12 confirmations" (msg `1302780729121570906`)
 > "full model imports as well like logans $100 for the full with $10 buy ins" (msg `1302781232068825260`)
@@ -79,7 +81,7 @@ Then, in March 2025, someone leaked paid mods:
 
 > "Basically an edgelord tried to leak buy in mods" — a moderator, `#on-topic`, msg `1352106850715308134`, 2025-03-19
 
-YourMomsChestHair posted *"Im halting all buy ins atm"* the same day (msg `1351884110330859531`). SamiPuma, days later: *"we don't really know what the rules are yet, all of this is new, we're really jus trying to make sure the people from going into T1 wont be trying to leak stuff"* (msg `1353223879530647574`).
+Modder B posted *"Im halting all buy ins atm"* the same day (msg `1351884110330859531`). Modder C, days later: *"we don't really know what the rules are yet, all of this is new, we're really jus trying to make sure the people from going into T1 wont be trying to leak stuff"* (msg `1353223879530647574`).
 
 > **Inferred:** The March 2025 leak is a plausible driver of the move to per-project roles and auditable confirmed/unconfirmed state. **No message states this causally** — the two are adjacent in time and theme, nothing more. Treat as hypothesis.
 
@@ -135,7 +137,7 @@ The per-project roles are **public on your profile in the server**, and the comm
 
 > **Verified:** "Tier 1" was renamed to **Kingslayer** on **2026-03-24** by community poll — 149 votes: Kingslayers 81, Vanguard 40, Pathfinders 26, The Bulwark 2 (`#kingslayer-polls`, msg `1485007498162475028`; result msg `1486094687105318985`; a moderator's *"~~Tier 1~~ Kingslayer"* msg `1486095571730042960`).
 
-> **⚠️ Naming trap for anyone reading old messages.** The tier labels **swapped meaning** during System 1. In March 2025 SamiPuma described the crowdfund reward as the *"Tier 1 Armory"* (msg `1347339972801466430`); by May 2025 the same reward was *"Tier 2"*, with Tier 1 as the earned role (msg `1375616498579800065`). Pre-mid-2025 references to "T1 Armory" usually mean **what is now the Supporter armoury**.
+> **⚠️ Naming trap for anyone reading old messages.** The tier labels **swapped meaning** during System 1. In March 2025 Modder C described the crowdfund reward as the *"Tier 1 Armory"* (msg `1347339972801466430`); by May 2025 the same reward was *"Tier 2"*, with Tier 1 as the earned role (msg `1375616498579800065`). Pre-mid-2025 references to "T1 Armory" usually mean **what is now the Supporter armoury**.
 
 ---
 
@@ -147,31 +149,31 @@ Entries marked ★ were announced only in chat and have **no `@everyone`**, whic
 
 | # | Date | Crowdfund | Creator | Source |
 | --- | --- | --- | --- | --- |
-| 1 ★ | ≤2024-11 | **Night War Ghost** full outfit | YourMomsChestHair | First completed crowdfund; released public, Nexus mod 1090 (msg `1310097291587223553`) |
-| 2 | 2024-11-17 | **Alex "Echo 3-1"** gear pack (CoD MW19) | YourMomsChestHair | msg `1307805326631768124` (`#on-topic`) |
-| 3 ★ | 2024-11-23 | *(unnamed project by **SB-4**)* | SB-4 | msg `1309770589795520592` |
+| 1 ★ | ≤2024-11 | **Night War Ghost** full outfit | Modder B | First completed crowdfund; released public, Nexus mod 1090 (msg `1310097291587223553`) |
+| 2 | 2024-11-17 | **Alex "Echo 3-1"** gear pack (CoD MW19) | Modder B | msg `1307805326631768124` (`#on-topic`) |
+| 3 ★ | 2024-11-23 | *(unnamed project by Modder D)* | Modder D | msg `1309770589795520592` |
 | 4 ★ | 2024-12-02 | **Shadow Company Heavy Outfit** | — | msg `1313256555994681406`; $10 buy-in |
 | 5 ★ | ≤2024-12 | **Price Ghillie** | — | msgs `1318754880512327691`, `1350822574468370493` |
 | 6 ★ | ≤2024-12 | **GZW assortment** | — | msgs `1318754880512327691`, `1322527000925307053`; stayed private over asset copyright (`1349505166176555060`) |
-| 7 | 2024-12-11 | *(unnamed new weapon)* | YourMomsChestHair | msg `1316621603978874991` |
-| 8 | 2024-12-16 | *(unnamed gear pack)* | FlawlyBoy | msg `1316829668674109511` |
-| 9 | 2024-12-29 | **Daniel Defense DDM4V7** | `506427314301566976` | msg `1322878300007174144` |
-| 10 | 2025-01-14 | **Shadow Rusher** outfit | YourMomsChestHair | msg `1328857878152613940` |
-| 11 | 2025-01-21 | **Chimera Bridge** | `506427314301566976` | msg `1331300784599728188` |
+| 7 | 2024-12-11 | *(unnamed new weapon)* | Modder B | msg `1316621603978874991` |
+| 8 | 2024-12-16 | *(unnamed gear pack)* | Modder E | msg `1316829668674109511` |
+| 9 | 2024-12-29 | **Daniel Defense DDM4V7** | Modder F | msg `1322878300007174144` |
+| 10 | 2025-01-14 | **Shadow Rusher** outfit | Modder B | msg `1328857878152613940` |
+| 11 | 2025-01-21 | **Chimera Bridge** | Modder F | msg `1331300784599728188` |
 | 12 ★ | ≤2025-03 | **SC Wolves / Wolves Overhaul** | — | msgs `1347339972801466430`, `1350547784788344943` |
-| 13 | 2025-03-12 | **MCX Raptor** | `335527074079047680` | msg `1349440792007278703` |
-| 14 | 2025-03-29 | **Australian SOF Vests** | `781897007043837952` | msg `1355682150719951068` |
-| 15 | 2025-04-08 | **Ferro Concepts Slickster Plate Carrier** | YourMomsChestHair | msg `1359291748144119898` |
-| 16 | 2025-04-13 | **Next Generation Ghost's Gear** | YourMomsChestHair | msg `1360895696894693396` |
-| 17 | 2025-05-06 | **Konni Group Outfits** | `779221619892813854` | msg `1369345583709552750` |
-| 18 | 2025-05-08 | **Kalashnikov SR1** | Agent/07 | msg `1370159031775268944` |
-| 19 | 2025-05-15 | **"Warfare" movie outfits** | YourMomsChestHair | msg `1372703221805481984` |
-| 20 | 2025-06-13 | **BREN 3** | `335527074079047680` | msg `1383200543043883179` |
-| 21 | 2025-06-19 | **Haenel MK556** | Agent/07 | msg `1385507734392406037` |
-| 22 | 2025-07-05 | **DS Arms SA 58 FAL** *(renewal)* | ᴇ Δ ᴡ ᴇ ʟ ʟ | msg `1391022434211069993` |
-| 23 | 2025-07-08 | **Commando Diving Drysuit**, a.k.a. **"Frogman"** | YourMomsChestHair | msg `1392009113185030288`; "Frogman" per msgs `1398318235249672334`, `1399101991619399801` |
+| 13 | 2025-03-12 | **MCX Raptor** | Modder G | msg `1349440792007278703` |
+| 14 | 2025-03-29 | **Australian SOF Vests** | Modder H | msg `1355682150719951068` |
+| 15 | 2025-04-08 | **Ferro Concepts Slickster Plate Carrier** | Modder B | msg `1359291748144119898` |
+| 16 | 2025-04-13 | **Next Generation Ghost's Gear** | Modder B | msg `1360895696894693396` |
+| 17 | 2025-05-06 | **Konni Group Outfits** | Modder I | msg `1369345583709552750` |
+| 18 | 2025-05-08 | **Kalashnikov SR1** | Modder J | msg `1370159031775268944` |
+| 19 | 2025-05-15 | **"Warfare" movie outfits** | Modder B | msg `1372703221805481984` |
+| 20 | 2025-06-13 | **BREN 3** | Modder G | msg `1383200543043883179` |
+| 21 | 2025-06-19 | **Haenel MK556** | Modder J | msg `1385507734392406037` |
+| 22 | 2025-07-05 | **DS Arms SA 58 FAL** *(renewal)* | Modder K | msg `1391022434211069993` |
+| 23 | 2025-07-08 | **Commando Diving Drysuit**, a.k.a. **"Frogman"** | Modder B | msg `1392009113185030288`; "Frogman" per msgs `1398318235249672334`, `1399101991619399801` |
 
-> **Inferred:** #12 may be the same project as #10 — SamiPuma linked channel `1328856903996018828` (created the same day as the Shadow Rusher announcement) while calling it *"the SC Wolves outfits"*. Both are Shadow Company content. Not resolvable without access to that channel; listed separately with the ambiguity flagged.
+> **Inferred:** #12 may be the same project as #10 — Modder C linked channel `1328856903996018828` (created the same day as the Shadow Rusher announcement) while calling it *"the SC Wolves outfits"*. Both are Shadow Company content. Not resolvable without access to that channel; listed separately with the ambiguity flagged.
 
 ### System 2 (2025-07-29 → present) — 32, believed complete
 
@@ -179,38 +181,38 @@ Every entry has a dated `@everyone` in `#announcements`. Names in *(parentheses)
 
 | # | Date | Crowdfund | Creator |
 | --- | --- | --- | --- |
-| 24 | 2025-07-29 | Vulcan/Malyuk 7.62 Assault Rifle | `779221619892813854` |
-| 25 | 2025-08-14 | AKM w/ KPYK parts | Agent/07 |
-| 26 | 2025-08-18 | White Moon | YourMomsChestHair |
-| 27 | 2025-09-17 | **Snake Eater** | YourMomsChestHair |
-| 28 | 2025-09-23 | **Steyr** | Agent/07 |
-| 29 | 2025-10-13 | **Operation Mother's Chest Hair** | YourMomsChestHair |
-| 30 | 2025-11-07 | **Crowd Control** *(Mercer's debut)* | MercerBlack™ |
+| 24 | 2025-07-29 | Vulcan/Malyuk 7.62 Assault Rifle | Modder I |
+| 25 | 2025-08-14 | AKM w/ KPYK parts | Modder J |
+| 26 | 2025-08-18 | White Moon | Modder B |
+| 27 | 2025-09-17 | **Snake Eater** | Modder B |
+| 28 | 2025-09-23 | **Steyr** | Modder J |
+| 29 | 2025-10-13 | **Operation Mother's Chest Hair** | Modder B |
+| 30 | 2025-11-07 | **Crowd Control** *(Mercer's debut)* | Modder L |
 | 31 | 2025-11-09 | **Enfield Tea Set** | — |
-| 32 | 2025-11-19 | **Bad Boys** | YourMomsChestHair |
+| 32 | 2025-11-19 | **Bad Boys** | Modder B |
 | 33 | 2025-11-21 | **Dual Sig** | — |
 | 34 | 2025-12-15 / 20 | **Door Kicker** | — |
-| 35 | 2025-12-17 | **Lioness** | YourMomsChestHair |
-| 36 | 2025-12-15 / 20 | **Kill Confirmed** | ViruS |
-| 37 | 2026-01-06 | **Ahead of Your Time** | SAMI TECH SUPUMA |
-| 38 | 2026-01-18 | **Tip of the Spear** | Acosta. |
-| 39 | 2026-01-30 | *(unnamed — Mercer, 🇿🇦)* | MercerBlack™ |
+| 35 | 2025-12-17 | **Lioness** | Modder B |
+| 36 | 2025-12-15 / 20 | **Kill Confirmed** | Modder M |
+| 37 | 2026-01-06 | **Ahead of Your Time** | Modder C |
+| 38 | 2026-01-18 | **Tip of the Spear** | Modder A |
+| 39 | 2026-01-30 | *(unnamed — Mercer, 🇿🇦)* | Modder L |
 | 40 | 2026-02-11 | *(unnamed)* | — |
 | 41 | 2026-02-17 | *(unnamed — "cold pasta")* | — |
 | 42 | 2026-02-23 | *(unnamed)* | — |
-| 43 | 2026-02-27 | **Crye Baby** | YourMomsChestHair |
+| 43 | 2026-02-27 | **Crye Baby** | Modder B |
 | 44 | 2026-03-27 | **Spirited Away** | — |
 | 45 | 2026-03-31 | **Wolf Pack** | — |
-| 46 | 2026-04-07 | *(unnamed — Mercer, "FW" monogram)* | MercerBlack™ |
-| 47 | 2026-04-12 | **CYBERSAMI** 🔴 *still posted* | SAMI TECH SUPUMA |
-| 48 | 2026-05-11 | **Smokin Aces** | keem |
+| 46 | 2026-04-07 | *(unnamed — Mercer, "FW" monogram)* | Modder L |
+| 47 | 2026-04-12 | **CYBERSAMI** 🔴 *still posted* | Modder C |
+| 48 | 2026-05-11 | **Smokin Aces** | Modder N |
 | 49 | 2026-05-15 | **Breach & Clear** | — |
-| 50 | 2026-06-01 | **Heavy Metal** 🔴 *still posted* | MercerBlack™ |
-| 51 | 2026-06-12 | **Pastaslov** | ᴇ Δ ᴡ ᴇ ʟ ʟ |
-| 52 | 2026-06-13 | **Time 'n Tide** | 𝐵𝑂𝑁𝐹𝐼𝑅𝐸 ("Bon") |
-| 53 | 2026-07-03 | **Rangers Lead The Way** | urmomschesthair |
-| 54 | 2026-07-11 | **GWOT Classics** | ViruS |
-| 55 | 2026-08-19 | **Dealer's Choice** 🔴 *open* | Avetis |
+| 50 | 2026-06-01 | **Heavy Metal** 🔴 *still posted* | Modder L |
+| 51 | 2026-06-12 | **Pastaslov** | Modder K |
+| 52 | 2026-06-13 | **Time 'n Tide** | Modder O ("Bon") |
+| 53 | 2026-07-03 | **Rangers Lead The Way** | Modder B |
+| 54 | 2026-07-11 | **GWOT Classics** | Modder M |
+| 55 | 2026-08-19 | **Dealer's Choice** 🔴 *open* | Modder P |
 
 > Names for #43–#45, #48, #49 and #52 were recovered by **reading the announcement title-card graphics** posted in `#announcements` — the artwork spells the name out where the surviving text does not.
 
@@ -286,19 +288,19 @@ Mean 102, median 72, range 48–275. All tallies finalized.
 
 | Crowdfund | Drops | Window | Principal creator |
 | --- | ---: | ---: | --- |
-| Operation Mother's Chest Hair | 39 | 64 d | YourMomsChestHair |
-| Ahead of Your Time | 36 | 141 d | SAMI TECH SUPUMA |
-| Door Kicker | 18 | 57 d | MercerBlack™ |
-| Lioness | 18 | 32 d | YourMomsChestHair |
-| Snake Eater | 16 | 169 d | YourMomsChestHair |
-| Crowd Control | 15 | 94 d | MercerBlack™ |
-| Dual Sig | 13 | 189 d | 𝐵𝑂𝑁𝐹𝐼𝑅𝐸 |
-| Kill Confirmed | 13 | 35 d | ViruS |
-| Tip of the Spear | 13 | 70 d | Acosta. |
-| Bad Boys | 11 | 25 d | YourMomsChestHair |
-| Enfield Tea Set | 6 | 48 d | Gazza2764 |
+| Operation Mother's Chest Hair | 39 | 64 d | Modder B |
+| Ahead of Your Time | 36 | 141 d | Modder C |
+| Door Kicker | 18 | 57 d | Modder L |
+| Lioness | 18 | 32 d | Modder B |
+| Snake Eater | 16 | 169 d | Modder B |
+| Crowd Control | 15 | 94 d | Modder L |
+| Dual Sig | 13 | 189 d | Modder O |
+| Kill Confirmed | 13 | 35 d | Modder M |
+| Tip of the Spear | 13 | 70 d | Modder A |
+| Bad Boys | 11 | 25 d | Modder B |
+| Enfield Tea Set | 6 | 48 d | Modder Q |
 
-**Each creator distributes differently**, which is why a single house format cannot be counted on: **MercerBlack** keeps one Google Drive folder and updates it in place (*"All mod files and updates will be in the Gdrive, as usual"*); **𝐵𝑂𝑁𝐹𝐼𝑅𝐸** ships versioned drops (MPX V1 → V1.1 → V2.0); **YourMomsChestHair**, **ViruS**, **SAMI TECH SUPUMA** and **Acosta** post discrete `MOD RELEASE` items.
+**Each creator distributes differently**, which is why a single house format cannot be counted on: Modder L keeps one Google Drive folder and updates it in place (*"All mod files and updates will be in the Gdrive, as usual"*); Modder O ships versioned drops (MPX V1 → V1.1 → V2.0); Modder B, Modder M, Modder C and Modder A post discrete `MOD RELEASE` items.
 
 > **Method caveat:** a "drop" is a post from the crowdfund's principal creator carrying a download link or a replacement statement. An earlier count keyed on the literal `MOD RELEASE` heading and scored Crowd Control, Enfield Tea Set, Dual Sig and Door Kicker as **zero** — all four had in fact delivered, in other formats. That was a measurement artefact and is corrected here.
 
@@ -309,7 +311,7 @@ Mean 102, median 72, range 48–275. All tallies finalized.
 | System 1 | ~9 | 23+ | ≥2.6 / mo |
 | System 2 | ~13 | 32 | 2.5 / mo |
 
-**Creator concentration:** YourMomsChestHair leads ~14 of the 32 System 2 projects (~29% of all crowdfunds), including the largest on record (Rangers Lead The Way, 383).
+**Creator concentration:** Modder B leads ~14 of the 32 System 2 projects (~29% of all crowdfunds), including the largest on record (Rangers Lead The Way, 383).
 
 ---
 
@@ -324,10 +326,10 @@ Tier 1 Imports was created **2024-11-02**. It did not appear out of nothing: **T
 > | 2024-11-02 | Tier 1 Imports created. Day one, its founder states the plan: *"my idea for this server was to have this be a storefront of sorts for crowdfunding mod projects."* | T1 msg `1302414873325604945` |
 > | 2024-11-06 | The Bivouac's ownership transfers to a new owner. The announcement names no outgoing owner and signals no conflict. | Bivouac msg `1303731106599796817` |
 > | 2024-11-08 | The founder posts into the Bivouac's `#grb-talk`: *"I'm the co-creator of Tier 1 Imports"*, with an invite link. He is not removed for it. | Bivouac msg `1304532626023120966` |
-> | 2024-11-23 | **ViruS**, from inside the Bivouac, routes people to Tier 1 for crowdfunds: *"check nexusmods, put up a comission here, or make a request for a crowdfund mod … over at the tier1 server."* | Bivouac msg `1309919966497214525` |
+> | 2024-11-23 | Modder M, from inside the Bivouac, routes people to Tier 1 for crowdfunds: *"check nexusmods, put up a comission here, or make a request for a crowdfund mod … over at the tier1 server."* | Bivouac msg `1309919966497214525` |
 > | 2026-05-11 | *"Just go to Tier 1 Imports server, this one is dead."* The Bivouac still exists but is largely inactive. | Bivouac msg `1503318552331948113` |
 
-Several people who went on to become Tier 1 regulars — including the modders ViruS and SamiPuma — were active Bivouac members at the time.
+Several people who went on to become Tier 1 regulars — including the modders Modder M and Modder C — were active Bivouac members at the time.
 
 ### The difference that actually matters
 

@@ -1221,7 +1221,7 @@ guild search on "buy-in" / "crowdfund project" / "unconfirmed". New doc:
   halted same day, msg `1351884110330859531`) plausibly drove the move to auditable per-project roles.
   Adjacent in time and theme; **no message states the causal link.** Flagged as hypothesis in the doc.
 - System 1 item #12 (SC Wolves / Wolves Overhaul) may be the same project as #10 (Shadow Rusher) —
-  SamiPuma linked the Shadow Rusher channel while naming it "SC Wolves".
+  Modder C linked the Shadow Rusher channel while naming it "SC Wolves".
 
 ### Questions answered / opened
 - ✅ What the two systems were, and exactly how each worked.
@@ -1236,7 +1236,7 @@ guild search on "buy-in" / "crowdfund project" / "unconfirmed". New doc:
 - **Tier 1 grew out of The Bivouac** (guild `981599102523539466`), a GRB modding community running
   since mid-2022. **Verified:** T1 founded 2024-11-02; the Bivouac's ownership transfers to
   a new owner 2024-11-06 (msg `1303731106599796817`); T1's co-creator posts an invite into the
-  Bivouac's own chat 2024-11-08 (msg `1304532626023120966`) and is not removed for it; ViruS routes
+  Bivouac's own chat 2024-11-08 (msg `1304532626023120966`) and is not removed for it; Modder M routes
   Bivouac members to T1 for crowdfunds 2024-11-23 (msg `1309919966497214525`). The Bivouac is now
   largely inactive (msg `1503318552331948113`).
 - **The structural difference is the funding model, and it is still visible in the channel lists.**
