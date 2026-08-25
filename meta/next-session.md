@@ -224,49 +224,72 @@ every claim. It is in this repo because it answers a provenance question the cor
 a **separate repo**, `dataterminals/t1-crowdfunds` →
 <https://dataterminals.github.io/t1-crowdfunds/>, which renders `data/crowdfunds.json`.
 
-**⚠️ The panel is currently out of sync with this repo.** The 2026-08-24 pass changed six names and
-two creators here and did not touch the panel. Bringing `data/crowdfunds.json` into line is the
-first thing to do in this lane:
-
-| `n` | field | from | to |
-| ---: | --- | --- | --- |
-| 26 | `name` | `"White Moon"` | `"To the Moon"` |
-| 39 | `name` / `creator` | `null` / MercerBlack | `"Recce"` / unchanged |
-| 40 | `name` / `creator` | `null` / `null` | `"Blackbird"` / 𝐵𝑂𝑁𝐹𝐼𝑅𝐸 |
-| 41 | `name` / `creator` | `null` / `null` | `"Cold Ops Carbonara"` / ᴇ Δ ᴡ ᴇ ʟ ʟ |
-| 42 | `name` / `creator` | `null` / `null` | `"Step Brothers in Arms"` / ViruS + SexyCouchPotato |
-| 43 | `name` | `"Crye Baby"` | `"Crye Babies"` |
-| 46 | `name` / `creator` | `null` / MercerBlack | `"Forgotten Weapons"` / unchanged |
-| 2 | `creator` | YourMomsChestHair | FlawlyBoy |
-| 8 | `name` / `date` | `null` / `2024-12-16` | GZW gear pack / `2024-12-12`, and note it is the same project as #6 |
-| 33 | `creator` | `null` | 𝐵𝑂𝑁𝐹𝐼𝑅𝐸 |
-| 34 | `creator` | `null` | MercerBlack |
-
-Names go on the panel under real handles; this repo keeps the Modder A–R pseudonyms. **Modder R is
-new** — SexyCouchPotato, co-creator of Step Brothers in Arms with Modder M, the first crowdfund with
-two creators. `tools/refresh.py` in the panel repo re-pulls sign-ups and backer overlap but
-deliberately never touches the catalogue, so all of the above is a hand edit.
+**Panel and repo are in sync as of 2026-08-25.** Both carry the 2026-08-24 naming pass and
+crowdfund #56. Names go on the panel under real handles; this repo keeps the Modder A–R pseudonyms.
+**Modder R** is SexyCouchPotato, co-creator of Step Brothers in Arms with Modder M — the first
+crowdfund with two creators. When they diverge again, the panel's `tools/refresh.py` re-pulls
+sign-ups and the cohort block but **deliberately never touches the catalogue**, so names, creators,
+dates and outcomes are always a hand edit in both places.
 
 ### What is actually left
 
-1. **#3 and #7 are the last two unnamed**, both System 1, both announced without a name. See
+1. **⭐ Hidden channel names — live lead as of 2026-08-25.** A ShowHiddenChannels-type plugin is now
+   enabled, so locked channels appear in the client's sidebar. **It does not reach the bridge:**
+   `GuildChannelStore.getChannels` still returns the same 50 accessible channels, and reads on hidden
+   channels still fail the client-side permission gate. But **the client demonstrably holds their
+   names** — `#heavy-metal` and `#pastaslov` render as names inside crowdfund posts and neither is
+   accessible from this account. Why it matters: **an era-1 project channel's name is a crowdfund
+   name**, which is the standing open question below. Two routes, neither yet tried in bulk:
+   - **`current_view` is ungated** and returns the full channel object for whatever is on screen, so
+     clicking a hidden channel names it. One click per channel — fine for a handful, not for 45.
+   - **Sidebar screenshots.** Expand the crowdfund categories and read the names off the image.
+     Cheapest by far, and covers the whole list in two or three shots.
+   - If someone does patch the bridge for this, the store to read is the same one `parentChannel`
+     already uses — the client receives *every* guild channel in `GUILD_CREATE`, permissions or not.
+2. **#3 and #7 are the last two unnamed**, both System 1, both announced without a name. See
    §7 open question 2 for what is known about each and why they resisted. Low expected yield from
-   more searching — the productive move is to ask a member who was buying in during December 2024.
-2. **⭐ The cheapest unexplored lever: read the guild role list.** A crowdfund's role carries the
+   more text searching — the productive moves are lead 1 above, or asking a member who was buying in
+   during December 2024.
+3. **⭐ The cheapest unexplored lever: read the guild role list.** A crowdfund's role carries the
    crowdfund's *name*, and the Discord client caches **every** guild role — including ones the
    account does not hold. The VesktopClaudeBridge plugin already reads that store
    (`GuildRoleStore.getRolesSnapshot`, in `plugin/discord.ts`, used only to resolve `@role` mentions)
    but exposes no RPC method or HTTP route for the snapshot itself. One small addition would have
-   answered this whole strand in a single call, and might reach System 1's roles too.
+   answered the whole naming strand in a single call, and might reach System 1's roles too.
    ⚠️ Not a complete answer: at least one crowdfund role has been deleted (#39's,
    `1466647776396836874`, renders unresolved), so closed projects may be gone from the store.
    ⚠️ Also a different repo and a plugin change — it needs an Equicord rebuild and a Discord reload.
-   Ask before starting it.
-3. **The 11-of-55 depth gap is structural.** Release votes and delivery records live inside each
-   crowdfund's paid channel. Nothing this account can do widens it; it takes a member with more
-   roles, or an admin. **Do not let a future pass quietly present the 11 as the 55** — the write-up
-   now says so in two places, and that distinction is the thing to preserve.
-4. **Re-run the forward oracle when new forwards appear.** Discord's search index covers forwarded
+   Ask before starting it. **A moderator can also just paste it** from Server Settings → Roles,
+   which costs them thirty seconds and grants nothing.
+4. **The 11-of-56 depth gap is structural, and there is now a live conversation with the moderators
+   about closing it.** Release votes and delivery records live inside each crowdfund's paid channel.
+   Nothing this account can do widens it. The minimal ask, worked out 2026-08-25:
+   - **One new role, zero guild-level permissions**, granted `View Channel` + `Read Message History`
+     and nothing else, on the `*-confirmed` channels plus `#crowdfund-projects-legacy`
+     (`1302441788585279570`) and `#crowdfund-votes` (`1303906293219856477`).
+   - **Ask for the confirmed half only.** The `*-unconfirmed` channels are the *payment* channels —
+     PayPal links and proof-of-payment screenshots. A moderator disabled images there on 2026-03-20
+     *"because users keep on posting personal info in their crowdfund payment posts"*
+     (msg `1484600258473496628`). Everything the panel needs is in the confirmed half; asking only
+     for that is both honest and much easier to say yes to.
+   - **All 11 readable confirmed channels sit in one category** (`1310270708303138816`), so the rest
+     probably do too. ⚠️ But category permissions only propagate to channels still *synced* with the
+     category, and private per-crowdfund channels almost certainly are not — a category-level grant
+     can look like it worked and silently do nothing. Test one channel first.
+   - **A read-once is enough** for the backfill; standing access is not required. If they would
+     rather grant nothing, a chat export of those channels answers it equally well — check the
+     exporter captures **poll results**, since the release votes are polls.
+   - ⚠️ If they offer to hand over the existing per-crowdfund roles instead, that works
+     mechanically but has a social cost *in this server specifically*: role tags are public on the
+     profile and the community reads them, so ~45 crowdfund roles would look like backing every
+     project. Flag it rather than let them find out.
+   - **Do not let a future pass quietly present the 11 as the 56** — the write-up says so in two
+     places, and that distinction is the thing to preserve.
+5. **Sign-up counts are only recoverable while a post is live.** The 👍 count for the 26 System 2
+   crowdfunds whose post is gone cannot be recovered by any permission — the messages are deleted.
+   But it stops getting worse the moment `tools/refresh.py` runs on a schedule. That is a zero-
+   permission fix and worth mentioning to the moderators alongside everything above.
+6. **Re-run the forward oracle when new forwards appear.** Discord's search index covers forwarded
    message snapshots, so a deleted post's verbatim text survives in whoever forwarded it. Method and
    the six known forwards are in §7. It named nothing new this time; it is the only route to a
    deleted post's exact wording if one is ever needed.

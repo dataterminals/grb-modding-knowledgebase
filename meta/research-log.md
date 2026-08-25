@@ -1340,6 +1340,62 @@ tables plus a naming-provenance block, §5 and §7 coverage caveat, §7 rewritte
 **[dataterminals/t1-crowdfunds](https://github.com/dataterminals/t1-crowdfunds)** was left untouched
 and now lags this file by six names and two corrections — see next-session.
 
+## Entry — 2026-08-25 — Crowdfund #56 caught live, and what a first-hour sample actually measures
+
+### What I did
+Short session. A new crowdfund went up while we were working on the previous entry, so it is in the
+catalogue from the day it was posted rather than reconstructed later — the first one that has been.
+Also fixed a statistic that the seventh post quietly broke.
+
+### VERIFIED (new)
+- **#56 — Flash Point**, Modder O, posted **2026-08-25T06:52Z** (post `1541701813349253190`,
+  `@everyone` msg `1541702858146320394`, *"Another Bonfire Masterclass"*). Spiritus Systems LV-119
+  and an FN Five-Seven MK3. Modder O's **third** crowdfund after Dual Sig (#33) and Blackbird (#40).
+- **Board snapshot 2026-08-25T07:12Z, seven live posts:** Rangers Lead The Way 399, GWOT Classics
+  321, CYBERSAMI 200, Heavy Metal 176, Pastaslov 134, Dealer's Choice 126, Flash Point 11.
+  **837 distinct people, 1,367 sign-ups.**
+- **The wide-and-shallow finding is stable, not a fluke of one read.** 67.9 % backed exactly one
+  crowdfund across six posts on 08-23, and **67.9 %** across seven posts on 08-25 — a seventh
+  crowdfund and 25 more people, same figure to a decimal. Only 5 people of 837 are on all seven.
+- **Creator concentration, recomputed.** Modder B has run **14 of the 56** — a quarter of every
+  crowdfund the server has held — and it is **7 in each era**, so the share survived the changeover
+  rather than being a legacy of the early days. ⚠️ The previous text said *"~14 of the 32 System 2
+  projects (~29 %)"*, which put the all-era numerator against the era-2 denominator. Corrected.
+- **Cadence is unchanged across the system change:** System 1 ≥2.5/mo (22 distinct over ~9 months),
+  System 2 2.6/mo (33 over ~13 months). Everything about the funding model changed; the rate did not.
+
+### INFERRED (new) — and the measurement trap it exposed
+- **A crowdfund's first hour recruits nobody.** Flash Point was 20 minutes old when read, and
+  **10 of its first 11 backers already back at least one other live crowdfund** — the exact inverse
+  of the 46–55 % fresh-backer share the mature crowdfunds show. Reading that as "this crowdfund
+  isn't recruiting" would be wrong: it is a **sampling-order artefact**. The people watching the
+  board when a post lands are the regulars; fresh backers arrive over the following weeks.
+- This was not hypothetical — `tools/refresh.py` picks the *newest* crowdfund for the panel's
+  new-blood figure, so it selected Flash Point and would have rendered **"0 of Flash Point's 9
+  backers appear on none of the other 6 — each crowdfund recruits largely fresh"**, a sentence that
+  states the opposite of its own evidence. Fixed at the source: the script now **skips any crowdfund
+  less than seven days old** and logs which it skipped and why. It picked GWOT Classics (45 days,
+  149 of 321 fresh). Same family of error as the `limit=4` mistake — a number that is technically
+  correct and answers a different question than the prose around it.
+
+### Questions answered / opened
+- ✅ #56 named and dated at source.
+- 🆕 **Hidden channel names may be reachable.** A ShowHiddenChannels-type plugin was enabled mid-
+  session so locked channels appear in the client's sidebar. It does **not** reach the bridge:
+  `GuildChannelStore.getChannels` still returns the same 50 accessible channels, and reads on hidden
+  channels still fail the client-side permission gate. But **the client demonstrably holds their
+  names** — `#heavy-metal` and `#pastaslov` render as names inside crowdfund posts and neither is
+  accessible from this account. Two routes remain: `current_view` is **ungated** and returns the
+  full channel object for whatever is on screen (one channel per click), or a few sidebar
+  screenshots. Worth pursuing: an era-1 project channel's *name* is a crowdfund name, which is the
+  standing open question for #3 and #7.
+
+### Docs written this session
+Updated: [`reference/crowdfund-history.md`](../reference/crowdfund-history.md) (§1, §4 catalogue,
+§5 sign-ups / overlap / cadence / creator concentration, §7 counts),
+[`meta/next-session.md`](next-session.md), and in the panel repo `data/crowdfunds.json` plus
+`tools/refresh.py`.
+
 ---
 
 ---
