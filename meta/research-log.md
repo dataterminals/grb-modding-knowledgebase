@@ -1390,9 +1390,30 @@ Also fixed a statistic that the seventh post quietly broke.
   screenshots. Worth pursuing: an era-1 project channel's *name* is a crowdfund name, which is the
   standing open question for #3 and #7.
 
+### Follow-up (same day) — the access ask was declined, and what replaces it
+- **Read-only access to the paid channels is closed.** The minimal role — zero guild-level
+  permissions, `View Channel` + `Read Message History`, `*-confirmed` channels only, explicitly not
+  the payment channels, read-once sufficient, export offered as an alternative — was put to **two
+  staff members and turned down**. Recorded in [`next-session.md`](next-session.md) as
+  **do not re-pitch**. The **turnout** column is therefore fixed at 11 of 56 permanently.
+- **Destination is a different question, and it is reachable.** Where a crowdfund's output *landed*
+  leaks into public chat, `#supporter-armory` (readable) and Nexus. Probed the same day and it
+  returns outcomes for crowdfunds well outside the 11, including **System 1**, where there is no
+  vote data at all: To the Moon → supporters (msg `1422746736690200616`), Commando Diving Drysuit →
+  supporters (`1413651144026099755`), Vulcan/Malyuk → public (`1478138630139543864`), Cold Ops
+  Carbonara → public (`1507031310512685106`). Validated against a known answer: Tip of the Spear →
+  public (`1498457981350842450`) matches the vote we can read.
+- ⚠️ **Keep destination and turnout in separate columns.** Destination is broader and weaker, it is
+  not always what the vote said (the vote is sometimes scoped to part of a project), and **the
+  source has to be weighted** — a member's *"I guess it was voted to not go public"* about Snake
+  Eater (`1532273474637135975`) is flatly wrong, and only detectable as wrong because that vote
+  happens to be readable. On an unreadable crowdfund it would have been recorded as fact.
+- **Asking one modder about their own crowdfund is not the ask that was declined.** Different
+  question, different people, no permissions involved.
+
 ### Docs written this session
 Updated: [`reference/crowdfund-history.md`](../reference/crowdfund-history.md) (§1, §4 catalogue,
-§5 sign-ups / overlap / cadence / creator concentration, §7 counts),
+§5 sign-ups / overlap / cadence / creator concentration, §7 counts and open question 4),
 [`meta/next-session.md`](next-session.md), and in the panel repo `data/crowdfunds.json` plus
 `tools/refresh.py`.
 

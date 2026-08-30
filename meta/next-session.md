@@ -261,35 +261,55 @@ dates and outcomes are always a hand edit in both places.
    ⚠️ Also a different repo and a plugin change — it needs an Equicord rebuild and a Discord reload.
    Ask before starting it. **A moderator can also just paste it** from Server Settings → Roles,
    which costs them thirty seconds and grants nothing.
-4. **The 11-of-56 depth gap is structural, and there is now a live conversation with the moderators
-   about closing it.** Release votes and delivery records live inside each crowdfund's paid channel.
-   Nothing this account can do widens it. The minimal ask, worked out 2026-08-25:
-   - **One new role, zero guild-level permissions**, granted `View Channel` + `Read Message History`
-     and nothing else, on the `*-confirmed` channels plus `#crowdfund-projects-legacy`
-     (`1302441788585279570`) and `#crowdfund-votes` (`1303906293219856477`).
-   - **Ask for the confirmed half only.** The `*-unconfirmed` channels are the *payment* channels —
-     PayPal links and proof-of-payment screenshots. A moderator disabled images there on 2026-03-20
-     *"because users keep on posting personal info in their crowdfund payment posts"*
-     (msg `1484600258473496628`). Everything the panel needs is in the confirmed half; asking only
-     for that is both honest and much easier to say yes to.
-   - **All 11 readable confirmed channels sit in one category** (`1310270708303138816`), so the rest
-     probably do too. ⚠️ But category permissions only propagate to channels still *synced* with the
-     category, and private per-crowdfund channels almost certainly are not — a category-level grant
-     can look like it worked and silently do nothing. Test one channel first.
-   - **A read-once is enough** for the backfill; standing access is not required. If they would
-     rather grant nothing, a chat export of those channels answers it equally well — check the
-     exporter captures **poll results**, since the release votes are polls.
-   - ⚠️ If they offer to hand over the existing per-crowdfund roles instead, that works
-     mechanically but has a social cost *in this server specifically*: role tags are public on the
-     profile and the community reads them, so ~45 crowdfund roles would look like backing every
-     project. Flag it rather than let them find out.
-   - **Do not let a future pass quietly present the 11 as the 56** — the write-up says so in two
-     places, and that distinction is the thing to preserve.
-5. **Sign-up counts are only recoverable while a post is live.** The 👍 count for the 26 System 2
+4. **~~Ask the moderators for read-only access.~~ DECLINED 2026-08-25 — do not re-pitch.** The ask
+   was put to two staff members and turned down. It was the minimal version — one role, zero
+   guild-level permissions, `View Channel` + `Read Message History` only, on the `*-confirmed`
+   channels plus `#crowdfund-projects-legacy` (`1302441788585279570`) and `#crowdfund-votes`
+   (`1303906293219856477`), explicitly **not** the `*-unconfirmed` channels because those are the
+   payment channels and hold proof-of-payment screenshots (a moderator disabled images there on
+   2026-03-20 *"because users keep on posting personal info in their crowdfund payment posts"*,
+   msg `1484600258473496628`). A read-once was offered as sufficient, and an export as an
+   alternative to any grant. All of it was declined, so **treat paid-channel access as closed** and
+   spend the effort on leads 1, 5 and 6 instead. Two things worth remembering rather than repeating:
+   asking *staff* for access to *everyone's* channels is a different question from asking *one
+   modder* about *their own* crowdfund (see lead 6), and the answer being no does not make the
+   sample dishonest — it makes the 11-of-56 caveat load-bearing, which is why it is stated twice.
+5. **⭐ Widen the *destination* column from public channels — the best remaining lead, and it needs
+   nothing from anybody.** Turnout is locked at 11 forever, but **where a crowdfund's output landed**
+   leaks constantly into channels this account already reads, and into two it holds by right:
+   `#supporter-armory` (`1310257013430681600`, readable now) and `#mod-releases`, plus Nexus. Probed
+   2026-08-25 and it is real — outcomes for crowdfunds well outside the readable 11:
+   - **#26 To the Moon → supporters.** *"The people who crowdfunded that voted for it to be released
+     only to T2 armory"* — Modder C, msg `1422746736690200616`.
+   - **#23 Commando Diving Drysuit → supporters.** *"the scuba you can still obtain, it was voted to
+     be released in Tier 2 armory"* — msg `1413651144026099755`. That one is **System 1**, where we
+     have no vote data at all.
+   - **#24 Vulcan/Malyuk → public.** *"crowdfunded and voted to go public last year"* — a moderator,
+     msg `1478138630139543864`.
+   - **#41 Cold Ops Carbonara → public**, its creator posting the Nexus links (`1507031310512685106`).
+   - **#38 Tip of the Spear → public** (`1498457981350842450`), which agrees with the vote we can
+     read — the method validating against a known answer.
+
+   ⚠️ **Three disciplines, or this turns into the thing §5 already had to correct.**
+   *(a)* This measures **destination, not turnout** — a different, weaker, broader column. Keep it
+   in its own field; never merge it into the vote table or quote it as a tally.
+   *(b)* Destination is not the same claim as "what the vote said" when the vote was scoped to part
+   of a project — see the Snake Eater and Bad Boys note in §5.
+   *(c)* **Weight the source.** The creator or a moderator stating an outcome is evidence; a member
+   guessing is not. A real example of the failure mode: *"I guess it was voted to not go public"*
+   about Snake Eater (msg `1532273474637135975`) is flatly wrong — we can read that vote, and the
+   XOF suit went public. Had it been an unreadable crowdfund, that guess would have been recorded
+   as fact.
+6. **Ask the modders, not the staff.** A modder describing the outcome of **their own** crowdfund is
+   answering a trivia question, not granting access to anyone's private channel — a completely
+   different ask from the one that was declined, aimed at different people, and it is how several
+   facts already in this file were obtained. Modders L, C and K are all active in public channels
+   and all credited on the panel. Per-crowdfund, incremental, no permissions involved.
+7. **Sign-up counts are only recoverable while a post is live.** The 👍 count for the 26 System 2
    crowdfunds whose post is gone cannot be recovered by any permission — the messages are deleted.
-   But it stops getting worse the moment `tools/refresh.py` runs on a schedule. That is a zero-
-   permission fix and worth mentioning to the moderators alongside everything above.
-6. **Re-run the forward oracle when new forwards appear.** Discord's search index covers forwarded
+   But it stops getting worse the moment `tools/refresh.py` runs on a schedule — nobody's permission
+   required, and it is the one gap that closes itself if the script is simply left running.
+8. **Re-run the forward oracle when new forwards appear.** Discord's search index covers forwarded
    message snapshots, so a deleted post's verbatim text survives in whoever forwarded it. Method and
    the six known forwards are in §7. It named nothing new this time; it is the only route to a
    deleted post's exact wording if one is ever needed.
