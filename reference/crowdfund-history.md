@@ -355,7 +355,7 @@ costs a backer less than it used to.
 >   items … were exclusive to those that supported it"* (msg `1532274964785266778`). **Public does
 >   not mean all of it.**
 > - **Sources are weighted, and the panel shows which.** 11 come from a vote read in the channel;
->   24 from a creator or moderator saying so outright; 10 from members only. On the
+>   21 from a creator or moderator saying so outright; 13 from members only. On the
 >   [live panel](https://dataterminals.github.io/t1-crowdfunds/) a **solid** pill is a read vote and
 >   a **dashed** one is reconstructed — they should not look alike, because they are not the same
 >   evidence.
