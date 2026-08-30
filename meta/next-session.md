@@ -224,8 +224,14 @@ every claim. It is in this repo because it answers a provenance question the cor
 a **separate repo**, `dataterminals/t1-crowdfunds` →
 <https://dataterminals.github.io/t1-crowdfunds/>, which renders `data/crowdfunds.json`.
 
-**Panel and repo are in sync as of 2026-08-25.** Both carry the 2026-08-24 naming pass and
-crowdfund #56. Names go on the panel under real handles; this repo keeps the Modder A–R pseudonyms.
+**The two ask-lists live in [`crowdfund-asks.md`](crowdfund-asks.md)** — what a moderator can
+*look at* and report back (the archive channels, the role list, the two unnamed projects), and which
+modder to ask about which of their own crowdfunds. Neither list asks anyone to grant access or share
+a file, which is why they survive the refusal in lead 4. Read it before opening any conversation
+about this in the server.
+
+**Panel and repo are in sync as of 2026-08-30.** Both carry the 2026-08-24 naming pass and
+crowdfunds #56 and #57. Names go on the panel under real handles; this repo keeps the Modder A–R pseudonyms.
 **Modder R** is SexyCouchPotato, co-creator of Step Brothers in Arms with Modder M — the first
 crowdfund with two creators. When they diverge again, the panel's `tools/refresh.py` re-pulls
 sign-ups and the cohort block but **deliberately never touches the catalogue**, so names, creators,
