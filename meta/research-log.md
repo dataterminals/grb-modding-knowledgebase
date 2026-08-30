@@ -1213,6 +1213,11 @@ guild search on "buy-in" / "crowdfund project" / "unconfirmed". New doc:
   channel). 11 measured: 1,118 votes total, range 48–275. **7 of 11 voted to stay supporter-only** —
   i.e. roughly two thirds of crowdfunded work never reaches Nexus, which is the answer to "why can't
   I find this mod publicly".
+  **⚠️ Superseded 2026-08-30 — the generalisation was backwards.** The 11 measurements stand; the
+  inference from them does not. A destination sweep across 45 of 57 found **two thirds reaching the
+  public**, not two thirds staying private. The 11 are the crowdfunds this one account backed, all
+  from a five-month window in the era that keeps the most behind the supporter role. See that day's
+  entry.
 - **Backer base is wide and shallow.** Exact reactor lists for all six posted crowdfunds: **812
   distinct humans, 1,318 sign-ups, 67.9% backed only one**, and just 14 people are on all six.
 
@@ -1416,6 +1421,75 @@ Updated: [`reference/crowdfund-history.md`](../reference/crowdfund-history.md) (
 §5 sign-ups / overlap / cadence / creator concentration, §7 counts and open question 4),
 [`meta/next-session.md`](next-session.md), and in the panel repo `data/crowdfunds.json` plus
 `tools/refresh.py`.
+
+## Entry — 2026-08-30 — The destination sweep, and a headline claim that was backwards
+
+### What I did
+Ran the destination sweep proposed after the access refusal: for each of the 57 crowdfunds, harvest
+every message naming it from channels this account already reads — public chat, `#mod-releases`,
+`#supporter-armory`, and Nexus links posted by the creators — and work out **where its output
+landed**. Machine-tagged the evidence, judged every row by hand. New doc:
+[`meta/crowdfund-asks.md`](crowdfund-asks.md) was written the same day (the two ask-lists).
+
+### VERIFIED (new)
+- **Destination is now known for 45 of 57**, up from 11. **30 public, 13 supporters, 2 private**;
+  8 still open on the board; 4 unknown (#3, #7, #10, #16). Every row is a named person saying where
+  a named crowdfund went, cited by message id in `data/crowdfunds.json`.
+- **⚠️ The "two thirds stay private" claim was backwards.** The 2026-08-23 entry generalised
+  *7 of 11 voted supporter-only* into *"roughly two thirds of crowdfunded work never reaches
+  Nexus"*. Across 45 it is close to the reverse: **two thirds reaches the public.** The 11
+  measurements were never wrong — the inference from them was. Annotated in place at that entry
+  rather than edited away.
+- **Why the 11 misled, which is the reusable part.** They are the crowdfunds *this one account
+  backed*, all from 2025-09 → 2026-01. That is a narrow window **and** the wrong era. This is the
+  first time the 11-of-57 caveat has actually caught something, which is a good argument for having
+  stated it twice.
+- **The two eras behave differently, and that is the real finding.** System 1: **79 % public**
+  (15/2/2 of 19 decided). System 2: **58 % public** (15/11 of 26). System 2 keeps roughly twice as
+  much behind the supporter role. Coherent with §3: once supporting *any* crowdfund grants a
+  permanent role with a standing armoury attached, "supporters" stops meaning locked away and starts
+  meaning the reward that makes the role worth holding, so voting that way costs a backer less.
+- **#45 Wolf Pack's creator is Modder O** — three Nexus mods posted in a row with *"thank everyone
+  in wolfpack!"* (msg `1502850378373271692`). The catalogue had no creator for it. That makes five
+  crowdfunds for Modder O, level with Modder L.
+- **#6/#8 GZW stayed private for a stated reason:** *"GZW stuff … was kept private due to legal
+  reason"* (msg `1541641511165370488`) — which matches §4's copyright note from 2025.
+
+### INFERRED / method
+- **Destination is a weaker and different claim than turnout, and the data says which.** New field
+  `destination {where, confidence, src, note}`, deliberately **separate** from `release`.
+  `confidence` is `vote` (11, read in the channel), `strong` (24, creator or moderator said so) or
+  `moderate` (10, members only). The panel renders a **solid** pill for a read vote and a **dashed**
+  one for a reconstruction — they must not look alike.
+  - ⚠️ Caught while wiring that up: two entries (#1, #6) carried a `release` value reconstructed
+    from chat *before* this field existed, so keying the solid pill on `release` would have claimed
+    a vote nobody ever read. It keys on `vote` now.
+- **Public rarely means all of it.** Almost every public crowdfund retained exclusives — Forgotten
+  Weapons kept a working RMR back; Snake Eater went public on the sneaking suit while *"a majority
+  of the items … were exclusive to those that supported it"* (msg `1532274964785266778`).
+- **Search keys, not catalogue names.** Discord ANDs the tokens in `content`, so a full name like
+  *"Shadow Rusher outfit"* matches almost nothing. The first sweep returned zero hits for several
+  crowdfunds purely because of that; each needs a short distinctive key.
+- **The failure mode this had to dodge**, recorded because it will recur: a member writing *"I guess
+  it was voted to not go public"* about Snake Eater (msg `1532273474637135975`) is flatly wrong, and
+  the only reason that is detectable is that Snake Eater is one of the readable 11. On any of the
+  other 46 it would have gone in as fact. Ordinary words make it worse — `Steyr`, `Recce`, `WMD`,
+  `Warfare` are all common, and a search for `wolf pack` returns the unrelated *Hound Wolf Squad*.
+
+### Questions answered / opened
+- ✅ Destination across the catalogue — §7 open question 4, now largely closed.
+- ❌ **Turnout stays at 11 and always will**; a tally exists only inside the channel that held the
+  vote, and access was declined on 2026-08-25.
+- ❌ **#10 Shadow Rusher and #16 Next Generation Ghost's Gear have no destination** and no public
+  trace at all. #16 nearly got one in error: a creator's Nexus release post crediting a crowdfund
+  role looked like it, but the role's snowflake dates to 2025-05-16 — one day after the **Warfare**
+  announcement, not #16's. Both belong on the modder-ask list.
+
+### Docs written this session
+New: [`meta/crowdfund-asks.md`](crowdfund-asks.md). Updated:
+[`reference/crowdfund-history.md`](../reference/crowdfund-history.md) (§5 gains *Where the mods
+actually went*; §7 open question 4 closed), and in the panel repo `data/crowdfunds.json` (the
+`destination` field on 45 entries) plus `index.html` (the two-grade pill).
 
 ---
 

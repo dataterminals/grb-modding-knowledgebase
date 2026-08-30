@@ -29,9 +29,10 @@ Both are bounded, and neither asks anyone to share a file, a channel, or a mod.
 
 - **All 34 System 2 crowdfunds are named.** Only **#3** and **#7** are unnamed, both System 1.
 - **11 crowdfunds have full vote + delivery data** — see §5. Do not re-ask those.
-- **Some destinations are already recovered from public chat** and need no asking: **#23** and
-  **#26** → supporters; **#24**, **#38**, **#41** → public. The method and citations are in §7
-  open question 4.
+- **Destination is now known for 45 of the 57** (swept 2026-08-30 — §5, *Where the mods actually
+  went*). **Do not ask where a crowdfund went unless it is one of the four with no answer: #3, #7,
+  #10, #16.** What is still missing everywhere except the readable 11 is **turnout** — the vote
+  tally — which is the harder thing to ask for and the less interesting answer.
 - **Sign-up counts for closed crowdfunds are gone permanently.** No lookup recovers a deleted
   message. Do not ask; ask A8 instead.
 
@@ -57,38 +58,41 @@ Ordered by what they settle per second of someone's time. Each is a *look and te
 
 ## B. For the modders — one question about their own project
 
-For each: *"where did it end up — public, supporter armoury, or stayed in the crowdfund?"* and, if
-they are willing, *"roughly how many voted?"* The first is the valuable one — it is the question a
-reader actually arrives with, and it is the column that can still grow.
+**Rewritten 2026-08-30.** The destination sweep answered *where it went* for 45 of 57 without
+anyone being asked, so this list is no longer about that. What is left for a modder to answer is
+**turnout** — *"roughly how many people voted on it, and which way?"* — plus the four crowdfunds
+with no destination at all. Turnout is the harder ask and the duller answer, so treat this list as
+lower priority than section A, and lead with the two rows marked ⭐.
 
-| Modder | Crowdfunds with no vote data | Around? | Notes |
+| Modder | Crowdfunds with no turnout figure | Around? | Notes |
 | --- | --- | --- | --- |
-| **Modder B** | **#1, #7, #10, #15, #16, #19, #23, #26, #43** | active | ⭐ **By far the highest-value single conversation** — nine crowdfunds, a quarter of everything the server has run. Also the only person who can **name #7**. #23 and #26 are already known (supporters), so lead with the other seven |
+| **Modder B** | **#1, #7, #10, #15, #16, #19, #23, #26, #43** | active | ⭐ **By far the highest-value single conversation** — nine crowdfunds, a quarter of everything the server has run. Three separate things only this person can settle: the **name of #7**, and the **destination of #10 and #16**, the only two closed crowdfunds with no public trace at all |
 | **Modder J** | #18, #21, #25, #28 | quiet since spring | Four, including **#28 Steyr**, whose name we only have via The Bivouac |
 | **Modder E** | #2, #6, #8 | active | Also the one person who can confirm the **#6 ≡ #8** inference — that the GZW assortment and the "new gear pack" are one crowdfund counted twice. That is currently our strongest *inferred* claim in System 1 |
 | **Modder A** | #9, #11 | quiet since spring | #38 is already measured, so this is a short conversation |
 | **Modder G** | #13, #20 | around recently | — |
-| **Modder I** | #17, #24 | occasionally | #24 already known (public), so really just #17 |
-| **Modder K** | #22, #41 | active | #41 already known (public) — so this is one question, about #22 |
+| **Modder I** | #17, #24 | occasionally | Both destinations known; turnout only |
+| **Modder K** | #22, #41 | active | Both destinations known; turnout only |
 | **Modder L** | #39, #46 | active | Both recent, both his own, both already named by his own posts |
-| **Modder O** | #40, #52 | active | Plus #56, live |
+| **Modder O** | #40, #45, #52 | active | Plus #56, live. **#45 Wolf Pack was attributed to them on 2026-08-30** (msg `1502850378373271692`), which makes five crowdfunds — level with Modder L |
 | **Modder M + Modder R** | #42 | both active | The tag-team crowdfund; either could answer |
 | **Modder N** | #48 | active | Plus #57, live |
 | **Modder H** | #14 | long quiet | Lowest expected reply rate; one crowdfund |
-| **Modder D** | **#3** | referenced in chat as recently as this week, but their account could not be resolved from this member account | ⭐ Holds a **name**, not just an outcome — the only person who can settle #3 short of A2/A4 |
+| **Modder D** | **#3** | referenced in chat as recently as this week, but their account could not be resolved from this member account | ⭐ Holds a **name and a destination** — #3 has neither, and no public trace. The only person who can settle it short of A2/A4 |
 
 ### Six crowdfunds have no creator recorded at all
 
-**#4, #5, #12** (System 1) and **#44, #45, #49** (System 2). These need *attribution* before there
-is anyone to ask, so they belong with A1/A2/A5 or with any long-standing member — not on this list
-yet. #12 additionally carries the open question of whether it is the same project as #10.
+**#4, #5, #12** (System 1) and **#44, #49** (System 2) — five, since **#45 was attributed to
+Modder O** on 2026-08-30. These need *attribution* before there is anyone to ask, so they belong
+with A1/A2/A5 or with any long-standing member. #12 additionally carries the open question of
+whether it is the same project as #10.
 
 ### Suggested wording
 
 > Hey — I keep a public archive of every Tier 1 crowdfund (dates, who ran them, where the mods ended
 > up). It's at <https://dataterminals.github.io/t1-crowdfunds/> and you're credited on it. I've got
-> **\<name\>** in there but not where it landed — did it go public, to the supporter armoury, or stay
-> in the crowdfund? Not after the files, just the outcome.
+> **\<name\>** in there but no idea how big the vote was — do you remember roughly how many people
+> voted, and which way it went? Not after the files, just the numbers.
 
 Short, one question, names what it is for, and makes clear it is not a request for content.
 

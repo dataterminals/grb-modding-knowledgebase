@@ -208,7 +208,7 @@ Every entry has a dated `@everyone` in `#announcements`. **Every one is now name
 | 42 | 2026-02-23 | **Step Brothers in Arms** | Modder M + Modder R |
 | 43 | 2026-02-27 | **Crye Babies** | Modder B |
 | 44 | 2026-03-27 | **Spirited Away** | — |
-| 45 | 2026-03-31 | **Wolf Pack** | — |
+| 45 | 2026-03-31 | **Wolf Pack** | Modder O |
 | 46 | 2026-04-07 | **Forgotten Weapons** | Modder L |
 | 47 | 2026-04-12 | **CYBERSAMI** 🔴 *still posted* | Modder C |
 | 48 | 2026-05-11 | **Smokin Aces** | Modder N |
@@ -309,6 +309,64 @@ Mean 102, median 72, range 48–275. All tallies finalized.
 
 > **⚠️ Read the scope before reading the outcome.** The vote does not always cover the whole crowdfund. **Snake Eater's** poll asked *"Where to share the XOF Outfits?"* — one item — and a moderator says so in-channel: *"MOST of the items in this crowdfund are supporter items, the XOF suit is what will be made public from this crowdfund"* (msg `1426355642410467368`). **Bad Boys'** was scoped to *"the Exfil Helmets, Police Vests and Belt"*. The other nine read as whole-project. So "4 public / 7 supporters" describes **the voted portion**, not the crowdfund.
 
+### Where the mods actually went — 45 of 57, and it reverses the earlier reading
+
+The vote table above is stuck at 11 because turnout lives inside the paid channel. **Where a
+crowdfund's output *landed* is a different question, and it leaks.** Swept 2026-08-30 across
+channels this account already reads — public chat, `#mod-releases`, `#supporter-armory`, and Nexus
+links posted by the creators themselves. Result: a destination for **45 of the 57**, up from 11.
+
+| Destination | Count | Of the 45 |
+| --- | ---: | ---: |
+| **Public** — Nexus and/or `#mod-releases` | **30** | 67 % |
+| **Supporters** — the supporter armoury | **13** | 29 % |
+| **Private** — never released | **2** | 4 % |
+| *Still open (on the board)* | 8 | — |
+| *Unknown* — #3, #7, #10, #16 | 4 | — |
+
+> **⚠️ Correction — "two thirds stay private" was wrong, and it was wrong because of the sample.**
+> The 11 readable crowdfunds split **7 supporters / 4 public**, and an earlier pass generalised that
+> to *"roughly two thirds of crowdfunded work never reaches Nexus."* Across 45 it is close to the
+> **reverse**: **two thirds reaches the public.** The 11 were not a random 11 — they are the ones
+> this one account backed, all clustered between 2025-09 and 2026-01, which is both a narrow window
+> and the wrong era (see below). This is exactly the failure the 11-of-57 caveat exists to prevent,
+> and it is worth keeping visible now that it has actually happened once.
+
+**The eras behave differently, and that is the real finding.**
+
+| Era | Public | Supporters | Private | Decided | Public share |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| **System 1** (buy-in) | 15 | 2 | 2 | 19 | **79 %** |
+| **System 2** (reaction-role) | 15 | 11 | 0 | 26 | **58 %** |
+
+System 1 pushed almost everything out to Nexus. System 2 keeps roughly twice as much behind the
+supporter role. That is a coherent consequence of the change documented in §3: once supporting *any*
+crowdfund grants a permanent role with a standing armoury attached, "supporters" stops meaning
+"locked away" and starts meaning "the reward that makes the role worth holding" — so voting that way
+costs a backer less than it used to.
+
+> **⚠️ Destination is not turnout, and it is not the vote.** Three things to keep straight before
+> anyone quotes the table above:
+> - It records **where the output landed**, not what a vote said. Where a vote was scoped to part of
+>   a project — Snake Eater, Bad Boys, and probably others — those are different claims. See the
+>   scope warning above.
+> - Almost every "public" crowdfund **still retained exclusives**. Forgotten Weapons went public and
+>   kept a working RMR back; Snake Eater went public on the sneaking suit while *"a majority of the
+>   items … were exclusive to those that supported it"* (msg `1532274964785266778`). **Public does
+>   not mean all of it.**
+> - **Sources are weighted, and the panel shows which.** 11 come from a vote read in the channel;
+>   24 from a creator or moderator saying so outright; 10 from members only. On the
+>   [live panel](https://dataterminals.github.io/t1-crowdfunds/) a **solid** pill is a read vote and
+>   a **dashed** one is reconstructed — they should not look alike, because they are not the same
+>   evidence.
+
+The failure mode this sweep had to dodge, recorded because it will recur: a member writing *"I guess
+it was voted to not go public"* about Snake Eater (msg `1532273474637135975`) is **flatly wrong**,
+and the only reason that is detectable is that Snake Eater happens to be one of the readable 11. On
+any of the other 46 it would have gone straight in as fact. Ordinary names make it worse — `Steyr`,
+`Recce`, `WMD` and `Warfare` are all common words, and a search for `wolf pack` returns the unrelated
+*Hound Wolf Squad* mod. Every row above is a named human saying where a named crowdfund went.
+
 ### The four places content actually ends up
 
 | Destination | Who can reach it | Notes |
@@ -322,7 +380,7 @@ Mean 102, median 72, range 48–275. All tallies finalized.
 
 ### The vote is not the end of it
 
-> **Verified:** every one of the 11 measurable crowdfunds kept delivering **after** its vote — **198 separate drops in total**, a median of **64 days** from first to last. Same sample as the vote table above, and the same warning applies: **11 of 57, because delivery happens inside the paid channel.** "Every one" means every one of the 11 that can be read, not every one of the 57.
+> **Verified:** every one of the 11 measurable crowdfunds kept delivering **after** its vote — **198 separate drops in total**, a median of **64 days** from first to last. Same sample as the vote table above, and the same warning applies: **11 of 57, because delivery happens inside the paid channel.** "Every one" means every one of the 11 that can be read, not every one of the 57. Unlike *destination*, which the sweep above widened to 45, delivery counts have no public shadow — a drop happens inside the channel and leaves no trace outside it.
 
 | Crowdfund | Drops | Window | Principal creator |
 | --- | ---: | ---: | --- |
@@ -416,7 +474,7 @@ Two indexing behaviours are worth knowing next time, both discovered here:
 1. **How many System 1 crowdfunds were there really?** Answerable by anyone with access to `#crowdfund-projects-legacy` or `#crowdfund-votes`, or by a moderator with the audit log.
 2. **#3 and #7 — the last two unnamed.** Both are System 1, both were announced without a name, and neither is named anywhere in public chat that search reaches. #3 is *"another crowdfund project that will be by [Modder D]"* (msg `1309770589795520592`) — Modder D was working on an HK437, an MCX Spear LT and a Rotex suppressor that month, none confirmed as the crowdfunded one. #7 is *"a new weapon done by none other [Modder B]"* (msg `1316621603978874991`) and is **absent from Modder B's own list of open buy-ins six days later** (*"There are still three projects available for buy ins, price ghillie, shadow company heavy and the latest gzw assortment"*, msg `1318754880512327691`), so it may have collapsed early — Modder B describes a crowdfund doing exactly that on 2024-12-19: *"the entire crowdfund for that has fallen short, had over 15 ppl vote yes and only a 4 ppl paid"* (msg `1319125305558040587`, said of the Shadow Company Heavy project). A member who was buying in that December could settle both in a sentence.
 3. **Did the March 2025 leak cause the system change?** §2 flags this as inferred. A moderator could confirm or kill it in one sentence.
-4. **Full public/supporters split across all 57.** Only 11 are measurable from this account. **A read-only role covering the `*-confirmed` channels was proposed to two staff members on 2026-08-25 and declined**, so the *turnout* column is fixed at 11 for good — a member with more roles or an admin is the only thing that widens it. The **destination** of a crowdfund's output is a different and much more reachable question: it leaks into public chat, into `#supporter-armory`, and onto Nexus, and outcomes for crowdfunds well outside the 11 are already sitting in the record — *"The people who crowdfunded that voted for it to be released only to T2 armory"* about **To the Moon** (msg `1422746736690200616`), *"the scuba you can still obtain, it was voted to be released in Tier 2 armory"* about **Commando Diving Drysuit** (msg `1413651144026099755`, a System 1 project), *"crowdfunded and voted to go public last year"* about **Vulcan/Malyuk** (msg `1478138630139543864`). ⚠️ Destination is **not** turnout, and it is not always what the vote said — see the scope warning in §5 — so it belongs in its own column, never merged into the vote table. ⚠️ And weight the source: a member guessing *"I guess it was voted to not go public"* about Snake Eater (msg `1532273474637135975`) is simply wrong, and only detectable as wrong because that one vote is readable.
+4. **~~Full public/supporters split across all 57.~~ Answered for *destination*, 2026-08-30 — see §5, [*Where the mods actually went*](#where-the-mods-actually-went--45-of-57-and-it-reverses-the-earlier-reading).** Where the output landed is now known for **45 of 57**, and it reversed the earlier reading: roughly two thirds public, not two thirds private. **What remains open is *turnout*, which has no public shadow** — a tally exists only inside the channel that held the vote. A read-only role covering the `*-confirmed` channels was put to two staff members on 2026-08-25 and **declined**, so the turnout column is fixed at 11 unless a member with more roles, or an admin, extends it.
 5. **Is the role list readable another way?** The role name *is* the crowdfund name, so a single read of the guild's role list would have answered this whole session's question in one call — and would answer the System 1 question too, if those roles still exist. The Discord client caches **every** guild role, including ones the account does not hold; the bridge already reads that store to resolve role mentions but exposes no endpoint for the snapshot. One caution before anyone builds it: at least one crowdfund role has been deleted. #39's (`1466647776396836874`) renders unresolved in a message that mentions it, which is consistent with a moderator's *"when the CF ends we just delete the Unconfirmed role"* (msg `1459296798244868298`) going further than the unconfirmed half.
 
 ---
