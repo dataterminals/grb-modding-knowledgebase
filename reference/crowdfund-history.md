@@ -4,7 +4,7 @@
 >
 > **On names:** modders appear as **Modder A–R**, assigned by first appearance and stable throughout this file. The labels are used rather than handles so the analysis stays checkable — that one modder ran nearly a third of all crowdfunds is visible without naming them. Everyone else is referred to by role. Message IDs are unchanged, so every claim remains verifiable against the source. Creator credits do appear under their real handles on the [live panel](https://dataterminals.github.io/t1-crowdfunds/), which is where attribution belongs.
 >
-> **Status:** First comprehensive pass, 2026-08-23; names swept again 2026-08-24; on **2026-08-30** a Tier 1 moderator supplied vote tallies and paid-membership counts for 40 crowdfunds, which validated 11/11 against the votes readable here and rewrote most of §5. Compiled by reading *Tier 1 Imports* (guild `1302392670181916722`) directly through an authenticated Discord bridge as `@blkdnm`. Every claim below cites the message it came from. Provenance: [`../meta/research-log.md`](../meta/research-log.md).
+> **Status:** First comprehensive pass, 2026-08-23; names swept again 2026-08-24; on **2026-08-30** a Tier 1 moderator supplied vote tallies and supporter counts for 40 crowdfunds, which validated 11/11 against the votes readable here and rewrote most of §5. Compiled by reading *Tier 1 Imports* (guild `1302392670181916722`) directly through an authenticated Discord bridge as `@blkdnm`. Every claim below cites the message it came from. Provenance: [`../meta/research-log.md`](../meta/research-log.md).
 
 ## Why this is in a modding knowledgebase
 
@@ -41,7 +41,7 @@ Tier 1 Imports has run **at least 58 crowdfunds** since the server was founded o
 | **Reward tier** | "Tier 1 Armory", later "Tier 2" | **Supporter** (renamed from Tier 2, 2026-03-24) |
 | **Named crowdfunds recoverable** | 24 rows, **23 distinct projects**, 1 still unnamed — and a floor, not a count (§7) | **34 of 34** |
 
-The user's recollection is correct on every point: the second system is roles, unconfirmed→confirmed, and the paid-up role showing on your profile in the server.
+The user's recollection is correct on every point: the second system is roles, unconfirmed→confirmed, and the supporter's own role showing on your profile in the server.
 
 ---
 
@@ -77,7 +77,7 @@ Non-payment was a problem from the start. The founder, 2024-12-02 (msg `13132565
 
 > "we've been having issues with people not following through with committing to the 'buy-ins' WITHOUT TELLING US THEY NO LONGER WISH TO 'BUY-IN'. If you continuously vote to 'buy-in' for a CROWDFUND and don't communicate that you no longer want to, you WILL be kicked from the server."
 
-Then, in March 2025, someone leaked paid mods:
+Then, in March 2025, someone leaked crowdfund mods:
 
 > "Basically an edgelord tried to leak buy in mods" — a moderator, `#on-topic`, msg `1352106850715308134`, 2025-03-19
 
@@ -112,7 +112,7 @@ So, precisely:
 | Pay + post proof | Modder swaps your role for **`<Name>`** → access to `#<name>-confirmed` |
 | Automatically, with the first one | **Supporter** role — permanent, one crowdfund is enough |
 
-> **Verified:** Roles come in **channel pairs created seconds apart**. Crowd Control's unconfirmed channel is `1436320079779201145` and its confirmed channel is `1436320209735778396` (msg `1436644451639361586`, which links both). The `-confirmed` suffix in the channel list is therefore the *paid* half of a pair.
+> **Verified:** Roles come in **channel pairs created seconds apart**. Crowd Control's unconfirmed channel is `1436320079779201145` and its confirmed channel is `1436320209735778396` (msg `1436644451639361586`, which links both). The `-confirmed` suffix in the channel list is therefore the *supporter* half of a pair.
 
 > **Verified:** The reaction-role automation is **T1 Carl** (Carl-bot, account `235148962103951360`). It is the sole bot reactor on every crowdfund post — see §5.
 
@@ -289,9 +289,9 @@ Across those eight posts: **918 distinct people, 1,628 sign-ups.**
 
 > **The tail of the distribution is an artefact of when you read it.** On 2026-08-25 only **5 people** were on all seven posts; five days later **17** are on all eight. That reads like a surge and is not one. Flash Point was twenty minutes old at the first read, so the people who back everything simply had not reacted yet — the 12 who were then "6 of 7" are the 12 who make up the difference. **The same distortion, seen from the other end, sank the fresh-backer figure**: Flash Point's first 11 backers were 10/11 repeat backers (9 % fresh), and five days later it sits at 19 % fresh and climbing. The people watching the board when a post lands are the regulars; everyone else arrives over the following weeks. **Anything measured on a crowdfund's first day describes who was watching, not who funds it** — `tools/refresh.py` now refuses to compute a new-blood figure for a crowdfund less than a week old for exactly this reason.
 
-### Release-vote turnout — 40 of 58, and the paid membership behind each
+### Release-vote turnout — 40 of 58, and the supporters behind each
 
-> **Where these came from (2026-08-30).** A read-only role covering the paid channels was declined
+> **Where these came from (2026-08-30).** A read-only role covering the confirmed channels was declined
 > on 2026-08-25. A moderator was then asked, not for access, but for **the numbers** — and supplied
 > them for every completed crowdfund, on the explicit basis that the objection had been to channel
 > privacy rather than to the figures. That distinction is the whole thesis of
@@ -311,8 +311,9 @@ Across those eight posts: **918 distinct people, 1,628 sign-ups.**
 > see #40 below, where a screenshot of the poll settled it in the tally's favour.
 
 **`Members` is new, and it retires a caveat.** It is the confirmed channel's membership — the people
-who actually paid. Until now this file could only say turnout was a *floor* on paid membership; the
-real figure is now known, and the gap is large. Lioness drew 275 votes from **435 backers**.
+who actually supported the project. Until now this file could only say turnout was a *floor* on how
+many had supported it; the real figure is now known, and the gap is large. Lioness drew 275 votes
+from **435 supporters**.
 
 | # | Crowdfund | Creator | Members | Turnout | Public | Supporters | Private | Went to |
 | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
@@ -358,10 +359,10 @@ real figure is now known, and the gap is large. Lioness drew 275 votes from **43
 | 3 | **MCX Spear LT** | Modder D | 14 | **10** | 10 |  |  | Public |
 | | **40 crowdfunds** | | **4,936** | **2,991** | | | | |
 
-> **Verified:** **4,936 paid memberships and 2,991 votes across 40 crowdfunds.** Median
+> **Verified:** **4,936 supporters and 2,991 votes across 40 crowdfunds.** Median
 > participation is **63 %** — but it scales inversely with size. The twelve crowdfunds with 150+
 > members vote at a median of **59 %**; the twelve under 60 members vote at **71 %**, topping out at
-> 89 % (Kalashnikov SR1, 25 of 28). A small crowdfund is close to a plebiscite of everyone who paid.
+> 89 % (Kalashnikov SR1, 25 of 28). A small crowdfund is close to a plebiscite of everyone who supported it.
 > A large one is decided by a little over half the room, and the largest — Warfare, 205 members —
 > was settled by **39 %** of its backers.
 

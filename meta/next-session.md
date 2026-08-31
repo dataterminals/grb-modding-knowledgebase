@@ -226,7 +226,7 @@ a **separate repo**, `dataterminals/t1-crowdfunds` →
 
 **⭐ The access refusal was worked around on 2026-08-30, and how is the reusable part.** A
 moderator was asked for **the numbers** instead of **the channels** — and supplied vote tallies and
-paid-membership counts for **40 crowdfunds**, the contents of exactly the channels the declined role
+supporter counts for **40 crowdfunds**, the contents of exactly the channels the declined role
 would have opened. It validated **11/11** against the votes readable here. Turnout went 11 → 40,
 membership went from unmeasurable to 41 crowdfunds, #3 got its name, and a crowdfund nobody knew
 existed (#58) turned up. **If a request for access is refused, the fact behind it may not be.**
@@ -282,7 +282,7 @@ dates and outcomes are always a hand edit in both places.
    payment channels and hold proof-of-payment screenshots (a moderator disabled images there on
    2026-03-20 *"because users keep on posting personal info in their crowdfund payment posts"*,
    msg `1484600258473496628`). A read-once was offered as sufficient, and an export as an
-   alternative to any grant. All of it was declined, so **treat paid-channel access as closed** and
+   alternative to any grant. All of it was declined, so **treat confirmed-channel access as closed** and
    spend the effort on leads 1, 5 and 6 instead. Two things worth remembering rather than repeating:
    asking *staff* for access to *everyone's* channels is a different question from asking *one
    modder* about *their own* crowdfund (see lead 6), and the answer being no does not make the

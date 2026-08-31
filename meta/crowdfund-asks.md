@@ -6,7 +6,7 @@ and lane 3 of [`next-session.md`](next-session.md).*
 > ## ✅ This worked. 2026-08-30.
 > A moderator was asked for **the numbers** rather than **the channels**, on the explicit basis that
 > the staff objection had been to channel privacy and not to the data. He agreed immediately,
-> and within two hours supplied **vote tallies and paid-membership counts for 40 crowdfunds** —
+> and within two hours supplied **vote tallies and supporter counts for 40 crowdfunds** —
 > the contents of exactly the channels the role would have opened. It validated **11/11** against
 > the votes readable here. Sections A9 and most of B are answered; what is left is listed under
 > *Still open* below. **The framing note further down is not theory any more — it is the reason this
@@ -22,7 +22,7 @@ and lane 3 of [`next-session.md`](next-session.md).*
 > it** — a copy-pasted template leaves stale prose next to correct numbers, which is precisely how
 > the file's single error happened.
 
-A read-only role covering the paid channels was proposed to two staff members on 2026-08-25 and
+A read-only role covering the confirmed channels was proposed to two staff members on 2026-08-25 and
 **declined** — see next-session lead 4, and **do not re-pitch it**. What remains are *questions*
 rather than permissions, and they split cleanly into two kinds:
 
@@ -34,7 +34,7 @@ Both are bounded, and neither asks anyone to share a file, a channel, or a mod.
 
 > **⚠️ Frame every ask as a fact, never as content.** *"Where did Konni Group end up — public or
 > supporters?"* is a trivia question. *"Can you tell me about your crowdfund"* reads as *"can I have
-> it"*, especially in a server built around paid access. The distinction is the whole reason these
+> it"*, especially in a server where that access is what supporting a project earns you. The distinction is the whole reason these
 > asks are viable when the access ask was not.
 
 > **On names.** This file keeps the repo's Modder A–R pseudonyms, as the crowdfund prose does. The
@@ -49,7 +49,7 @@ Both are bounded, and neither asks anyone to share a file, a channel, or a mod.
 - **All 34 System 2 crowdfunds are named.** Only **#3** and **#7** are unnamed, both System 1.
 - **11 crowdfunds have full vote + delivery data** — see §5. Do not re-ask those.
 - **Turnout is known for 40 of 58 and destination for 47** (2026-08-30). **Do not re-ask either.**
-- **Paid membership is known for 41.** Do not ask.
+- **Supporter counts are known for 41.** Do not ask.
 - **Only #7 is unnamed**, and it is absent from the moderator's list as well.
 - **Sign-up counts for closed crowdfunds are gone permanently.** No lookup recovers a deleted
   message. Do not ask; ask A8 instead.
@@ -70,7 +70,7 @@ Ordered by what they settle per second of someone's time. Each is a *look and te
 | **A6** | Their own memory | Did the **March 2025 leak** cause the move to the reaction-role system? | §2 flags this as **inferred** — the leak and the changeover are adjacent in time and theme and *no message states a cause*. One sentence from anyone who was staff then closes it either way | ~1 min |
 | **A7** | Their own memory | Are crowdfund posts **deleted deliberately** when a project closes, or was there a one-off purge? | §7 calls the mechanism **unestablished**. Two of the posts on the board are months past their stated end date and still up, which argues against rolling removal but does not settle it | ~1 min |
 | **A8** | — | Nothing to look at: a **request**. Sign-up counts die with the post, so if posts stay up — or if `tools/refresh.py` is simply left running on a schedule — the numbers stop being lost from here on | The one gap that closes itself. Costs nobody anything and grants nobody anything | — |
-| ~~**A9**~~ | ~~Each `*-confirmed` channel~~ | ~~The release-vote poll result~~ | ✅ **DONE 2026-08-30** — a moderator supplied all 40, plus membership counts nobody thought to ask for. This row is kept because it is the one that paid off, and because the *shape* of it — a bounded lookup, two numbers, no access — is the template | — |
+| ~~**A9**~~ | ~~Each `*-confirmed` channel~~ | ~~The release-vote poll result~~ | ✅ **DONE 2026-08-30** — a moderator supplied all 40, plus membership counts nobody thought to ask for. This row is kept because it is the one that worked, and because the *shape* of it — a bounded lookup, two numbers, no access — is the template | — |
 
 ---
 
@@ -137,4 +137,4 @@ Short, one question, names what it is for, and makes clear it is not a request f
   Nothing the archive needs is in them.
 - **Mod files, exclusives, or armoury content.** The archive records *that* something exists and
   where it went. It has never needed the thing itself, and asking would recast every question above
-  as an attempt to get paid content for free.
+  as an attempt to get supporter-only content for free.
