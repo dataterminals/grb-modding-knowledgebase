@@ -12,10 +12,15 @@ and lane 3 of [`next-session.md`](next-session.md).*
 > *Still open* below. **The framing note further down is not theory any more — it is the reason this
 > worked.**
 > 
-> ⚠️ **How he produced the file is not known** — it carries marks of both a program and a person
-> (see the 2026-08-30 research-log entry). That is why the **11/11 validation** is load-bearing
-> rather than a nicety, and why every figure taken from it is a **tally** and never the summary
-> line sitting beside it. If you run this play again: ask for numbers, and use the numbers.
+> **He did it by hand, and said so when asked** — went through the channels, counted members
+> individually where no count was shown, and copy-pasted a line per crowdfund with the numbers
+> edited in, explicitly choosing that over using AI. *(An earlier note here guessed otherwise on bad
+> evidence; see the 2026-08-31 correction in the research log.)*
+>
+> Two things to carry into the next one of these: the **11/11 validation** is what makes a supplied
+> dataset usable at all, and **every figure should come from a tally rather than the sentence beside
+> it** — a copy-pasted template leaves stale prose next to correct numbers, which is precisely how
+> the file's single error happened.
 
 A read-only role covering the paid channels was proposed to two staff members on 2026-08-25 and
 **declined** — see next-session lead 4, and **do not re-pitch it**. What remains are *questions*

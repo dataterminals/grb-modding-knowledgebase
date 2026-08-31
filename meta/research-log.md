@@ -1499,24 +1499,26 @@ rather than for **the channels** — explicitly noting that the staff objection 
 privacy, not to the data. He agreed on the spot, said he would *"collect them all manually"*, and 1 h 39 m later
 sent a 7 KB text file covering every completed crowdfund. Largest single data drop in the strand.
 
-> **⚠️ How it was produced is not known, and the file says two different things about it.**
-> Signs of a **programmatic step**: `Agent\/07` appears four times — a backslash-escaped forward
-> slash, which is what JSON encoding leaves behind when nobody unescapes it, and not something a
-> person types — and the file carries a UTF-8 BOM, i.e. it was written by a program rather than
-> typed into Discord. Signs of a **human**: the armoury is spelled four different ways
-> (`Supporter Armory` 22, `Tier 2 Armory` 18, `Support Armory` 1, `T2 Armory` 1), "Voted" and
-> "Votes" are mixed, three rows have no `Result:` line at all, and the closing notes hedge with
-> question marks. Best reading: **a person working with tool assistance.** He may well have used an
-> agent much as this project uses the bridge.
+> **⚠️ Correction, 2026-08-31 — I claimed this file showed signs of being machine-generated. It
+> does not, and the reasoning was bad.** The compiler was asked outright and said: *"no I manually
+> looked through all the channels and in some cases counted the individual members in the channels
+> … then just copied and pasted everything and changed numbers to fit the CF"*, adding that he chose
+> *"the harder and non lazy way"* over using AI (msgs `1543794401896038420`, `1543794505105412216`).
+> Both of my "tells" have innocent explanations, and I had already seen one of them:
+> - `Agent\/07` is **that modder's actual Discord display name**, backslash included — verified against
+>   the user record, and printed in this very session hours earlier while resolving creator IDs.
+>   It was never JSON escaping.
+> - A UTF-8 BOM is what Windows Notepad writes by default. Evidence of nothing.
 >
-> **Why it does not undermine the data, and what it does change.** The 11/11 validation is exactly
-> the check that survives not knowing how something was made — it is the reason to trust an artifact
-> of uncertain production, and it matters *more* here, not less. But it sharpens the error model:
-> **a tally is structured data and reads accurately; a `Result:` line is narrative summary and is
-> the part anything skims.** The single error in the whole file is in a `Result:` line, not a tally.
-> **Every destination in the catalogue is therefore derived from the tally and never from the result
-> line** — verified across all 40. Rule for anything like this in future: take the numbers, not the
-> prose about the numbers.
+> **The user floated the possibility and I over-confirmed it** rather than testing it — I went
+> looking for support and stopped when I found some, which is the same failure as the `limit=4`
+> read, in a different costume.
+>
+> **What survives, and is now better explained.** *Take the tally, never the summary sentence.* His
+> actual method — copy-paste a line per crowdfund and edit the numbers into it — is a **better**
+> account of the one error than an agent skimming would be: the numbers get edited, the trailing
+> sentence gets missed. That is exactly the Blackbird failure, and it means the rule holds for
+> human-compiled data too, not just machine-compiled.
 
 ### VERIFIED (new)
 - **11 of 11 exact.** Every release vote this account can read first-hand appears in the file with
@@ -1554,9 +1556,11 @@ sent a 7 KB text file covering every completed crowdfund. Largest single data dr
 - **#40 Blackbird is the file's single internal contradiction** — it records 40 public against 15
   supporter and then states the result as Supporter Armory. The tally agrees with the independent
   public-record evidence, so the result line is read as a slip and Blackbird stays **public**,
-  flagged in the data with the disagreement written out. **It sits in exactly the field the
-  provenance note predicts is weakest**, which is mild corroboration for that reading rather than a
-  coincidence.
+  flagged in the data with the disagreement written out. **Settled 2026-08-31 with a screenshot of
+  the poll itself** — *"Where to release."*, Public **40 (73 %)**, Tier 2 **15 (27 %)**, 55 votes,
+  closed (msg `1543793745684603011`). The tally was right and the sentence beside it was stale. He
+  also supplied the reason members called it public but could not find it: Bonfire released the
+  items **individually rather than under the Blackbird name**.
 - **#5 Price Ghillie downgraded to unknown.** The sweep called it public off a Nexus *Price's
   Ghillied Up*; the file has the Price taking 3 votes of 34 inside Crowdfund Project 1, with *"I
   don't think Chest ended up making the Price"*. The Nexus mod may be unrelated.

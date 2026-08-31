@@ -303,12 +303,12 @@ Across those eight posts: **918 distinct people, 1,628 sign-ups.**
 > carried at the same confidence rather than hedged as one person's recollection. Rows marked **°**
 > are the ones read first-hand; the rest are the moderator's, corroborated by those eleven.
 >
-> ⚠️ **Every figure here is the crowdfund's own vote tally, never the summary line beside it.** How
-> the file was produced is unknown — it carries marks of both a program and a person, so it may have
-> been assembled with tool assistance. That does not weaken the numbers, and the 11/11 check is
-> precisely what survives not knowing; but it means **a tally is structured data and a "Result:"
-> sentence is narrative**, and the file's one error is in the latter. Where the two disagree the
-> tally wins — see #40 below.
+> ⚠️ **Every figure here is the crowdfund's own vote tally, never the summary sentence beside it.**
+> He compiled it by going through the confirmed channels himself, counting members by hand where no
+> count was shown, and copy-pasting one line per crowdfund with the numbers edited in. That workflow
+> is exactly what leaves a **stale summary sentence next to correct numbers** — which is the file's
+> one error, and why the rule is worth stating. Where tally and sentence disagree, the tally wins;
+> see #40 below, where a screenshot of the poll settled it in the tally's favour.
 
 **`Members` is new, and it retires a caveat.** It is the confirmed channel's membership — the people
 who actually paid. Until now this file could only say turnout was a *floor* on paid membership; the
@@ -372,11 +372,13 @@ real figure is now known, and the gap is large. Lioness drew 275 votes from **43
 > **System 2 goes 16 / 10.**
 
 > **⚠️ Two disagreements, neither smoothed over.**
-> - **#40 Blackbird** is the single internal contradiction in the moderator's file: it records
->   **40 public against 15 supporter** and then states the result as Supporter Armory. The tally
->   agrees with the independent public-record evidence (*"some of the blackbird guns were released
->   publicly"*, msg `1483556816523755590`), so the result line is taken as a slip and the crowdfund
->   is recorded **public**. Flagged in the data; worth one confirming question.
+> - **#40 Blackbird — asked, and settled.** The file records **40 public against 15 supporter** and
+>   then states the result as Supporter Armory. Asked directly, the compiler answered *"was released
+>   according vote"* and sent **a screenshot of the closed poll**: *"Where to release."* — Public
+>   **40 (73 %)**, Tier 2 **15 (27 %)**, 55 votes (msg `1543793745684603011`). Recorded **public**,
+>   now on primary evidence rather than inference. He also explained why members called it public
+>   yet could not find it: Bonfire released the items **individually, not under the Blackbird
+>   name**.
 > - **#28 Steyr flips to public.** The sweep had it as supporters on three members saying the Steyr
 >   DMR sits in the armoury — but that ballot offered only **public or private** (64/20), with no
 >   supporter option. The vote decides it. Both can be true: a Steyr in the supporter armoury need
