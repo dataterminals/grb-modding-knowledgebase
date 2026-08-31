@@ -1496,9 +1496,27 @@ actually went*; §7 open question 4 closed), and in the panel repo `data/crowdfu
 ### What I did
 Five days after the read-only role was refused, the user asked a moderator for **the figures**
 rather than for **the channels** — explicitly noting that the staff objection had been to channel
-privacy, not to the data. He agreed on the spot, spent two hours compiling it by hand, and sent a
-7 KB text file covering every completed crowdfund. This is the largest single data drop in the
-strand and it validates perfectly.
+privacy, not to the data. He agreed on the spot, said he would *"collect them all manually"*, and 1 h 39 m later
+sent a 7 KB text file covering every completed crowdfund. Largest single data drop in the strand.
+
+> **⚠️ How it was produced is not known, and the file says two different things about it.**
+> Signs of a **programmatic step**: `Agent\/07` appears four times — a backslash-escaped forward
+> slash, which is what JSON encoding leaves behind when nobody unescapes it, and not something a
+> person types — and the file carries a UTF-8 BOM, i.e. it was written by a program rather than
+> typed into Discord. Signs of a **human**: the armoury is spelled four different ways
+> (`Supporter Armory` 22, `Tier 2 Armory` 18, `Support Armory` 1, `T2 Armory` 1), "Voted" and
+> "Votes" are mixed, three rows have no `Result:` line at all, and the closing notes hedge with
+> question marks. Best reading: **a person working with tool assistance.** He may well have used an
+> agent much as this project uses the bridge.
+>
+> **Why it does not undermine the data, and what it does change.** The 11/11 validation is exactly
+> the check that survives not knowing how something was made — it is the reason to trust an artifact
+> of uncertain production, and it matters *more* here, not less. But it sharpens the error model:
+> **a tally is structured data and reads accurately; a `Result:` line is narrative summary and is
+> the part anything skims.** The single error in the whole file is in a `Result:` line, not a tally.
+> **Every destination in the catalogue is therefore derived from the tally and never from the result
+> line** — verified across all 40. Rule for anything like this in future: take the numbers, not the
+> prose about the numbers.
 
 ### VERIFIED (new)
 - **11 of 11 exact.** Every release vote this account can read first-hand appears in the file with
@@ -1536,7 +1554,9 @@ strand and it validates perfectly.
 - **#40 Blackbird is the file's single internal contradiction** — it records 40 public against 15
   supporter and then states the result as Supporter Armory. The tally agrees with the independent
   public-record evidence, so the result line is read as a slip and Blackbird stays **public**,
-  flagged in the data with the disagreement written out.
+  flagged in the data with the disagreement written out. **It sits in exactly the field the
+  provenance note predicts is weakest**, which is mild corroboration for that reading rather than a
+  coincidence.
 - **#5 Price Ghillie downgraded to unknown.** The sweep called it public off a Nexus *Price's
   Ghillied Up*; the file has the Price taking 3 votes of 34 inside Crowdfund Project 1, with *"I
   don't think Chest ended up making the Price"*. The Nexus mod may be unrelated.

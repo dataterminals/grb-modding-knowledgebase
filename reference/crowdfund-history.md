@@ -302,6 +302,13 @@ Across those eight posts: **918 distinct people, 1,628 sign-ups.**
 > file with **both numbers identical**. Nothing had to be reconciled, which is why the other 29 are
 > carried at the same confidence rather than hedged as one person's recollection. Rows marked **°**
 > are the ones read first-hand; the rest are the moderator's, corroborated by those eleven.
+>
+> ⚠️ **Every figure here is the crowdfund's own vote tally, never the summary line beside it.** How
+> the file was produced is unknown — it carries marks of both a program and a person, so it may have
+> been assembled with tool assistance. That does not weaken the numbers, and the 11/11 check is
+> precisely what survives not knowing; but it means **a tally is structured data and a "Result:"
+> sentence is narrative**, and the file's one error is in the latter. Where the two disagree the
+> tally wins — see #40 below.
 
 **`Members` is new, and it retires a caveat.** It is the confirmed channel's membership — the people
 who actually paid. Until now this file could only say turnout was a *floor* on paid membership; the

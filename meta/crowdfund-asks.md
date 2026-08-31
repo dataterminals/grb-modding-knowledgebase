@@ -6,11 +6,16 @@ and lane 3 of [`next-session.md`](next-session.md).*
 > ## ✅ This worked. 2026-08-30.
 > A moderator was asked for **the numbers** rather than **the channels**, on the explicit basis that
 > the staff objection had been to channel privacy and not to the data. He agreed immediately,
-> compiled it by hand, and supplied **vote tallies and paid-membership counts for 40 crowdfunds** —
+> and within two hours supplied **vote tallies and paid-membership counts for 40 crowdfunds** —
 > the contents of exactly the channels the role would have opened. It validated **11/11** against
 > the votes readable here. Sections A9 and most of B are answered; what is left is listed under
 > *Still open* below. **The framing note further down is not theory any more — it is the reason this
 > worked.**
+> 
+> ⚠️ **How he produced the file is not known** — it carries marks of both a program and a person
+> (see the 2026-08-30 research-log entry). That is why the **11/11 validation** is load-bearing
+> rather than a nicety, and why every figure taken from it is a **tally** and never the summary
+> line sitting beside it. If you run this play again: ask for numbers, and use the numbers.
 
 A read-only role covering the paid channels was proposed to two staff members on 2026-08-25 and
 **declined** — see next-session lead 4, and **do not re-pitch it**. What remains are *questions*
