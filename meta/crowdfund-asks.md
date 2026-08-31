@@ -131,8 +131,8 @@ Short, one question, names what it is for, and makes clear it is not a request f
 
 - **Read access to the `*-confirmed` channels, in any form.** Asked and declined 2026-08-25. A
   second, larger pitch would get a firmer no and would spend goodwill that sections A and B need.
-- **Anything from the `*-unconfirmed` channels.** They are the payment channels and hold
-  proof-of-payment screenshots — a moderator disabled images there on 2026-03-20 *"because users
+- **Anything from the `*-unconfirmed` channels.** They are the confirmation channels and hold
+  proof-of-support screenshots — a moderator disabled images there on 2026-03-20 *"because users
   keep on posting personal info in their crowdfund payment posts"* (msg `1484600258473496628`).
   Nothing the archive needs is in them.
 - **Mod files, exclusives, or armoury content.** The archive records *that* something exists and

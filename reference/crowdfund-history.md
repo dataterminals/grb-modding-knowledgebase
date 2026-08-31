@@ -64,16 +64,16 @@ So the buy-in was **a share of the modder's commission price**, and the project 
 
 1. A project is announced (`#announcements` `@everyone`, or `#on-topic`, pointing at `#crowdfund-projects-legacy`).
 2. You **vote in `#crowdfund-votes`** (`1303906293219856477`) to opt in. *"if you want to 'buy-in' go vote in #crowdfund-votes"* (msg `1307805326631768124`).
-3. You are **manually added** to the project channel, which carries the payment link.
+3. You are **manually added** to the project channel, which carries the link to support it.
 4. You pay the modder directly — **PayPal** was standard (msgs `1369279409374232586`, `1437621881313431694`).
-5. Once the modder confirms payment you are added to a **confirmation channel** (msg `1384961275628490754`).
+5. Once the modder confirms your support you are added to a **confirmation channel** (msg `1384961275628490754`).
 6. At the end, **buyers vote** whether the mod goes public or stays private (msg `1312514949058400346`).
 
 > **Verified:** The public/private release vote — the mechanic that still runs today — existed from the very first weeks. A member, 2024-11-30: *"at the end of every crowd fund there's a vote held for the people who bought in for it to stay private or be released"* (msg `1312514949058400346`).
 
 ### The flake problem, and the leak
 
-Non-payment was a problem from the start. The founder, 2024-12-02 (msg `1313256555994681406`):
+Not following through was a problem from the start. The founder, 2024-12-02 (msg `1313256555994681406`):
 
 > "we've been having issues with people not following through with committing to the 'buy-ins' WITHOUT TELLING US THEY NO LONGER WISH TO 'BUY-IN'. If you continuously vote to 'buy-in' for a CROWDFUND and don't communicate that you no longer want to, you WILL be kicked from the server."
 
@@ -108,7 +108,7 @@ So, precisely:
 | Step | What you get |
 | --- | --- |
 | React 👍 on the post | Role **`<Name> unconfirmed`** → access to the unconfirmed channel |
-| Read the unconfirmed channel | The modder's PayPal link / preferred payment method |
+| Read the unconfirmed channel | The modder's PayPal link / preferred way to be supported |
 | Pay + post proof | Modder swaps your role for **`<Name>`** → access to `#<name>-confirmed` |
 | Automatically, with the first one | **Supporter** role — permanent, one crowdfund is enough |
 
@@ -249,7 +249,7 @@ None of these five posts exists any more. Every name below is a **third party na
 
 > **Correction (2026-08-24) — #43 is "Crye Babies", not "Crye Baby".** The singular came from the announcement's attachment filename, `CRYE_BABY.png`. Modder B's own release header is plural: *"CRYE BABIES SUPPORTER RELEASE"* (msg `1487141790770532525`, 2026-03-27), and the community is unanimous — *"Currently an exclusive for the **Crye Babies** CF"* (`1478840232487944213`), *"crye babies is closed"* (`1495819342686847036`).
 
-> **Creators filled in (2026-08-24).** #33 **Dual Sig** → Modder O, named in a showcase thread: *"it was part of the crowdfund called 'Dual Sig' — you can ask [Modder O] for the SPC"* (msg `1472093680142778496`). #34 **Door Kicker** → Modder L, who runs its confirmed channel and its payments (`1459523762943824090`) and posts *"The **Door Kicker Crowdfund** has come to Tier 2"* (`1465710021294821556`). Both were already implied by the delivery table in §5; they are now cited.
+> **Creators filled in (2026-08-24).** #33 **Dual Sig** → Modder O, named in a showcase thread: *"it was part of the crowdfund called 'Dual Sig' — you can ask [Modder O] for the SPC"* (msg `1472093680142778496`). #34 **Door Kicker** → Modder L, who runs its confirmed channel and confirms its supporters (`1459523762943824090`) and posts *"The **Door Kicker Crowdfund** has come to Tier 2"* (`1465710021294821556`). Both were already implied by the delivery table in §5; they are now cited.
 
 ---
 

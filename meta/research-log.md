@@ -1189,7 +1189,7 @@ guild search on "buy-in" / "crowdfund project" / "unconfirmed". New doc:
   variable price set per project as a *share of the modder's commission* ($60 gun / 12 people / $5
   each — msg `1302780729121570906`), opt in by voting in `#crowdfund-votes`, manual channel adds.
   System 2 ("the reaction-role system's way", 2025-07-29 →): flat $10 minimum, 👍 reaction grants a
-  `<Name> unconfirmed` role, payment swaps it for `<Name>` plus the `-confirmed` channel and the
+  `<Name> unconfirmed` role, supporting the project swaps it for `<Name>` plus the `-confirmed` channel and the
   permanent **Supporter** role.
 - **The changeover was never announced.** `#announcements` was read in full and contains no post
   describing it; the new channel and post format simply appeared.
@@ -1398,7 +1398,7 @@ Also fixed a statistic that the seventh post quietly broke.
 ### Follow-up (same day) — the access ask was declined, and what replaces it
 - **Read-only access to the paid channels is closed.** The minimal role — zero guild-level
   permissions, `View Channel` + `Read Message History`, `*-confirmed` channels only, explicitly not
-  the payment channels, read-once sufficient, export offered as an alternative — was put to **two
+  the confirmation channels, read-once sufficient, export offered as an alternative — was put to **two
   staff members and turned down**. Recorded in [`next-session.md`](next-session.md) as
   **do not re-pitch**. The **turnout** column is therefore fixed at 11 of 56 permanently.
 - **Destination is a different question, and it is reachable.** Where a crowdfund's output *landed*
@@ -1574,7 +1574,7 @@ sent a 7 KB text file covering every completed crowdfund. Largest single data dr
 ### The method finding, which is the transferable part
 **Asking for a fact is not asking for access, and the difference decided this.** The same people who
 refused a role — one with no guild permissions, view-and-read-history on the confirmed channels
-only, explicitly not the payment channels, read-once accepted — handed over the contents of those
+only, explicitly not the confirmation channels, read-once accepted — handed over the contents of those
 channels' votes when asked for the numbers instead. That distinction was written up in
 [`crowdfund-asks.md`](crowdfund-asks.md) the same week as a hypothesis about how to work around the
 refusal; it is now the strand's best-evidenced technique. What did **not** transfer: the delivery

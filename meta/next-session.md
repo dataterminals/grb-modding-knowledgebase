@@ -279,7 +279,7 @@ dates and outcomes are always a hand edit in both places.
    guild-level permissions, `View Channel` + `Read Message History` only, on the `*-confirmed`
    channels plus `#crowdfund-projects-legacy` (`1302441788585279570`) and `#crowdfund-votes`
    (`1303906293219856477`), explicitly **not** the `*-unconfirmed` channels because those are the
-   payment channels and hold proof-of-payment screenshots (a moderator disabled images there on
+   confirmation channels and hold proof-of-support screenshots (a moderator disabled images there on
    2026-03-20 *"because users keep on posting personal info in their crowdfund payment posts"*,
    msg `1484600258473496628`). A read-once was offered as sufficient, and an export as an
    alternative to any grant. All of it was declined, so **treat confirmed-channel access as closed** and
