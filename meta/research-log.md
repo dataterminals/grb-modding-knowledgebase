@@ -1491,6 +1491,87 @@ New: [`meta/crowdfund-asks.md`](crowdfund-asks.md). Updated:
 actually went*; §7 open question 4 closed), and in the panel repo `data/crowdfunds.json` (the
 `destination` field on 45 entries) plus `index.html` (the two-grade pill).
 
+## Entry — 2026-08-30 (second) — A moderator supplied the numbers the declined role would have shown
+
+### What I did
+Five days after the read-only role was refused, the user asked a moderator for **the figures**
+rather than for **the channels** — explicitly noting that the staff objection had been to channel
+privacy, not to the data. He agreed on the spot, spent two hours compiling it by hand, and sent a
+7 KB text file covering every completed crowdfund. This is the largest single data drop in the
+strand and it validates perfectly.
+
+### VERIFIED (new)
+- **11 of 11 exact.** Every release vote this account can read first-hand appears in the file with
+  **both numbers identical** — Lioness 132/143, Snake Eater 59/35/5, Op Chesthair 97/47, and the
+  other eight. Nothing needed reconciling, which is why the remaining 29 are carried at the same
+  confidence instead of being hedged as one person's recollection. **A free accuracy test on a
+  whole batch, from the overlap alone.**
+- **Turnout goes from 11 crowdfunds to 40; 1,118 votes to 2,991.**
+- **`members` is an entirely new metric — the confirmed channel's membership, i.e. who actually
+  paid.** 41 crowdfunds, **4,936 paid memberships**. This retires a standing caveat: turnout was
+  only ever a *floor* on paid membership, and §7 recorded Lioness as "bounded (≥275) but not
+  known". It is **435**.
+- **Participation scales inversely with size.** Median **63 %**; crowdfunds with 150+ members vote
+  at a median of 59 %, those under 60 members at 71 %, topping out at 89 % (Kalashnikov SR1, 25 of
+  28). The largest, Warfare at 205 members, was decided by **39 %** of its backers.
+- **The release split, settled on votes: 28 public / 12 supporters.** Same shape the public-record
+  sweep reached by a different route, so the "two thirds stay private" correction is now closed
+  from both directions. Era 1 **12 public / 2 supporters**, era 2 **16 / 10**.
+- **#3 is named — SB-4's MCX Spear LT** (10 buy-ins cap, no confirmed channel, public, Nexus 1125).
+  The 2026-08-24 pass had listed the Spear LT as one of three candidates in flight that month
+  without being able to choose. **#7 is now the only unnamed crowdfund in the catalogue.**
+- **A crowdfund nobody here had ever seen: #58, Modder B's Salomon X4 Ultra Mid GTX**, 18 buy-ins,
+  released public. It appears in no announcement readable from this account. Direct proof the era-1
+  count is still a floor. Numbered 58 because catalogue numbers are identifiers, not a
+  chronological rank — renumbering would break every citation in the file.
+- **Creators filled:** #4 and #49 → Modder B. Modder B is now **17 of 58 (29 %)**, up from 14.
+- **#1 is really a three-way build vote.** "Crowdfund Project 1" pooled 34 buy-ins and voted on
+  *which* to make: Ghost Nightwar 18, Gaz Road Warrior 13, Capt Price 3.
+
+### Corrections and conflicts (all recorded, none smoothed)
+- **#28 Steyr flips supporters → public.** The destination sweep had it as supporters from three
+  members saying a Steyr DMR sits in the armoury; the ballot in fact offered only **public or
+  private** (64/20). The vote decides it, and both can be true — an item in the armoury need not
+  have arrived by that vote. **This is the sweep's error rate made visible: one in forty-five.**
+- **#40 Blackbird is the file's single internal contradiction** — it records 40 public against 15
+  supporter and then states the result as Supporter Armory. The tally agrees with the independent
+  public-record evidence, so the result line is read as a slip and Blackbird stays **public**,
+  flagged in the data with the disagreement written out.
+- **#5 Price Ghillie downgraded to unknown.** The sweep called it public off a Nexus *Price's
+  Ghillied Up*; the file has the Price taking 3 votes of 34 inside Crowdfund Project 1, with *"I
+  don't think Chest ended up making the Price"*. The Nexus mod may be unrelated.
+- **#6 ≡ #8 is reopened but not overturned.** The moderator recalls **two** GZW crowdfunds, one per
+  modder, *"both never finished and kept private due to legal reasons"* — but hedges it as memory,
+  with question marks, because both posts are deleted. Weak evidence against a strong inference:
+  the merge stands and the doubt is written down.
+- **#4 may be #12, not #10.** The file calls #4 *"Shadow Company Heavies as Wolves"*, which is the
+  language this catalogue records separately as #12. Both ambiguities are now live.
+
+### The method finding, which is the transferable part
+**Asking for a fact is not asking for access, and the difference decided this.** The same people who
+refused a role — one with no guild permissions, view-and-read-history on the confirmed channels
+only, explicitly not the payment channels, read-once accepted — handed over the contents of those
+channels' votes when asked for the numbers instead. That distinction was written up in
+[`crowdfund-asks.md`](crowdfund-asks.md) the same week as a hypothesis about how to work around the
+refusal; it is now the strand's best-evidenced technique. What did **not** transfer: the delivery
+table is still 11 of 58, because a drop leaves no trace and nobody keeps a tally of them the way
+they keep a vote result.
+
+### Questions answered / opened
+- ✅ Turnout, membership, and the release split across the catalogue.
+- ✅ #3 named. ❌ **#7 remains the only unnamed crowdfund**, absent from the moderator's list too.
+- ❌ #10 Shadow Rusher still has no destination; #5 now has none either.
+- 🆕 **Era 1's true count is still open and now demonstrably a floor** — #58 was invisible from here.
+  `#crowdfund-projects-legacy` and `#crowdfund-votes` remain the only places the real number lives.
+
+### Docs written this session
+Updated: [`reference/crowdfund-history.md`](../reference/crowdfund-history.md) (§1, §4 catalogue and
+notes, §5 turnout rewritten around 40 votes plus membership and participation, destination section
+reconciled against the votes, §7 consequences and open questions),
+[`meta/crowdfund-asks.md`](crowdfund-asks.md), [`meta/next-session.md`](next-session.md), and in the
+panel repo `data/crowdfunds.json` (vote blocks, `members`, #58) plus `index.html` (membership beside
+turnout, a paid-memberships KPI, and the retired "hard floor" line).
+
 ---
 
 ---

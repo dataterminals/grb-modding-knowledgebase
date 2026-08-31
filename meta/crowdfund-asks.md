@@ -3,6 +3,15 @@
 *Written 2026-08-30. Companion to [`../reference/crowdfund-history.md`](../reference/crowdfund-history.md)
 and lane 3 of [`next-session.md`](next-session.md).*
 
+> ## ✅ This worked. 2026-08-30.
+> A moderator was asked for **the numbers** rather than **the channels**, on the explicit basis that
+> the staff objection had been to channel privacy and not to the data. He agreed immediately,
+> compiled it by hand, and supplied **vote tallies and paid-membership counts for 40 crowdfunds** —
+> the contents of exactly the channels the role would have opened. It validated **11/11** against
+> the votes readable here. Sections A9 and most of B are answered; what is left is listed under
+> *Still open* below. **The framing note further down is not theory any more — it is the reason this
+> worked.**
+
 A read-only role covering the paid channels was proposed to two staff members on 2026-08-25 and
 **declined** — see next-session lead 4, and **do not re-pitch it**. What remains are *questions*
 rather than permissions, and they split cleanly into two kinds:
@@ -29,10 +38,9 @@ Both are bounded, and neither asks anyone to share a file, a channel, or a mod.
 
 - **All 34 System 2 crowdfunds are named.** Only **#3** and **#7** are unnamed, both System 1.
 - **11 crowdfunds have full vote + delivery data** — see §5. Do not re-ask those.
-- **Destination is now known for 45 of the 57** (swept 2026-08-30 — §5, *Where the mods actually
-  went*). **Do not ask where a crowdfund went unless it is one of the four with no answer: #3, #7,
-  #10, #16.** What is still missing everywhere except the readable 11 is **turnout** — the vote
-  tally — which is the harder thing to ask for and the less interesting answer.
+- **Turnout is known for 40 of 58 and destination for 47** (2026-08-30). **Do not re-ask either.**
+- **Paid membership is known for 41.** Do not ask.
+- **Only #7 is unnamed**, and it is absent from the moderator's list as well.
 - **Sign-up counts for closed crowdfunds are gone permanently.** No lookup recovers a deleted
   message. Do not ask; ask A8 instead.
 
@@ -52,17 +60,28 @@ Ordered by what they settle per second of someone's time. Each is a *look and te
 | **A6** | Their own memory | Did the **March 2025 leak** cause the move to the reaction-role system? | §2 flags this as **inferred** — the leak and the changeover are adjacent in time and theme and *no message states a cause*. One sentence from anyone who was staff then closes it either way | ~1 min |
 | **A7** | Their own memory | Are crowdfund posts **deleted deliberately** when a project closes, or was there a one-off purge? | §7 calls the mechanism **unestablished**. Two of the posts on the board are months past their stated end date and still up, which argues against rolling removal but does not settle it | ~1 min |
 | **A8** | — | Nothing to look at: a **request**. Sign-up counts die with the post, so if posts stay up — or if `tools/refresh.py` is simply left running on a schedule — the numbers stop being lost from here on | The one gap that closes itself. Costs nobody anything and grants nobody anything | — |
-| **A9** | Each `*-confirmed` channel | The release-vote poll result — **two numbers** | Would extend §5's turnout table past 11. ⚠️ **~46 channels, so do not lead with this.** Only worth raising if someone volunteers, and then take the largest crowdfunds first | high |
+| ~~**A9**~~ | ~~Each `*-confirmed` channel~~ | ~~The release-vote poll result~~ | ✅ **DONE 2026-08-30** — a moderator supplied all 40, plus membership counts nobody thought to ask for. This row is kept because it is the one that paid off, and because the *shape* of it — a bounded lookup, two numbers, no access — is the template | — |
 
 ---
 
 ## B. For the modders — one question about their own project
 
-**Rewritten 2026-08-30.** The destination sweep answered *where it went* for 45 of 57 without
-anyone being asked, so this list is no longer about that. What is left for a modder to answer is
-**turnout** — *"roughly how many people voted on it, and which way?"* — plus the four crowdfunds
-with no destination at all. Turnout is the harder ask and the duller answer, so treat this list as
-lower priority than section A, and lead with the two rows marked ⭐.
+**Largely spent, 2026-08-30.** The sweep answered *where it went*, and the moderator's file then
+answered *turnout* and *membership* for 40 crowdfunds. **Almost nothing on this list is still worth
+a modder's time.** What survives is below; the table is kept for the record and because it maps who
+made what.
+
+### Still open — the whole of it
+
+| What | Who can answer | Why it survived |
+| --- | --- | --- |
+| **#7's name** | Modder B, or a member buying in during December 2024 | The only unnamed crowdfund left. Absent from the moderator's list too, and missing from Modder B's own open-buy-ins list six days after its announcement — it may have collapsed early |
+| **#5 and #10's destination** | Modder B | The only two closed crowdfunds with no destination. #5 may never have been built at all |
+| **#6 ≡ #8** | Modder E | Is the GZW assortment one crowdfund or two? The moderator recalls two but flagged it as memory |
+| **#4 vs #12** | Modder B, or any long-standing member | The moderator's *"Shadow Company Heavies as Wolves"* suggests #4 and #12 are one project, where this file had guessed #10 and #12 |
+| **Delivery counts** | any creator, about their own | Still 11 of 58 — the one column nothing has widened, because a drop leaves no trace and nobody tallies them |
+
+The table below is now a *who-made-what* reference rather than an ask list.
 
 | Modder | Crowdfunds with no turnout figure | Around? | Notes |
 | --- | --- | --- | --- |
