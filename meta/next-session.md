@@ -286,7 +286,8 @@ dates and outcomes are always a hand edit in both places.
    spend the effort on leads 1, 5 and 6 instead. Two things worth remembering rather than repeating:
    asking *staff* for access to *everyone's* channels is a different question from asking *one
    modder* about *their own* crowdfund (see lead 6), and the answer being no does not make the
-   sample dishonest — it makes the 11-of-56 caveat load-bearing, which is why it is stated twice.
+   sample dishonest — it made the coverage caveat load-bearing. *(Superseded 2026-08-30: a moderator
+   supplied the vote figures anyway. The caveat now applies only to the delivery table.)*
 5. **⭐ Widen the *destination* column from public channels — the best remaining lead, and it needs
    nothing from anybody.** Turnout is locked at 11 forever, but **where a crowdfund's output landed**
    leaks constantly into channels this account already reads, and into two it holds by right:
