@@ -225,7 +225,7 @@ on my mesh." Full write-up:
 [`../reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
 
 ```
-python skeleton_reflex.py "H:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint"
+python skeleton_reflex.py "D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint"
 python skeleton_reflex.py DataPC.forge --csv skeletons.csv
 python skeleton_reflex.py 1889064665537_-_Player_Kilt_Addon.data
 ```
@@ -256,7 +256,7 @@ sheet: every rig it pulls in, and which of those carry bone physics.
 
 ```
 python entity_skeletons.py 1536663434687_-_PLAYER_Template.data ^
-    --install "H:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint"
+    --install "D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint"
 ```
 
 ```
@@ -368,3 +368,150 @@ python reflex3.py Tsec_Trench_AddonSkeleton.data --names ..\reference\grb-bone-n
 The prefixes are the part worth memorising: **`RFX_`** is Reflex — the physics
 bones themselves — `T_` are targets/attachment points, `L_` are no-roll helpers,
 `Prop_` are prop attach points, and unprefixed names are the standard biped.
+
+---
+
+## 🧊 Blender bridge — drive Blender from a terminal
+
+Everything above reads **game files**. This one drives **Blender**, the other end of
+the authoring pipeline.
+
+Blender ships its own Python and runs with no window at all, so importing a mesh,
+transferring weight painting and exporting a GLB can all be scripted — repeatable,
+diffable, and drivable by an assistant working alongside you.
+
+```
+python blender\grbblend.py doctor            # is Blender here, and does it have what we need?
+python blender\grbblend.py selftest          # prove the bridge works, touching no game files
+python blender\grbblend.py inspect Coat.glb  # UV sets, vertex colors, bones, weights, warnings
+python blender\grbblend.py transfer-weights --source Coat.glb --target Poncho.glb ^
+       --out Bound.glb --with-colors
+```
+
+**There is no GRB-specific Blender add-on to hunt down, and none is needed** — the
+connector is **glTF**. ATK exports and imports GLB; Blender reads and writes GLB
+natively. What was missing was tooling around that seam.
+
+`inspect` checks the failure modes
+[`../docs/10-meshes-and-skeletons.md`](../docs/10-meshes-and-skeletons.md) names by
+hand — missing UVs, more than 5 UV sets, missing vertex colours, more than 4 bone
+influences per vertex, unweighted vertices, multiple materials.
+
+`transfer-weights` is [Sami's move](../meta/project-goal.md) scripted: take the weight
+painting off a vanilla garment and put it on a new mesh. It reports **what percentage
+of the new mesh's vertices actually got a weight** — anything under 100 % means
+geometry that will not deform in game.
+
+⚠️ **Read-only with respect to your GRB install** — it only touches the files you point
+it at. The ATK export/import clicks at either end stay manual; ATK has no CLI.
+
+⚠️ This does **not** solve the `.cloth` rebind — cloth is welded to one mesh's exact
+vertices. Where it helps the north star is the **bone-physics route**, which transfers
+precisely because it is weight-painted:
+[`../reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
+
+Full guide: [`blender/README.md`](blender/README.md).
+
+---
+
+## ⚙️ `atk_bridge.py` — call ATK's own readers from Python
+
+ATK has no command line, but `AnvilToolkit.dll` is an ordinary .NET library and
+the app is only a WPF shell over it. This loads that library into CPython through
+pythonnet, so ATK — **the community's reference implementation of these formats**
+— can be used as a second, independent opinion against the parsers in this folder.
+
+```
+python atk_bridge.py 87874_-_TP_Tacvest_Walker_Coat_LOD0.data
+```
+
+```
+  ClassID       1707208439117
+  VertexFormat  Pos3s_Col1s_Norm3ub_Col1ub_Tan4ub_Binorm4ub_Tex2s_Joint4_Col4ub
+  Vertices      1816
+  Faces         3263
+  index range   0..1815
+  Bones         30
+  influences/vertex  {1: 490, 2: 53, 3: 238, 4: 1035}
+```
+
+Needs `pythonnet`, the .NET 9 runtime, and an ATK install (`GRB_ATK`, default
+`D:\Anvil Toolkit`). The container layer stays **ours** — `data_inspect.py`
+decompresses the `.data` and slices out the resource payload, and only the
+payload goes to ATK. That is what makes the two readers independent.
+
+Three gates, each silent when you get it wrong — all three are handled here and
+explained in the module docstring:
+
+1. ATK's dependencies live in `Libs\`, which .NET will not probe on its own.
+2. `DataStorage.GlobalScimitarClassReader` is a static only the GUI populates.
+3. `Mesh.Read` **catches its own exceptions** and hands back a half-built object
+   that looks plausible.
+
+⚠️ **`mesh.Failed` is not a success signal** for GRB meshes in ATK 1.3.1 — the
+reader wants exactly one byte past the resource payload. The bridge pads one zero
+byte; the geometry is identical either way.
+
+⚠️ **Read-only by policy, and not incidentally.** `ForgeFile.Serialize` and
+`Mesh.WriteToFile` sit in the same object graph, and ATK's backup defaults are
+*application* settings that do **not** apply to direct library calls. The bridge
+also never calls `DataFile` — its `Deserialize` runs `CreateBackup` and unpacks
+to an `Extracted\` folder, i.e. it writes to your install.
+
+This is how the 2026-09-01 correction was found: ATK reads GRB garment skinning
+as **four-influence** at vertex bytes 24–31, not two-bone at 32–35 (those are a
+colour channel). See [`../meta/research-log.md`](../meta/research-log.md).
+
+---
+
+## 🧵 `rebind_check.py` — will this rebound garment actually move?
+
+The pre-flight check for [the project goal](../meta/project-goal.md). You have
+taken a vanilla garment's weight painting onto a new mesh and you are about to
+import the GLB and repack. **Launching the game is the expensive step** — a hung
+GRB needs `taskkill /F /T` — so this answers, from files alone, the question a
+rebind actually fails on:
+
+> Does the new mesh's weight painting reach the bones Reflex3 actually drives?
+
+```
+python rebind_check.py --skeleton Tsec_Trench_AddonSkeleton.data --mesh MyPoncho.glb
+python rebind_check.py --skeleton Player_Kilt_Addon.data --mesh New.glb ^
+       --donor 87874_-_TP_Tacvest_Walker_Coat_LOD0.data
+```
+
+```
+[  ok  ] Influences per vertex within GRB's Joint4 limit
+[ FAIL ] Weight coverage 75.00% - 3 of 12 vertices have NO weight
+[ FAIL ] 1 driven bones are in the rig but carry NO weight
+           These chains will not move, and ATK 'removes unused bones' on GRB
+           import - so they may vanish from the mesh entirely and take the
+           physics with them.
+[ FAIL ] 1 driven bones are absent from the GLB's skin
+```
+
+**Why this tool can exist here and nowhere else.** ATK reads GRB meshes and
+skeletons but **cannot parse Reflex3** — its parser validates Mirage's constants
+and is gated behind `Version != Game.Mirage`, so for GRB it keeps the constraint
+blob as an opaque Base64 lump. This repo decodes it ([`reflex3.py`](reflex3.py)).
+The question above needs *both halves at once*, and only this repo has both.
+
+It reads the GLB itself — **stdlib only, no Blender and no dependencies** — so it
+runs anywhere. Exit code is `0` on pass/warn, `2` on fail, for scripting.
+
+### How bone names are matched — the bit that makes it work at all
+
+Reflex3 addresses bones by **CRC32 of the exact-case bone name**, and most of
+GRB's per-garment dangle bones are *not* in ATK's dictionary (only 8 of 30 resolve
+on the Walker coat). So ATK writes those glTF nodes with the **number** as the
+name — `HashedData.GetHashedString` falls back to `id.ToString()`.
+
+That fallback is load-bearing: **a numeric node name IS the bone hash.** A name is
+taken literally when it is all digits and CRC32-ed otherwise (exact/lower/upper,
+matching how ATK builds its map); Blender's `.001` suffixes are stripped. Names
+that match nothing are reported as a warning — the tool degrades to *"I cannot
+check this"*, never to a silent pass.
+
+⚠️ **It checks files, not the game.** It cannot tell you whether a modified
+skeleton loads at all — that is still the open both-patch-forge question in
+[`../meta/next-session.md`](../meta/next-session.md).

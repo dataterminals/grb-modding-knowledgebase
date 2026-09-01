@@ -20,6 +20,11 @@
 *.fbx
 *.tga
 *.bak
+*.blend
+*.blend1
+
+# Blender bridge selftest scratch output
+tools/blender/_selftest/
 
 # ATK distribution / binaries
 AnvilToolkit*/

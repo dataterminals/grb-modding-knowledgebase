@@ -1608,3 +1608,441 @@ turnout, a paid-memberships KPI, and the retired "hard floor" line).
 > ### INFERRED (new)
 > ### Questions answered / opened
 > ```
+
+---
+
+## Entry — 2026-08-31 — Blender is scriptable from here; built the bridge and proved it end to end
+
+### Environment change (record it before anything else)
+**The install and the repo moved off `H:` onto `D:`.** Every path in the 2026-06-30 snapshot is
+stale. Current, verified by listing this session:
+
+| Thing | Now at |
+| --- | --- |
+| GRB install | `D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint` |
+| ATK | `D:\Anvil Toolkit` (has run — a crash log dated 2025-10-23 sits beside it) |
+| This repo | `D:\Github Repositories\grb-modding-knowledgebase` |
+| Blender | `D:\SteamLibrary\steamapps\common\Blender` (Steam listing; `5.0` and `5.2` resource dirs, `blender.exe` is **5.2.1 LTS**) |
+| Host Python | 3.12.10, on PATH |
+
+Forges are all present and the six main ones are already unpacked under `Extracted\`.
+
+### What I did
+The user asked what we actually have for authoring mods with Blender, and whether a "Blender
+connector" already exists. Answered both by checking rather than recalling, then built the piece
+that was genuinely missing and tested it.
+
+### VERIFIED (new)
+- **Blender runs headless on this machine and is fully scriptable.** `blender.exe --background
+  --python <script>` works; bundled interpreter is **Python 3.13.13**; `io_scene_gltf2` is present
+  and enabled. This is the whole basis for driving Blender from a terminal — or from an assistant.
+- **There is no GRB-specific Blender add-on to find, and none is needed.** The connector *is*
+  glTF: ATK exports/imports GLB (via SharpGLTF, per [`docs/10`](../docs/10-meshes-and-skeletons.md)),
+  and Blender reads/writes GLB natively. Both ends already speak the same format; what was missing
+  was tooling around the seam, not a plugin.
+- **Blender is Python-only — there is no Lua in it.** (The user's Garry's Mod modelling background
+  is where the Lua association comes from.)
+- **ATK still has no command-line interface.** Re-checked its `README.txt`: every "batch" reference
+  is multi-select *inside the GUI*. So the two ends of the pipeline — export the donor GLB, import
+  the finished one — stay manual clicks. Everything between them is now scriptable. This is
+  consistent with the 2026-06-30 finding that `EnableCommands` is an experimental off-by-default
+  console toggle, not an automation API.
+- **The local mod corpus contains no 3-D source files at all.** 205 mod folders, 4,424 files,
+  **zero** `.glb` / `.gltf` / `.fbx` / `.blend` / `.obj` / `.dae` / `.ma` / `.max`. Mods ship as
+  repacked forge data only; nobody's working rig survives in what we hold.
+  **This closes one of the leads listed on 2026-08-14 and again in
+  [`next-session.md`](next-session.md) for recovering GRB's own bone names** — "a modder's original
+  Blender/FBX rig" is not available *from this corpus*. It would have to come from a modder
+  directly.
+
+### Built: `tools/blender/` — a two-part Blender bridge
+`grbblend.py` runs on the host and finds Blender (explicit `--blender`, then `GRB_BLENDER`, then a
+sweep of Steam and Program Files locations on every drive letter). `_inside.py` runs inside Blender
+and prints a JSON report between sentinels so the host can find it among Blender's console output.
+Four commands: `doctor`, `selftest`, `inspect`, `transfer-weights`, plus a `run` escape hatch for
+arbitrary Python with the helpers in scope.
+
+Two deliberate design choices worth keeping:
+- **Operator keywords are filtered against what the installed Blender actually accepts**
+  (`op.get_rna_type().properties.keys()`). glTF export options get renamed between Blender
+  releases; asking beats assuming. This is the "compatibility layer" the user floated, at the
+  layer where it earns its keep.
+- **`inspect` checks the failure modes [`docs/10`](../docs/10-meshes-and-skeletons.md) names by
+  hand** — missing UVs, >5 UV sets, missing vertex colours, >4 influences per vertex, unweighted
+  vertices, multiple materials. The doc listed them as prose; they are now assertions.
+
+### VERIFIED — the selftest passes end to end
+`selftest` touches no game files. It builds a rigged, weight-painted, vertex-coloured cylinder
+("coat") and a differently-shaped, differently-tessellated cone with no rig ("poncho"), writes both
+to GLB, runs the real `transfer-weights` code, re-exports, reloads, and checks the result. All seven
+checks pass: weights land (3 of 3 groups), **100 % weight coverage** on the new mesh, vertex colours
+come across, the armature survives, and the GLB round trip preserves both the groups and the
+complete coverage.
+
+Two things the test caught that are worth writing down:
+- **A weight transfer copies weights and nothing else.** The donor's vertex colours stay behind
+  unless asked for — and a GRB mesh arriving without the vertex colours its slot expects is exactly
+  the "corrupted shading / colours read as UVs" failure `docs/10` describes. Hence `--with-colors`
+  and `--with-uvs`, each a separate `data_transfer` pass. Note the domain split: vertex groups are
+  point data and take `vert_mapping`; UVs and corner colours are loop data and take `loop_mapping`.
+- **The number that matters is unweighted-vertex count, not group count.** Groups can transfer while
+  large parts of the new mesh get nothing, and those vertices simply will not deform in game. The
+  report leads with coverage percent for that reason.
+
+### NOT verified — say so plainly
+- **No real GRB mesh has been through this yet.** The selftest proves the *machinery*; it does not
+  prove the *pipeline*. A garment exported from ATK, transferred, re-imported, and seen in game is
+  the open experiment, and per `docs/10` the vertex-format choice on ATK import is the step most
+  likely to bite.
+- **This does not touch the `.cloth` rebind** (lane 2A) and does not claim to. Cloth is welded to
+  one mesh's exact vertices and ATK's GRB cloth reader is gated off. Where weight transfer *does*
+  serve the north star is **lane 2B, the bone-physics route** — Reflex3 secondary motion is
+  transferable precisely because it is weight-painted rather than vertex-welded
+  ([`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md)). A scripted,
+  reproducible, checkable weight transfer is the Blender-side half of that route.
+
+### Open questions this raises
+1. **What does a real GRB garment GLB look like through `inspect`?** UV set count, vertex-colour
+   naming scheme, influences per vertex, bones per primitive. Cheap to answer — one ATK export.
+2. **Does a `transfer-weights` result import into ATK without complaint, and which vertex format
+   does the donor slot want?** The first genuine pipeline test.
+3. **Does a Reflex3-driven garment's bone set survive the ATK → Blender → ATK trip intact?** ATK
+   "removes unused bones" on GRB import; a dangle-bone chain that the new mesh weights to only
+   partially could lose bones silently.
+4. **Can `inspect` on a real skinned garment recover GRB bone *names* that `grb-bone-names.tsv`
+   does not have?** ATK's GLB export writes bone names as strings. That is a third route to the
+   name-recovery problem, and unlike the mod corpus it is available right now.
+
+---
+
+## Entry — 2026-08-31 (second) — ATK's format engine loads headlessly from Python; the GUI is a shell over a callable library
+
+### What I did
+The user asked whether a compatibility layer between an assistant and ATK is worth building.
+Rather than answer from the standing assumption — *"ATK is GUI-only, therefore the ends of the
+pipeline are manual"* — I tested it. That assumption is **true of the application and false of the
+library**, and the difference is large.
+
+### VERIFIED (new) — the assembly loads and its format types are reachable
+Loaded `D:\Anvil Toolkit\AnvilToolkit.dll` into **CPython 3.12 via pythonnet**, using
+`clr_loader.get_coreclr(runtime_config="AnvilToolkit.runtimeconfig.json")` to bring up the same
+.NET 9 runtime ATK itself targets.
+
+- **The assembly loads.** `Assembly.LoadFrom` → `AnvilToolkit 1.3.1.0`.
+- **1,235 types enumerate.** `GetTypes()` throws `ReflectionTypeLoadException` — expected, since
+  some types reference WPF assemblies that don't resolve outside the app — but the exception
+  **carries the successfully-loaded types**, and the format code is among them. The UI types are
+  the ones that fail; `FileTypes.*` is a separate namespace tree and survives.
+- **Everything needed is already on this machine, unplanned:** `.NET 9.0.10` +
+  `Microsoft.WindowsDesktop.App 9.0.10` runtimes, `ilspycmd`, and **pythonnet already installed**.
+  Zero new dependencies to test this.
+
+### VERIFIED (new) — the API surface is exactly the pipeline
+Reflected over the public methods of three types:
+
+| Type | Public methods (abridged) |
+| --- | --- |
+| `…Models.AnvilGLTF` | `CreateGLTF`, `FromGLTF`, `MeshFromGLTF`, `BonesFromGLTF`, `ShapeFromGLTF`, `AnimationsFromGLTF`, `CreateBones`, `RecomputeTangents`, `RecomputeDuplicateVertices`, `RemapBuffers`, `GetVertexColor`, `GetMeshCenter` |
+| `…Models.Mesh` | `Read`, `ReadFromFile`, `Write`, `WriteToFile`, `ReadVertexData`, `WriteVertexData`, `ReadIndexData`, `WriteIndexData`, `ReadXml`, `WriteXml`, `MergeMeshes`, `GetBoneByID`, `ConvertToTriangleMesh`, `GenerateShadowPrimitives` |
+| `…Containers.ForgeFile` | `Deserialize`, `DeserializeAsync`, `Serialize`, `SerializeAsync` |
+
+`Mesh` constructors take `(ScimitarClass)`, `(BinaryReader, ScimitarClass)`, or
+`(XmlReader, ScimitarClass)`.
+
+**`AnvilGLTF` is the Blender bridge, and it is a plain callable class.** The glTF conversion,
+tangent recomputation and vertex-format handling that `docs/10` describes as "what ATK does on
+import" are library calls, not GUI behaviour. So is forge serialisation.
+
+### What this changes
+The KB has said since 2026-06-30 that ATK is GUI-driven and `EnableCommands` is an experimental
+off-by-default console toggle, "not a public CLI/automation API". **That remains exactly true and
+is not retracted** — but it was being used to support a stronger conclusion than it licenses.
+*ATK has no CLI* does not entail *ATK's capabilities are unautomatable*. The application is a WPF
+shell; the engine underneath is an ordinary .NET library that a Python process can load and call.
+
+This reframes the pipeline diagram in [`tools/blender/README.md`](../tools/blender/README.md),
+which currently says the ATK export and import clicks "stay manual, and that's not going away
+soon." That sentence is now **provisional** — see the honest limit below before rewriting it.
+
+### NOT verified — and the gap is the whole question
+- **No call has been made.** Types and method signatures were reflected over; **nothing was
+  invoked.** Whether `Mesh.ReadFromFile` or `AnvilGLTF.CreateGLTF` actually succeed outside the
+  application depends on state the GUI may set up first — `ScimitarClass` construction, the game
+  registry (`ScimitarClassRegistry`), the loaded `Games.gsb`, `Lists\GhostReconBreakpoint.gfl`,
+  settings from `AnvilToolkit.dll.config`. **Reflection proving a method exists is not the same as
+  that method working.** This is precisely the error pattern the 2026-08-30 correction names —
+  finding support and stopping — so it is written down as untested on purpose.
+- **The first real test is read-only and cheap:** load one known `.data`, call the mesh read path,
+  and compare the result against what this repo's own independent Python parsers already say about
+  the same file. Two independent readers agreeing is a real check; one reader running is not.
+
+### ⚠️ Safety — the write path is live
+`ForgeFile.Serialize` and `Mesh.WriteToFile` are **in this surface**. A pythonnet layer therefore
+has, in principle, the ability to rewrite forges **without ATK's GUI safeguards** — and ATK's
+backup defaults (`CreateBackups`, `CreateDataBackups`, `CreateFileBackups`, all `True`) are
+*application settings*, not library behaviour. There is no reason to assume they apply to a direct
+library call.
+
+**Rule for any work down this path: read-only until proven otherwise, and never a write to a real
+forge without a verified backup and an explicit instruction** — CLAUDE.md safety rules 1 and 2,
+which this does not weaken but makes considerably easier to violate by accident.
+
+### Open questions
+1. **Does `Mesh.ReadFromFile` work on a real GRB `.data` outside the app?** The cheap decisive test.
+2. **What does `ScimitarClass` need to be constructed?** Probably the gate on everything else.
+3. **Does `AnvilGLTF.CreateGLTF` produce a GLB byte-identical to the GUI's export?** If yes, the
+   export click is genuinely automatable and the pipeline diagram changes.
+4. **What does `EnableCommands` actually expose?** Still unexamined; now lower priority, because
+   direct library calls would be a better interface than a console anyway.
+5. **Is `Reflex3SkeletonConstraints` readable this way?** ATK's Reflex3 parser is gated behind
+   `Version != Game.Mirage` for Breakpoint (see
+   [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md)), so this
+   would likely reproduce the gate rather than bypass it — `reflex3.py` stays the tool for GRB.
+
+---
+
+## Entry — 2026-09-01 — ATK's mesh reader RUNS headlessly, and it corrects a "verified" fact about GRB skinning
+
+### What I did
+Ran the cheap decisive test the 2026-08-31 (second) entry specified and left open:
+*load one known `.data`, call the mesh read path, and compare the result against this repo's own
+Python parsers on the same file.* That entry was careful to record that **nothing had been invoked**
+— only reflected over. It has now been invoked, on `TP_Tacvest_Walker_Coat_LOD0` and `LOD1`.
+
+### VERIFIED (new) — ATK's `Mesh` reader works outside the application, and agrees
+Two independent readers, same files, same numbers:
+
+| | LOD0 (this repo, 2026-07-01) | LOD0 (ATK, headless) | LOD1 (repo) | LOD1 (ATK) |
+| --- | --- | --- | --- | --- |
+| Vertices | 1816 | **1816** | 956 | **956** |
+| Triangles | 3263 | **3263** | 1631 | **1631** |
+| Vertex stride | 36 | **36** | 36 | **36** |
+| Max index | 1815 | **1815** | — | **955** |
+
+Container-layer facts agree too: file-header length (1 B), `ClassID` `1707208439117`, class hash
+`1096652136`. ATK's own `DataFile.ReadFileHeader` computes the header length by exactly the rule
+[`resource-type-ids.md`](../reference/resource-type-ids.md) states (`12·n + 8` when the lead byte is
+`1`, else 1) — an independent confirmation of a format note this KB derived separately.
+
+**So `AnvilGLTF`/`Mesh`/`ForgeFile` are not merely reflectable, they are callable.** The reframing
+in the 2026-08-31 entry survives contact with a real call.
+
+### VERIFIED (new) — three things gate it, and each is silent when wrong
+The 2026-08-31 entry guessed the gate would be `ScimitarClass` construction or the game registry.
+It is neither. It is:
+
+1. **`<ATK>\Libs` is not on .NET's probe path.** Without an `AssemblyResolve` handler pointing
+   there, `GetTypes()` throws `ReflectionTypeLoadException`. The prior session read that as
+   "expected, the WPF types fail" and moved on with 1235 types. **With the handler, 1245 types load
+   and there are zero loader exceptions** — so the exception was a missing-dependency artifact, not
+   an inherent WPF limit. Ten types were being lost silently.
+2. **`DataStorage.GlobalScimitarClassReader` is a public static that only the GUI populates.**
+   `ScimitarClass.ClassReader` is a *field initializer* reading it, so every instance built while it
+   is null carries a null reader. `Mesh.ReadFromFile` then dies on its first `ClassReader.Read(...)`
+   — at byte 24, immediately after reading the bone count. It is a plain parameterless class;
+   constructing one and assigning the static is the whole fix, but it must happen **before** any
+   `ScimitarClass` is constructed.
+3. **`Mesh.Read` catches its own exceptions**, prints to `Console` and sets `Failed = true`. A
+   failed read therefore returns a *half-built object that looks plausible* — the first attempt
+   reported a real `VertexFormat` and a real `UVScale` off a mesh that had parsed 11 bytes. Capture
+   `Console.Out` or you get no message at all.
+
+### ⚠️ `Failed` is not a success signal for GRB meshes in ATK 1.3.1
+Even on a fully correct read, ATK wants **exactly one byte more** than the resource payload holds:
+it ends at `88089/88089` with *"Unable to read beyond the end of the stream"* and `Failed = True`.
+Append a single zero byte and `Failed` is `False` with byte-identical geometry. Confirmed on both
+LODs. **Whether that byte is an ATK over-read or a container subtlety is UNRESOLVED** — flagging it
+rather than picking the flattering explanation.
+
+Also noted: `Mesh.ReadIndexData()` **appends** to `Faces` instead of clearing, and on the successful
+path `ReadFromFile` already calls it — so calling it again silently doubles the triangle count
+(3263 → 6526). Caught only because 6526 = 2×3263 was too tidy to be geometry.
+
+### ⚠️ CORRECTION — GRB garment meshes are FOUR-influence, not two-bone
+This supersedes a claim carried as **VERIFIED** since 2026-07-01 and repeated in
+[`docs/11`](../docs/11-cloth-and-physics.md) three times.
+
+**The old claim:** *"Last 4 bytes = two-bone skinning `[idx0, w0, idx1, w1]`, `w0+w1 = 255` … for
+all 1816 verts; bone indices span only 0..23."*
+
+**What is actually there.** ATK reports the format as
+`Pos3s_Col1s_Norm3ub_Col1ub_Tan4ub_Binorm4ub_Tex2s_Joint4_Col4ub`, which accounts for all 36 bytes:
+
+```
+0      6       8         11       12       16          20      24       32      36
+| Pos3s | Col1s | Norm3ub | Col1ub | Tan4ub | Binorm4ub | Tex2s | Joint4 | Col4ub |
+                                                                 ^^^^^^   ^^^^^^
+                                                    4 idx + 4 weights     read as
+                                                                          skinning
+```
+
+Skinning lives at **bytes 24–31** — four bone indices then four weights — and bytes 32–35 are a
+colour channel. The 2026-07-01 parse read the colour channel.
+
+- **Influences per vertex, LOD0:** `{1: 490, 2: 53, 3: 238, 4: 1035}`. The majority of vertices use
+  **four** bones. LOD1: `{1: 204, 2: 32, 3: 133, 4: 587}`.
+- Weights at 24–31 sum to 255 for **all** 1816 vertices; indices span **1..25** against a 30-entry
+  `Bones` list (LOD1: 0..24 against 25).
+- **The clincher:** ATK exposes bytes 32–35 as vertex `Color2`. On vertex 0 it reads
+  `(0.02745, 0.02353, 0.02353, 0.97647)` — ×255 = `(7, 6, 6, 249)` = the raw bytes `07 06 06 f9`,
+  exactly. Meanwhile ATK reads that same vertex as rigidly bound to bone 9 at weight 255, from
+  `09 00 00 00 | ff 00 00 00` at 24–31.
+
+**Why the old check passed, which is the part worth keeping.** The test used was *"do the two
+weights sum to 255?"* — and they do, 1816/1816. But so do the real weights at 24–31, and the
+complementary pair inside a normalized colour channel satisfies it too. Both hypotheses score
+1816/1816; both keep their "bone indices" inside the bone count (0..23 and 0..22 against a 30-bone
+list), so even a range check does not separate them. **A test that a wrong model also passes is not
+evidence.** What separated them was byte-budget accounting (under the old model, bytes 24–31 —
+14,528 bytes on LOD0 — were entirely unexplained) and reading the same bytes through the reference
+implementation. This is the identical failure mode the 2026-08-14 bone-name work guarded against
+with its null control, arrived at from a different direction.
+
+Practical consequences: the render mesh is still *skeleton-skinned with no per-vertex sim binding*,
+so **the conclusion that disproved "4561–4565 is the render↔sim binding" is unaffected** — it
+rested on 1816 ≠ 170 + 62, which still holds. What changes is anything downstream of influence
+count. For **lane 2B** that is direct: a weight transfer onto a GRB garment must carry up to four
+influences per vertex, and `tools/blender/`'s `inspect` warns above four — the right threshold,
+confirmed rather than assumed. `PackedJoints.MaxCount` is 8, so ATK itself can carry more.
+
+### Built: [`tools/atk_bridge.py`](../tools/atk_bridge.py)
+The loader recipe, packaged, so this is reproducible by a stranger. `start()` / `arm()` /
+`resources()` / `read_mesh()` / `summarize()`, plus a CLI. The container layer stays **ours**
+(`data_inspect.py` decompresses and slices the payload) and only the payload goes to ATK — that is
+what keeps the two readers independent.
+
+⚠️ It never calls `DataFile`. `DataFile.Deserialize` calls `CreateBackup` and unpacks to an
+`Extracted\` folder — it **writes to the install**, which is not what "read-only test" means. The
+docstring says so, at length, because the write path (`ForgeFile.Serialize`, `Mesh.WriteToFile`)
+sits in the same object graph with none of ATK's application-level backup settings applying.
+
+### Open questions
+1. **The one-byte tail.** ATK over-read, or is the resource payload one byte longer than the record
+   length says? Check a non-Mesh type through the same path — if `Skeleton` also wants +1, it is the
+   container; if only `Mesh` does, it is the reader.
+2. **`SubMeshes` is 0 on both LODs** while `Bones` is 30/25. Expected, or another silent gate?
+3. **Does `AnvilGLTF.CreateGLTF` run headlessly too?** That is the one that matters — it would make
+   the ATK export click automatable and change the pipeline diagram in
+   [`tools/blender/README.md`](../tools/blender/README.md), which currently calls it manual. Same
+   three gates presumably apply; the GLB it writes can be diffed against a GUI export.
+4. **Re-check the other numbers 2026-07-01 derived from that hand parse** — `QuantizationFactor`,
+   the position decode, the LOD1 figures. Two of its claims about the same vertex layout were wrong;
+   the rest were verified three ways and stand, but they came from the same scratch parser.
+
+### Addendum (same session) — `AnvilGLTF.CreateGLTF` gets all the way in, and a FOURTH silent gate
+
+Pushed one step further than the mesh read, because any design built on top of this needs to know
+whether the *export* half is automatable. Short answer: **yes, apparently** — the remaining failure
+is a missing input, not a missing environment.
+
+**Gate 4 — `HashedData.CheckStrings()` is a startup race.** Every hash→name lookup routes through
+it, and it kicks its load off inside a `Task.Run` and **returns immediately**:
+
+```csharp
+public static void CheckStrings() {
+    if (HashedStrings != null) return;
+    Task.Run(delegate { HashedStrings = new Dictionary<uint, string>(); ... });
+}
+```
+
+So the first caller dereferences a still-null dictionary → `NullReferenceException`. The GUI wins
+the race by loading early; a headless caller loses it. This is the same failure that made
+`ScimitarClass.ClassName` throw during the mesh test — recorded there as "cosmetic", which was
+wrong: it is the same gate, and it blocks glTF export outright. `atk_bridge.prime_hashes()` starts
+the load and waits for the count to settle.
+
+> **⚠️ Inferred, not verified:** the settle-detection is a plateau check (two equal readings 0.3 s
+> apart). ATK exposes no completion flag. A slower machine could plateau early and under-load.
+
+**VERIFIED — `CreateGLTF` runs.** With hashes primed, the call reaches
+`AnvilGLTF.ToGLTFS4(Mesh, Bones, ModelRoot, Scene)` and fails with
+`Missing skeleton! Bone "LeftArm" not found.` — i.e. it got through argument marshalling, into the
+real converter, and stopped because **I passed an empty skeleton list** for a skinned mesh. That is
+correct behaviour on bad input, not an environment failure. **The remaining work to automate the
+ATK export click is "locate and pass the garment's `Skeleton` resource", not "make the library
+work."** ⚠️ Still unproven end to end: no GLB has been written yet, and nothing has been diffed
+against a GUI export.
+
+**VERIFIED — ATK's embedded dictionary is 820,037 names, ~3× what we extract by hand.**
+[`atk_hashes.py`](../tools/atk_hashes.py) pulls **276,087** names out of `hashes.hl`; ATK's own
+loader on the same install produces **820,037**. Our extractor is getting well under half of it.
+Worth re-checking whether the missing ~544 k changes the 4 % GRB bone-hash resolution rate quoted
+on 2026-08-14 — though the result below suggests not.
+
+**The bone-name question, answered against the full dictionary.** `MeshBone` carries `Name` (a
+CRC32) and `NameString` (resolved). On `TP_Tacvest_Walker_Coat_LOD0`, **8 of 30 resolve**:
+
+```
+LeftArm, RightArm, LeftShoulder, RightShoulder, Neck, Spine1, Spine, Hips
+```
+
+All eight are standard biped — consistent with the naming grammar in
+[`grb-bone-names.tsv`](../reference/grb-bone-names.tsv) (unprefixed = biped). The other **22 stay
+bare numbers**, and they are the ones that matter: bones 0–4 (the resolved arm/shoulder/neck set)
+have `IsUsedBySubMeshes = False`, while nearly every *used* bone is unresolved.
+
+This **hardens a lead rather than opening one**. The 2026-08-31 entry closed off "a modder's
+original rig" as a source (no 3-D files in the local corpus). This closes off the richer dictionary
+too: even ATK's complete 820 k table does not contain GRB's garment bone names, so the shortfall
+was never our extractor. An animation resource storing track names as strings remains the best
+untried bet.
+
+**Practical upshot for tooling:** `atk_bridge.py` gained `prime_hashes()` and `hashed_string()`, and
+`summarize()` now reports resolved bone names — which makes it, incidentally, a bone-name recovery
+tool for any GRB mesh, not just a cross-check harness.
+
+### Addendum 2 (same session) — built the pre-flight rebind validator
+
+With the ATK bridge working, the first thing built on it is
+[`tools/rebind_check.py`](../tools/rebind_check.py): given a physics-carrying
+skeleton and a candidate GLB, does the new mesh's weight painting reach the bones
+Reflex3 actually drives? Chosen over automating ATK's export/import clicks because
+clicks cost minutes and a silent rigging failure costs a game launch — and a hung
+GRB needs `taskkill /F /T`.
+
+**It is the first thing in this project that needs both halves at once.** ATK reads
+GRB meshes and skeletons but cannot parse Reflex3 (gated behind `Version !=
+Game.Mirage`); `reflex3.py` parses Reflex3 but knows nothing about meshes. The check
+is the intersection, which is why it could not have been written before today.
+
+**VERIFIED — the name-matching trick that makes it work.** Reflex3 addresses bones by
+CRC32 of the exact-case name, and GRB's dangle bones are absent from ATK's dictionary
+— so `HashedData.GetHashedString` falls back to `id.ToString()` and ATK writes those
+glTF nodes with **the number as the name**. A numeric node name therefore *is* the
+bone hash, which sidesteps the unresolved-names problem entirely for this purpose.
+Non-numeric names are CRC32-ed exact/lower/upper (ATK's own map convention), Blender's
+`.001` suffixes stripped, and anything still unmatched is reported as a warning — the
+tool degrades to "cannot check", never to a silent pass.
+
+**Checks:** influences ≤ 4 (the `Joint4` limit corrected earlier today — a `JOINTS_1`
+set is caught as up-to-8), weight coverage, UV sets (>5 rejected), vertex colours, and
+the physics cross-reference. The physics result distinguishes two failures that need
+different fixes: a driven bone **present in the skin but carrying no weight** (chain
+will not move, *and* it is the bone most at risk from ATK's "removes unused bones" on
+import) versus one **absent from the skin entirely** (wrong rig transferred).
+
+**Tested** against `TP_HunterScarf_A_Skeleton` (6 driven bones, constraint types 5, 6,
+24 — note **none** of type 21, so a Reflex3 rig need not contain a single
+`Reflex3Physics` record) on five inputs: a synthetic clean case (PASS), a synthetic
+case with 75 % coverage plus one unweighted and one missing driven bone (all three
+caught), a two-`JOINTS`-set case (caught), the real Blender weight-transfer output
+`_selftest_result.glb` (correctly FAILs — its synthetic `Coat_Root` names match no GRB
+bone, and the warning says exactly that), and the unrigged poncho (correctly FAILs on
+no skin). The GLB reader is stdlib-only and parses real `io_scene_gltf2` output.
+
+> **⚠️ Not verified:** no *real* GRB garment has been through the full loop yet, because
+> that still needs an ATK GLB export — which is the next thing the bridge could
+> automate. The validator's own logic is tested; the pipeline it guards is not.
+
+**Documentation gap found while wiring this up — two numbering spaces, one word.**
+`Reflex3Physics` is **id 10** in ATK's `Reflex3ConstraintTypeRegistry` but the physics
+record's **type byte in a GRB blob is 21** (`PHYSICS_TYPE` in
+[`reflex3.py`](../tools/reflex3.py)). Both numbers are correct and the KB already holds
+both — the 2026-08-14 (third) entry identified byte 21 as physics *empirically*
+(`param[4] == 9.8` in 1,344/1,354 records, matching `Reflex3Physics.Gravity`'s ATK
+default), not by matching ATK's registry. But
+[`skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md) prints ATK's
+registry table without saying it is a *different space* from the blob's type byte, so a
+reader who greps a real blob for "type 10" finds nothing and a reader who sees "21" in
+tool output cannot find it in the table. Ids 6/7/9 coincide across both spaces, which
+makes the trap worse, not better. Noted in the reference doc.

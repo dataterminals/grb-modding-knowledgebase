@@ -64,6 +64,7 @@ assets/      Diagrams and supporting images
 | [`docs/10-meshes-and-skeletons.md`](docs/10-meshes-and-skeletons.md) | Vertex formats, LODs, the glTF pipeline, skeletons |
 | [`docs/11-cloth-and-physics.md`](docs/11-cloth-and-physics.md) | The `.cloth` / MotionCloth format, reverse-engineered from ATK source — sections, tunable properties, how to mod cloth |
 | [`docs/12-localization-and-text.md`](docs/12-localization-and-text.md) | Renaming items, weapons, and any in-game text via `LocalizationPackage` XML |
+| [`docs/13-blender-for-grb.md`](docs/13-blender-for-grb.md) | Blender from a standing start, for someone who has rigged a player model before |
 
 Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventory.md) · [`reference/resource-types.md`](reference/resource-types.md) · [`reference/resource-type-ids.md`](reference/resource-type-ids.md) · [`reference/buildtable-xml.md`](reference/buildtable-xml.md) · [`reference/cloth-section-types.md`](reference/cloth-section-types.md) · [`reference/mod-anatomy.md`](reference/mod-anatomy.md) · [`reference/glossary.md`](reference/glossary.md)
 
@@ -74,6 +75,9 @@ Techniques and sources: [`reference/hex-item-swaps.md`](reference/hex-item-swaps
 - **🧵 Cloth Inspector** ([`tools/`](tools/README.md)) — a click-to-run tool (window, drag-and-drop, or a standalone `.exe`) that reads a GRB cloth (`.Cloth` or `.data`) and tells you, in plain language, what it is: its cloth pieces (LODs), the **mesh + LOD** each drives, the sim-mesh size, and **how the garment is attached** (DIRECT vs BARYCENTRIC — i.e. how you can reskin it). Now backed by the exact MotionCloth reader (`motioncloth.py`). **No coding needed.** See [`tools/README.md`](tools/README.md).
 - **🔎 Data Inspector** ([`tools/`](tools/README.md)) — a click-to-run tool (window, drag-and-drop, or a standalone `.exe`) that lists the typed resources inside any GRB `.data` (name, **type**, ClassID, size), Oodle-decompressing via the game's DLL. **No coding needed.** See [`tools/README.md`](tools/README.md).
 - **🗂️ Forge Inspector** ([`tools/`](tools/README.md)) — a click-to-run tool (window, drag-and-drop, or a standalone `.exe`) that reads a whole `.forge` by its index (fast, no unpacking) to show its resource-type histogram, or **diff two forges by real file ID** to find mod conflicts/overrides. **No coding needed.** See [`tools/README.md`](tools/README.md).
+
+- **🧵 Rebind Check** ([`tools/rebind_check.py`](tools/rebind_check.py)) — you have put a vanilla garment's weight painting onto a new mesh and you are about to repack. This answers, **from files alone**, the question a rebind actually fails on: *does the new mesh's weight painting reach the bones Reflex3 actually drives?* Plus influence count, weight coverage, UV sets and vertex colours. Catches a dead dangle-chain before you spend a game launch on it. Stdlib only — no Blender, no dependencies.
+- **⚙️ ATK Bridge** ([`tools/atk_bridge.py`](tools/atk_bridge.py)) — calls **ATK's own** format engine from Python, headlessly. ATK has no command line, but `AnvilToolkit.dll` is an ordinary .NET library and the app is only a shell over it, so the community's reference implementation can be used as a second opinion against this repo's parsers. Also resolves bone names via ATK's 820,037-name dictionary. **Read-only by policy.**
 
 ## Community
 

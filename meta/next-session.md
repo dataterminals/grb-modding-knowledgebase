@@ -8,6 +8,40 @@ somewhere else entirely. Every lane is written down now, so none of them gets lo
 reason this repo exists. Then the two 2026-08-09 entries in [`research-log.md`](research-log.md)
 for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-24 entries.
 
+> **⚠️ Paths moved (2026-08-31). Everything is on `D:` now, not `H:`.** GRB install
+> `D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint`, ATK `D:\Anvil Toolkit`, this repo
+> `D:\Github Repositories\grb-modding-knowledgebase`. Older research-log entries name `H:` and are
+> left alone on purpose — they record where things were at the time.
+
+> **🧊 New (2026-08-31): Blender is scriptable from the command line, and there is now a bridge
+> for it** — [`tools/blender/`](../tools/blender/README.md). `doctor`, `selftest`, `inspect`,
+> `transfer-weights`, `run`. Blender 5.2.1 LTS lives at
+> `D:\SteamLibrary\steamapps\common\Blender`. **This is lane-2B tooling**: a scripted, checkable
+> weight transfer is the Blender-side half of the bone-physics route. The selftest passes on
+> synthetic data; **no real GRB mesh has been through it yet** — that is the next cheap experiment.
+
+> **⚙️ New (2026-09-01): ATK's format engine is CALLABLE from Python** —
+> [`tools/atk_bridge.py`](../tools/atk_bridge.py). The 2026-08-31 finding said the types were
+> *reflectable* and honestly flagged that nothing had been invoked. Now they have: ATK's own mesh
+> reader runs headless and **agrees with this repo's independent parser** on the Walker coat
+> (1816/3263 and 956/1631). Three gates, all silent when wrong — `Libs\` needs an `AssemblyResolve`
+> handler, `DataStorage.GlobalScimitarClassReader` must be populated before anything is constructed,
+> and `Mesh.Read` swallows its own exceptions into a plausible-looking half-built object.
+> ⚠️ **`Failed` is not a success signal** (ATK wants one byte past the payload), and the bridge
+> deliberately never touches `DataFile` — its `Deserialize` writes to your install.
+> ⚠️ **It also corrected a fact this KB carried as VERIFIED since 2026-07-01:** GRB garment meshes
+> are **four-influence**, not two-bone. That matters directly to lane 2B's weight transfer.
+
+> **🧵 New (2026-09-01): the lane-2B pre-flight check exists** —
+> [`tools/rebind_check.py`](../tools/rebind_check.py). Point it at a physics-carrying skeleton and
+> your candidate GLB and it answers *does the new mesh's weight painting reach the bones Reflex3
+> actually drives?*, plus influences/coverage/UVs/vertex-colours. **It is the first thing here that
+> needs ATK and this repo's own decoders at once** — ATK reads meshes but is gated out of Reflex3;
+> `reflex3.py` reads Reflex3 but knows nothing about meshes.
+> **Do this before any in-game test**, then spend the launch. Tested on five inputs including the
+> real Blender transfer output; **no real GRB garment has been through it**, because that still
+> needs an ATK GLB export — see lane 2B step 1 below.
+
 ---
 
 ## Three lanes. Know which one you're in.

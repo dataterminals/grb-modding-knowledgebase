@@ -318,6 +318,24 @@ half limited −20°→0° and half 0°→+20° — panels hinging fore and aft.
 Ids `2`, `4`, `5`, `8` are **unmapped by ATK** — the same kind of blind spot as the 22 unmodeled
 MotionCloth sections (see [`cloth-section-types.md`](cloth-section-types.md)).
 
+> **⚠️ These ids are NOT the type byte you will find in a GRB blob.** (Noted 2026-09-01.) The table
+> above is **ATK's registry**; the blob carries its **own** type byte, and the two spaces only
+> partly coincide. Most importantly:
+>
+> | | ATK registry id | GRB blob type byte |
+> | --- | ---: | ---: |
+> | `Reflex3Physics` | **10** | **21** |
+> | `Reflex3HingeVector` | 6 | 6 |
+> | `Reflex3LookAt` | 7 | 7 |
+> | `Reflex3Orientation` | 9 | 9 |
+>
+> Because 6/7/9 agree, it is easy to assume 10 will too — it does not. GRB blobs use type bytes
+> `5, 6, 7, 9, 19, 20, 21, 23, 24`; **there is no type-10 record in any of the 205 blobs surveyed.**
+> Byte 21 was identified as the physics record *empirically*, not by number: `param[4] == 9.8` in
+> 1,344 of 1,354 records, matching `Reflex3Physics.Gravity`'s ATK default (2026-08-14, third entry).
+> [`tools/reflex3.py`](../tools/reflex3.py) speaks the **blob** space (`PHYSICS_TYPE = 21`); prose
+> quoting ATK's source speaks the **registry** space. Say which one you mean.
+
 ### `Reflex3Physics` — the tunable fields
 
 Decompiled from `Reflex3Physics.ReadData(BinaryReader)`, in wire order:
