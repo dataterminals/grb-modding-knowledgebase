@@ -107,7 +107,7 @@ class GLB:
                     self.bin = data
                 off += 8 + clen + ((4 - clen % 4) % 4 if clen % 4 else 0)
             if self.json is None:
-                raise SystemExit(f"{path}: no JSON chunk - not a valid GLB")
+                raise ValueError(f"{path}: no JSON chunk - not a valid GLB")
         else:                                        # plain .gltf
             self.json = json.loads(blob.decode("utf-8"))
             self.bin = b""
@@ -228,7 +228,13 @@ def check_mesh(glb, rep):
         ws = sorted(k for k in attrs if k.startswith("WEIGHTS_"))
         joint_sets = max(joint_sets, len(js))
         uv_sets = max(uv_sets, len([k for k in attrs if k.startswith("TEXCOORD_")]))
-        color_sets = max(color_sets, len([k for k in attrs if k.startswith("COLOR_")]))
+        # ATK/SharpGLTF writes the 2nd..5th colour set as the custom attributes
+        # `_COLOR_1`..`_COLOR_4` - glTF only standardises COLOR_n, so extras take
+        # the underscore prefix. Counting only "COLOR_" undercounts a real GRB
+        # garment 5 sets down to 1. (Seen on TP_Tacvest_Walker_Coat_LOD0.)
+        color_sets = max(color_sets, len([k for k in attrs
+                                          if k.startswith("COLOR_")
+                                          or k.startswith("_COLOR_")]))
         if not js or not ws:
             rep.add("FAIL", f"Primitive {mname}[{pi}] has no joints/weights",
                     "Unrigged geometry cannot follow a physics bone.")
@@ -290,8 +296,13 @@ def check_mesh(glb, rep):
     return names, weighted_joints, total_verts
 
 
-def check_physics(skel_path, names, weighted_joints, rep, oodle_override=None):
-    """The money check: do the weights reach the bones Reflex3 drives?"""
+def check_physics(skel_path, names, weighted_joints, rep, oodle_override=None,
+                  donor_bones=None):
+    """The money check: do the weights reach the bones Reflex3 drives?
+
+    `donor_bones` is the set of bone-name hashes the vanilla garment actually
+    weighted. Supplying it scopes the check to bones this garment is *supposed*
+    to drive; without it the whole rig is in scope and findings are WARNs."""
     r3 = _sibling("reflex3")
     di = _sibling("data_inspect")
     oodle = di.Oodle(di.find_oodle(skel_path, oodle_override))
@@ -333,8 +344,15 @@ def check_physics(skel_path, names, weighted_joints, rep, oodle_override=None):
     def present(hashval):
         return any(hashval in cands for _i, _n, cands, _l in slot_hashes)
 
+    # Which driven bones is THIS garment supposed to use? A character rig drives
+    # hair, straps and everything else; a coat is never meant to weight them all.
+    # The donor's own bone usage is the honest reference set - without it we
+    # cannot tell "you lost the coat's physics" from "the rig also drives hair".
+    scoped = sorted(set(driven) & donor_bones) if donor_bones else sorted(driven)
+    out_of_scope = len(driven) - len(scoped)
+
     missing, dead, live = [], [], []
-    for bone in sorted(driven):
+    for bone in scoped:
         label = _label(bone, skel_bones)
         if not present(bone):
             missing.append(label)
@@ -350,23 +368,49 @@ def check_physics(skel_path, names, weighted_joints, rep, oodle_override=None):
             + (f"; {len(physics_driven)} bone(s) under Reflex3Physics (type {phys_type})"
                if phys_type is not None else ""))
 
+    if donor_bones and not scoped:
+        rep.add("FAIL", "This skeleton drives NONE of the bones your donor uses",
+                f"{os.path.basename(skel_path)} drives {len(driven)} bones and the\n"
+                "donor weights none of them - so there is no physics here to\n"
+                "inherit. Almost certainly the wrong skeleton for this garment.\n"
+                "Nothing below would have been checked, so this is a hard stop.")
+        return
+
+    if out_of_scope:
+        rep.add("INFO", f"{out_of_scope} driven bones ignored - the donor does not "
+                        f"use them either",
+                "A character rig drives hair, straps and other garments' bones too.\n"
+                "Only the ones your donor actually weighted are your problem.")
+
+    # Severity depends on whether we know the donor's bone set. Without it, an
+    # unweighted driven bone may simply be one this garment never used - a WARN,
+    # not a FAIL, because the tool genuinely cannot tell the difference.
+    sev = "FAIL" if donor_bones else "WARN"
+    scope = "the donor uses" if donor_bones else "the rig drives"
+
     if live:
         top = ", ".join(f"{n}" for n, _w in sorted(live, key=lambda x: -x[1])[:8])
-        rep.add("PASS", f"{len(live)} driven bones carry weight from your mesh",
-                f"e.g. {top}")
+        rep.add("PASS", f"{len(live)} of the {len(scoped)} bones {scope} carry weight "
+                        f"from your mesh", f"e.g. {top}")
     if dead:
-        rep.add("FAIL", f"{len(dead)} driven bones are in the rig but carry NO weight",
+        rep.add(sev, f"{len(dead)} bones {scope} are in the rig but carry NO weight",
                 "These chains will not move, and ATK 'removes unused bones' on GRB\n"
                 "import - so they may vanish from the mesh entirely and take the\n"
                 "physics with them. Weight-paint the new mesh onto them.\n"
                 + "  " + ", ".join(dead[:16]) + (" ..." if len(dead) > 16 else ""))
     if missing:
-        rep.add("FAIL", f"{len(missing)} driven bones are absent from the GLB's skin",
+        rep.add(sev, f"{len(missing)} bones {scope} are absent from the GLB's skin",
                 "The rig you transferred from is not the rig this skeleton drives,\n"
                 "or the export dropped them.\n"
                 + "  " + ", ".join(missing[:16]) + (" ..." if len(missing) > 16 else ""))
     if not dead and not missing:
-        rep.add("PASS", "Every Reflex3-driven bone is present and weighted")
+        rep.add("PASS", f"Every bone {scope} is present and weighted in your mesh")
+    if not donor_bones:
+        rep.add("INFO", "No --donor given, so the checks above are scoped to the "
+                        "WHOLE rig",
+                "Pass --donor <vanilla garment .data> to scope them to the bones the\n"
+                "original garment actually used. Without it, a full character rig\n"
+                "will report dozens of bones your garment was never meant to touch.")
 
     if unmatchable:
         rep.add("WARN", f"{len(unmatchable)} bone names could not be matched to a hash",
@@ -381,7 +425,10 @@ def _label(bone_hash, skel_bones):
 
 
 def check_donor(donor_path, rep):
-    """Optional: profile the vanilla garment, for comparison."""
+    """Profile the vanilla garment -> the set of bone hashes it actually weights.
+
+    That set is what scopes the physics check: it is the difference between
+    'you lost the coat's physics' and 'the rig also drives somebody's hair'."""
     try:
         sys.path.insert(0, _HERE)
         import atk_bridge as ab
@@ -389,19 +436,27 @@ def check_donor(donor_path, rep):
     except Exception as e:
         rep.add("WARN", "Donor profile unavailable",
                 f"atk_bridge could not read it: {str(e).splitlines()[0][:90]}\n"
-                "This is optional - the checks above do not depend on it.")
-        return
+                "Falling back to whole-rig scope for the physics check.")
+        return None
     vb = bytes(mesh.VertexBuffer)
     stride = mesh.VertexStride
-    hist = {}
+    bone_hashes = [b.Name for b in mesh.Bones]
+    hist, used = {}, set()
     for k in range(len(vb) // stride):
-        n = sum(1 for i in range(4) if vb[k * stride + 28 + i] > 0)
+        n = 0
+        for i in range(4):
+            if vb[k * stride + 28 + i] > 0:          # weight byte non-zero
+                n += 1
+                slot = vb[k * stride + 24 + i]       # bone index into mesh.Bones
+                if slot < len(bone_hashes):
+                    used.add(bone_hashes[slot])
         hist[n] = hist.get(n, 0) + 1
     rep.add("INFO", f"Donor {os.path.basename(donor_path)}: "
                     f"{mesh.Vertices.Count} verts, {mesh.Faces.Count} tris, "
-                    f"{mesh.Bones.Count} bones",
+                    f"{mesh.Bones.Count} bones ({len(used)} actually weighted)",
             f"influences per vertex: {dict(sorted(hist.items()))}\n"
             f"vertex format: {mesh.VertexFormat}")
+    return used
 
 
 def main(argv):
@@ -428,10 +483,11 @@ def main(argv):
     rep = Report()
     glb = GLB(args["--mesh"])
     names, weighted, _n = check_mesh(glb, rep)
+    # Donor first: its bone usage scopes the physics check below.
+    donor_bones = check_donor(args["--donor"], rep) if "--donor" in args else None
     if names:
-        check_physics(args["--skeleton"], names, weighted, rep, args.get("--oodle"))
-    if "--donor" in args:
-        check_donor(args["--donor"], rep)
+        check_physics(args["--skeleton"], names, weighted, rep,
+                      args.get("--oodle"), donor_bones)
     rep.render()
 
     print("=" * 70)

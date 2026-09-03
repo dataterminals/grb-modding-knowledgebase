@@ -435,6 +435,19 @@ python atk_bridge.py 87874_-_TP_Tacvest_Walker_Coat_LOD0.data
   influences/vertex  {1: 490, 2: 53, 3: 238, 4: 1035}
 ```
 
+It also **exports a garment to GLB with no ATK GUI at all** — the click at the
+front of the authoring pipeline, automated:
+
+```
+python atk_bridge.py 87874_-_TP_Tacvest_Walker_Coat_LOD0.data --export Coat.glb
+```
+
+It finds the rigs itself. A GRB garment needs **two** — a character skeleton plus a
+garment addon (the Walker coat: 24 bones from one, 6 from `Vest_Generic_Addon`) —
+and `CreateGLTF` refuses a skinned mesh whose bones it cannot find. ⚠️ Auto-discovery
+picks by bone coverage alone, so ties between character rigs break arbitrarily; names
+and hierarchy will be right, **rest pose may not be**. Pass `--skeleton` to choose.
+
 Needs `pythonnet`, the .NET 9 runtime, and an ATK install (`GRB_ATK`, default
 `D:\Anvil Toolkit`). The container layer stays **ours** — `data_inspect.py`
 decompresses the `.data` and slices out the resource payload, and only the
@@ -511,6 +524,12 @@ taken literally when it is all digits and CRC32-ed otherwise (exact/lower/upper,
 matching how ATK builds its map); Blender's `.001` suffixes are stripped. Names
 that match nothing are reported as a warning — the tool degrades to *"I cannot
 check this"*, never to a silent pass.
+
+**Pass `--donor` (the vanilla garment's `.data`).** It scopes the physics check to the
+bones the *original* garment actually used. Without it the whole rig is in scope — and
+a character rig drives hair, straps and other garments, so a perfectly good coat gets
+reported as failing dozens of bones it was never meant to touch. Findings drop to
+warnings when no donor is given, because the tool genuinely cannot tell the difference.
 
 ⚠️ **It checks files, not the game.** It cannot tell you whether a modified
 skeleton loads at all — that is still the open both-patch-forge question in

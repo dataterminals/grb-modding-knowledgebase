@@ -74,6 +74,14 @@ _REPO_TOOLS = os.path.dirname(os.path.abspath(__file__))
 _state = {"started": False, "asm": None, "System": None, "armed": False}
 
 
+class ResourceNotFound(LookupError):
+    """The .data has no resource of the requested type.
+
+    A plain LookupError on purpose: a library must not raise SystemExit, or a
+    caller sweeping many files with `except Exception` gets killed by the first
+    container that happens to hold something else."""
+
+
 def _data_inspect():
     """Load this repo's own container reader as a module."""
     spec = importlib.util.spec_from_file_location(
@@ -90,8 +98,8 @@ def start(atk_dir=None):
     atk = atk_dir or ATK_DIR
     dll = os.path.join(atk, "AnvilToolkit.dll")
     if not os.path.isfile(dll):
-        raise SystemExit(f"AnvilToolkit.dll not found at {dll}\n"
-                         f"Set GRB_ATK to your ATK folder.")
+        raise EnvironmentError(f"AnvilToolkit.dll not found at {dll}\n"
+                               f"Set GRB_ATK to your ATK folder.")
     if not _state["started"]:
         import clr_loader
         from pythonnet import set_runtime
@@ -224,38 +232,163 @@ def resources(path):
     return out
 
 
-def read_mesh(path, index=0, atk_dir=None):
-    """Read one Mesh resource out of a .data using ATK's own reader.
+def read_typed(path, type_name, atk_type, index=0, pad=1, atk_dir=None):
+    """Read one typed resource out of a .data using ATK's own reader.
 
-    Returns the live AnvilToolkit Mesh object with Vertices/Faces populated."""
+    `type_name` selects the resource inside the container (as `data_inspect`
+    names it); `atk_type` is the full ATK type to construct. `pad` zero bytes are
+    appended - see the module docstring on the one-byte tail."""
     System, _asm = start(atk_dir)
     arm()
     from System.IO import MemoryStream, BinaryReader, StringWriter
     from System import Array, Byte
 
     res = resources(path)
-    meshes = [r for r in res if r["type_name"] == "Mesh"]
-    if not meshes:
-        raise SystemExit(f"no Mesh resource in {os.path.basename(path)} "
-                         f"(found: {[r['type_name'] for r in res]})")
-    payload = meshes[index]["payload"]
+    hits = [r for r in res if r["type_name"] == type_name]
+    if not hits:
+        raise ResourceNotFound(
+            f"no {type_name} resource in {os.path.basename(path)} "
+            f"(found: {[r['type_name'] for r in res]})")
+    payload = hits[index]["payload"]
 
     grb = game()
-    # +1 pad: ATK 1.3.1's GRB mesh reader wants one byte past the payload. See
-    # the module docstring - without it Failed is always True.
-    br = BinaryReader(MemoryStream(Array[Byte](bytes(payload) + b"\x00")))
+    br = BinaryReader(MemoryStream(Array[Byte](bytes(payload) + b"\x00" * pad)))
     System.Console.SetOut(StringWriter())   # ATK logs swallowed errors to stdout
     T("AnvilToolkit.FileTypes.AnvilNext.Containers.DataFile") \
         .GetMethod("ReadFileHeader").Invoke(None, [br, grb])
     sc = System.Activator.CreateInstance(
         T("AnvilToolkit.FileTypes.AnvilNext.ScimitarClass"),
         [br, grb, System.UInt32(0)])
-    mesh = System.Activator.CreateInstance(
-        T("AnvilToolkit.FileTypes.AnvilNext.Models.Mesh"), [br, sc])
+    return System.Activator.CreateInstance(T(atk_type), [br, sc])
+
+
+def read_mesh(path, index=0, atk_dir=None):
+    """Read one Mesh resource out of a .data using ATK's own reader.
+
+    Returns the live AnvilToolkit Mesh object with Vertices/Faces populated."""
+    mesh = read_typed(path, "Mesh",
+                      "AnvilToolkit.FileTypes.AnvilNext.Models.Mesh",
+                      index=index, atk_dir=atk_dir)
     if not mesh.Vertices.Count:      # ReadFromFile populates these on success;
         mesh.ReadVertexData()        # on the failure path it may not have.
         mesh.ReadIndexData()
     return mesh
+
+
+def read_skeleton(path, index=0, atk_dir=None):
+    """Read one Skeleton resource out of a .data using ATK's own reader.
+
+    ⚠️ ATK parses the skeleton's structure (`Bones`, hierarchy) for GRB, but NOT
+    its Reflex3 constraint blob - that parser is gated behind
+    `Version != Game.Mirage`, so `Reflex3Constraints` stays an opaque lump.
+    Use [`reflex3.py`](reflex3.py) for the bone physics."""
+    return read_typed(path, "Skeleton",
+                      "AnvilToolkit.FileTypes.AnvilNext.Models.Skeleton",
+                      index=index, atk_dir=atk_dir)
+
+
+DEFAULT_SEARCH = [
+    r"D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint\Extracted\DataPC.forge",
+    r"D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint\Extracted\DataPC_Resources.forge",
+]
+
+
+def find_skeletons_for(mesh, search_dirs=None, verbose=False):
+    """Which skeleton .data files supply this mesh's bones?
+
+    `CreateGLTF` refuses a skinned mesh whose bones it cannot find ("Missing
+    skeleton! Bone X not found"), and a GRB garment's bones are usually split
+    across TWO rigs: the character skeleton plus a garment addon (the Walker coat
+    needs `Skeleton_Harmony_Reflex` for 24 of its 30 and `Vest_Generic_Addon` for
+    the other 6). Greedily picks a covering set.
+
+    Slow - it decompresses every candidate. Returns (paths, still_missing).
+
+    ⚠️ It picks by BONE COVERAGE ALONE, and several character rigs share the same
+    biped bone names. Ties are broken arbitrarily, so it may hand you
+    `Skeleton_Female_Cinematic_162_Reflex` for a mesh the game actually wears on
+    something else. The bone names and hierarchy will be right - which is all the
+    weight transfer needs - but the REST POSE and proportions may not be the ones
+    that garment was authored against. If you care how it looks in Blender, pass
+    `--skeleton` explicitly."""
+    import glob
+    want = {b.Name for b in mesh.Bones}
+    cands = []
+    for d in (search_dirs or DEFAULT_SEARCH):
+        cands += glob.glob(os.path.join(d, "*Skeleton*.data"))
+        cands += glob.glob(os.path.join(d, "*Addon*.data"))
+    scored = []
+    for p in sorted(set(cands)):
+        try:
+            sk = read_skeleton(p)
+        except (ResourceNotFound, Exception):
+            continue
+        have = {b.Name for b in sk.Bones}
+        if want & have:
+            scored.append((len(want & have), p, have))
+    scored.sort(key=lambda x: -x[0])
+    chosen, covered = [], set()
+    for _n, p, have in scored:
+        if want <= covered:
+            break
+        if have - covered & have:            # contributes something new
+            gain = (want & have) - covered
+            if gain:
+                chosen.append(p)
+                covered |= gain
+                if verbose:
+                    print(f"    + {os.path.basename(p)} (+{len(gain)} bones)")
+    return chosen, want - covered
+
+
+def export_gltf(data_path, out_path, skeleton_paths=None, search_dirs=None,
+                verbose=False):
+    """Export one GRB mesh .data to a .glb using ATK's own glTF writer.
+
+    VERIFIED 2026-09-01 on TP_Tacvest_Walker_Coat_LOD0: 1816 verts / 3263 tris,
+    5 UV sets, 5 colour sets, 271 skin joints - written by SharpGLTF, no GUI.
+
+    ⚠️ Writes `out_path`. Point it somewhere that is NOT your game install."""
+    System, _asm = start()
+    arm()
+    prime_hashes()          # CreateGLTF names nodes; unprimed it NullReferences
+    from System.Collections.Generic import List, Dictionary
+    from System import String
+    from System.IO import StringWriter
+
+    mesh = read_mesh(data_path)
+    if skeleton_paths is None:
+        if verbose:
+            print("  searching for skeletons that supply this mesh's bones...")
+        skeleton_paths, missing = find_skeletons_for(mesh, search_dirs, verbose)
+        if missing:
+            raise LookupError(
+                f"could not find skeletons for {len(missing)} of the mesh's bones: "
+                f"{sorted(missing)[:8]}")
+
+    T_Mesh = T("AnvilToolkit.FileTypes.AnvilNext.Models.Mesh")
+    T_Skel = T("AnvilToolkit.FileTypes.AnvilNext.Models.Skeleton")
+    T_Soft = T("AnvilToolkit.FileTypes.AnvilNext.Physics.SoftBody")
+    T_Trk = T("AnvilToolkit.FileTypes.AnvilNext.Schema.BaseTypes.AnimTrack")
+    meshes = List[T_Mesh]()
+    meshes.Add(mesh)
+    skels = List[T_Skel]()
+    for p in skeleton_paths:
+        skels.Add(read_skeleton(p))
+
+    gltf = T("AnvilToolkit.FileTypes.AnvilNext.Models.AnvilGLTF")
+    method = [m for m in gltf.GetMethods()
+              if m.Name == "CreateGLTF" and len(m.GetParameters()) == 5][0]
+    sw = StringWriter()
+    System.Console.SetOut(sw)
+    try:
+        method.Invoke(None, [out_path, meshes, skels, List[T_Soft](),
+                             Dictionary[String, Dictionary[String, List[T_Trk]]]()])
+    finally:
+        System.Console.SetOut(System.Console.Out)
+    if not os.path.isfile(out_path):
+        raise RuntimeError(f"CreateGLTF wrote nothing. ATK said: {sw.ToString().strip()}")
+    return out_path, skeleton_paths
 
 
 def summarize(path):
@@ -288,13 +421,30 @@ def summarize(path):
 
 
 def main(argv):
-    if len(argv) < 2:
+    args = list(argv[1:])
+    out = None
+    skels = []
+    if "--export" in args:
+        k = args.index("--export")
+        out = args[k + 1]
+        del args[k:k + 2]
+    while "--skeleton" in args:
+        k = args.index("--skeleton")
+        skels.append(args[k + 1])
+        del args[k:k + 2]
+    if not args:
         print(__doc__)
         return 1
-    for p in argv[1:]:
+    for p in args:
         print("=" * 70)
         print(f"FILE: {os.path.basename(p)}")
-        summarize(p)
+        if out:
+            path, used = export_gltf(p, out, skels or None, verbose=True)
+            print(f"  exported -> {path} ({os.path.getsize(path):,} B)")
+            for s in used:
+                print(f"    skeleton: {os.path.basename(s)}")
+        else:
+            summarize(p)
     return 0
 
 

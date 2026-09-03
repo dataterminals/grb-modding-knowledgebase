@@ -2046,3 +2046,91 @@ registry table without saying it is a *different space* from the blob's type byt
 reader who greps a real blob for "type 10" finds nothing and a reader who sees "21" in
 tool output cannot find it in the table. Ids 6/7/9 coincide across both spaces, which
 makes the trap worse, not better. Noted in the reference doc.
+
+---
+
+## Entry — 2026-09-01 (second) — The ATK export click is automated, and a real garment went through the validator
+
+### What I did
+Finished the thread the previous entry left at *"the remaining work is to locate and pass the
+garment's `Skeleton` resource, not to make the library work."* It was exactly that.
+
+### VERIFIED — a real GRB garment exported to GLB with no ATK GUI
+`AnvilGLTF.CreateGLTF` now returns cleanly and writes a valid file.
+`TP_Tacvest_Walker_Coat_LOD0` → **351,640 B GLB**, generator `SharpGLTF 1.0.11`, containing:
+
+| | |
+| --- | --- |
+| Geometry | **1816 verts / 3263 tris** — matches the raw read, and the 2026-07-01 parse |
+| Skin joints | 271 — **51 named biped bones, 220 bare numbers** |
+| UV sets | **5** (`TEXCOORD_0..4`) — exactly at the limit `docs/10` documents |
+| Colour sets | **5** (`COLOR_0` + `_COLOR_1.._COLOR_4`) |
+| Skinning | one `JOINTS_0`/`WEIGHTS_0` set |
+
+**The 220 bare numbers are the point.** They are the dictionary fallback predicted in the previous
+entry, arriving intact through a real export — which is what `rebind_check.py`'s whole
+name-matching strategy rests on. That assumption is now observed rather than inferred.
+
+**A garment needs TWO rigs, not one.** `CreateGLTF` refuses a skinned mesh whose bones it cannot
+find, and the coat's 30 bones are split: 24 come from a character skeleton and the other **6** from
+`Vest_Generic_Addon` (28 bones). No single skeleton in the install covers a garment. This is why
+the first attempt failed with `Missing skeleton! Bone "LeftArm" not found` — an empty list.
+
+### VERIFIED — the four-influence correction, confirmed a second way
+The GLB's `JOINTS_0`/`WEIGHTS_0` accessors give the influence histogram
+`{1: 490, 2: 53, 3: 238, 4: 1035}` — **identical** to the histogram read straight out of the raw
+vertex buffer at bytes 24–31. Two entirely different paths (glTF accessors written by SharpGLTF vs
+our own byte offsets) agreeing on the same numbers. The morning's correction is now doubly attested.
+
+### The validator met real data, and real data found two bugs
+Running `rebind_check.py` on the exported coat did what testing on synthetic GLBs could not.
+
+1. **Colour sets were undercounted 5 → 1.** ATK/SharpGLTF writes the 2nd–5th colour set as the
+   *custom* attributes `_COLOR_1.._COLOR_4` (glTF only standardises `COLOR_n`, so extras take an
+   underscore prefix). The check counted `COLOR_`-prefixed keys only. A real garment would have been
+   told it had one colour set when it had five — and since a missing colour set is exactly the
+   "corrupted shading" failure `docs/10` names, that is a check that would have lied in the
+   dangerous direction.
+2. **⚠️ The physics check was scoped wrong, and this is the important one.** It compared the mesh
+   against *every* bone the skeleton drives. Run against a real character rig, the vanilla coat —
+   which is by definition correct — was reported as **FAIL: 61 driven bones carry no weight**,
+   because `Skeleton_Harmony_Reflex` drives 74 bones including hair, straps and other garments'.
+   A coat is never meant to weight them all.
+
+   The honest reference set is **the driven bones the donor garment actually weights**, so
+   `--donor` now scopes the check. Re-run: *"8 of the 8 bones the donor uses carry weight"*, 66
+   correctly ignored, **PASS**. Without `--donor` the findings drop from FAIL to WARN and say so,
+   because the tool genuinely cannot tell "you lost the coat's physics" from "the rig also drives
+   somebody's hair".
+
+   This was a **false FAIL on known-good input** — the failure mode that trains you to ignore the
+   tool. Caught only by running it on something whose answer was already known.
+
+3. Added a guard for the vacuous case: if a skeleton drives **none** of the donor's bones, the
+   scoped set is empty and the old logic would have reported a cheerful PASS. It now hard-stops
+   with "wrong skeleton for this garment".
+
+### Tooling
+- `atk_bridge.py`: `read_typed()` / `read_skeleton()`, `find_skeletons_for()` (greedy cover over
+  every candidate rig), `export_gltf()`, and `--export out.glb` on the CLI. Auto-discovery works
+  end to end: it located both rigs itself and exported.
+  > ⚠️ It picks by **bone coverage alone** and several character rigs share biped bone names, so
+  > ties break arbitrarily — it chose `Skeleton_Female_Cinematic_162_Reflex` where I had picked
+  > `Harmony_Reflex`. Names and hierarchy are right, **rest pose may not be**. Pass `--skeleton`
+  > explicitly if you care how it looks in Blender.
+- **Fixed a genuine bug in both tools:** `read_typed` raised `SystemExit` on a missing resource.
+  `SystemExit` derives from `BaseException`, so a sweep wrapped in `except Exception` was killed
+  outright by the first container holding something else — which is precisely what happened while
+  scanning 110 skeletons. Now `ResourceNotFound(LookupError)`.
+
+### Where this leaves the pipeline
+```
+   ATK export  ──►  Blender transfer  ──►  rebind_check  ──►  ATK import  ──►  repack
+   AUTOMATED        automated             automated          still manual     still manual
+   (this entry)     (2026-08-31)          (this session)     FromGLTF untested
+```
+The front half runs headlessly end to end. **`FromGLTF`/`MeshFromGLTF` — the return trip — has not
+been touched**, and the repack is deliberately still manual.
+
+> **⚠️ Unchanged and still the wall:** nobody has confirmed a modified skeleton loads in game. Every
+> bit of this assumes it. See [`next-session.md`](next-session.md).
