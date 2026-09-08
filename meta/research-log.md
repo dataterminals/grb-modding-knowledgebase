@@ -2134,3 +2134,78 @@ been touched**, and the repack is deliberately still manual.
 
 > **⚠️ Unchanged and still the wall:** nobody has confirmed a modified skeleton loads in game. Every
 > bit of this assumes it. See [`next-session.md`](next-session.md).
+
+---
+
+## Entry — 2026-09-08 — Live Blender bridge installed; ATK's glTF *importer* called for the first time; the cloth gate is load-bearing
+
+### Environment snapshot
+- **Blender:** 5.2.1 LTS, `D:\SteamLibrary\steamapps\common\Blender` (Steam), bundled Python 3.13.13. Both 5.0 and 5.2 are installed; 5.2 is the one in use.
+- **NEW — live control.** The official **Blender Lab MCP** add-on is now installed (`bl_ext.lab_blender_org.mcp`, from the `https://lab.blender.org/` extension repository), alongside this repo's own `grb_blender_addon`. The connector's Claude-side server was already running; only the Blender-side add-on was missing, which is why `localhost:9876` was closed. An assistant can now inspect and drive a *running* Blender session, not just the headless CLI. `grb_blender_addon` registers 4 operators (`analyze`, `transfer_weights`, `select_unweighted`, `export_glb`) and 3 panels.
+- **ATK:** 1.3.1 at `D:\Anvil Toolkit`. `ilspycmd` available at `C:\Users\sylvi\.dotnet\tools\ilspycmd`.
+- `grbblend.py doctor` and `selftest` both pass on this machine (7/7).
+
+### Experiment 1 — the headless GLB round trip
+
+**Method.** `atk_bridge.export_gltf` on `87874_-_TP_Tacvest_Walker_Coat_LOD0.data` → GLB in a scratch dir → back through **`AnvilGLTF.FromGLTF`**, which had never been invoked before this session → diffed against `read_mesh` of the same `.data`. Nothing was written outside the scratch directory; the install was read-only throughout.
+
+> **Verified:** `AnvilGLTF.FromGLTF(string)` returns `(List<Mesh> meshes, List<ConvexVerticesShape> shapes)` and performs the **entire** import internally — it calls `LoadBoneNodes` and `MeshFromGLTF` itself. One call is the whole import side. Skeletons auto-resolved to `29770_-_Skeleton_Female_Cinematic_162_Reflex.data` and `29792_-_Vest_Generic_Addon.data`.
+
+| field | original `.data` | round-tripped | |
+| --- | --- | --- | --- |
+| Vertices | 1816 | 1816 | PASS |
+| Faces | 3263 | 3263 | PASS |
+| SubMeshes | 0 | 0 | PASS |
+| **Bones** | **30** | **25** | **DIFF** |
+| VertexFormat | `…_Tex2s_Joint4_Col4ub` | `…_Tex2s_Joint4` | `Col4ub` dropped |
+| VertexStride | 36 | 0 | buffer not yet built |
+| VertexBuffer | 65,376 B | 0 B | buffer not yet built |
+| IsUsingClusteredData | True | False | |
+
+> **Verified — the export is faithful; nothing is lost on the way out.** Direct parse of the GLB's JSON chunk: 1 mesh, 15 attributes — `POSITION`, `NORMAL`, `TANGENT`, `TEXCOORD_0..4` (**5 UV sets**), `COLOR_0` + `_COLOR_1..4` (**5 colour sets**), `JOINTS_0`, `WEIGHTS_0`; no glTF extensions; 262 nodes, 1 skin, 0 unreachable nodes. Blender agrees independently: 5 UV sets, 5 colour layers, max 4 influences/vertex, **0 unweighted vertices**.
+
+What actually changes is on **re-import**:
+
+- **Bones 30 → 25.** The importer keeps only bones that carry weights (Blender: "260 vertex groups, **25 actually used**"). The 5 lost bones were weightless entries in the original mesh's bone table.
+- **`VertexStride`/`VertexBuffer` are 0** because the buffer is not serialized until it is written. **`RemapBuffers` does *not* rebuild it** — verified from decompiled source, it only reorders `Vertices` into face-traversal order and rewrites face indices. The format/buffer step is elsewhere.
+- **The `Col4ub` drop is the importer's own format guess**, and is exactly the vertex-format choice [`docs/10-meshes-and-skeletons.md`](../docs/10-meshes-and-skeletons.md) warns is the step most likely to bite on import.
+
+> **Inferred, NOT verified:** whether the 5 dropped bones or the format guess actually break a garment in game. Untested. The point of the round trip is that both are now **measurable before anything ships**, instead of surfacing as a corrupted garment with no way to localise the cause.
+
+> **Note on the pipeline claim.** [`tools/blender/README.md`](../tools/blender/README.md) says "the two ends stay manual, and that's not going away soon." Since 2026-09-01 the export end is scripted; as of today the import end is **demonstrably callable too**. Only the final write-back into a `.data`/forge remains manual — and that one stays manual by policy, not capability.
+
+### A false positive in this repo's own inspector — the phantom `Icosphere`
+
+`grbblend.py inspect` reported a **second** mesh, `Icosphere` (42 verts, 80 tris), and warned that it had no vertex colours. It is not in the GLB — the JSON chunk has `meshes=1`, no extensions, and no unreachable nodes.
+
+> **Verified by control experiment:** importing `_selftest/_selftest_coat.glb` (**rigged**) into a genuinely empty scene produces an `Icosphere`; importing `_selftest/_selftest_poncho.glb` (**not rigged**) does not. **Blender's own glTF importer synthesises it for skinned GLBs** as a bone-display shape. It is unparented, at the origin, with no materials, no vertex groups, and no custom properties.
+
+**Consequence:** `inspect` raises a spurious *"no vertex colors — GRB uses them"* warning on **every rigged GRB garment**, i.e. on exactly the files it is meant to validate. The fix is to filter the importer's bone-shape object out of the report. (Also checked: `_inside.py`'s `reset_scene()` *is* called by `cmd_inspect` — the scene is clean; the Icosphere is genuinely the importer's doing.)
+
+### Experiment 2 — the cloth gate is LOAD-BEARING, and `SoftBody` is the wrong door
+
+**Method.** `34800_-_Cloth_FTP_Kilt.data` — one `Cloth` resource, **type id 3811591354**, 436,220 B. Built the `ScimitarClass` base through the same path `read_typed` uses, then constructed `SoftBody` over it, before and after appending GRB to the gate list. **In memory only — `AnvilToolkit.dll` on disk was never modified.**
+
+> **Verified:** ATK's own hash dictionary resolves this resource's class name to **`'Cloth'`** (hash 3811591354), and `SoftBody.FileActionType` is `MeshViewerCloth`. `SoftBody` *is* ATK's cloth class — so this is the right door to try, and the gate is what closes it.
+
+> **Verified from source** (`ilspycmd -t …Physics.SoftBody`) — the gate is **inside `Read`**, and the throw is **swallowed** into `Failed = true`. In outline: `Read` begins with `if (!SupportedGames.Contains(base.Version)) throw new Exception("This file format is unsupported for this game");` and the whole body is wrapped in a `try`/`catch` that does `Console.WriteLine(ex.Message); Failed = true;`. Another silent-when-wrong path of exactly the kind [`atk_bridge.py`](../tools/atk_bridge.py)'s docstring already catalogues.
+
+`SoftBody.SupportedGames` = `[AC2, Brotherhood, Revelations, AC3, AC3Remastered, BlackFlag, Rogue, Unity, Syndicate]` — **GRB absent**. It is a `public static List<Game>` with `IsInitOnly=False`, so it *can* be appended at runtime. A sweep of every type in a `*.Physics*` namespace found **zero** that admit `GhostReconBreakpoint`. And `AnvilGLTF.CreateGLTF`'s 4th parameter is `List<SoftBody> clothObjects` — so GRB cloth **structurally cannot reach the glTF exporter** either; `export_gltf` passing an empty list is a consequence, not an oversight.
+
+| | `Failed` | `SoftBodyStates` | ATK console |
+| --- | --- | --- | --- |
+| **A.** as shipped | True | 0 | `This file format is unsupported for this game` |
+| **B.** GRB appended in memory | True | **257** | same message *(from a nested type's gate)*, then `Unable to read beyond the end of the stream.` |
+
+> **Verified conclusion: the gate is load-bearing, not merely conservative.** Ground truth for this file, from this repo's own `cloth_inspect`, is **2 cloth LODs** with simulation cages of 262 pt/482 tri and 120 pt/210 tri. With the gate open, `SoftBody.Read` interprets the leading `int32` as a state count and gets **257**, then runs off the end of a 436 KB stream. The two formats are unrelated: AC-era `SoftBody` is a list of `ObjectPtr` states, whereas GRB cloth is a `ClothPackage` of `MotionBody` **section streams** — each section `uint16 TypeID | uint16 0xECD7 | int32 SizeIncludingHeader` (see [`reference/cloth-section-types.md`](../reference/cloth-section-types.md)). The residual "unsupported for this game" in run **B** comes from *nested* gates: `SoftBodyState`, `SoftBodyLOD`, `SoftBodyConstraint` and `SoftBodyVertexMapping` are gated to `AC2..Rogue` only, so opening the top gate merely exposes a chain of them.
+
+**What this kills.** The hope that ATK's GRB cloth support is one static-list edit away. It is not. Appending GRB to `SupportedGames` — at runtime, or by patching the assembly — produces garbage, and would produce the same garbage in the GUI. **Do not spend time on it.**
+
+**What this leaves standing.** The **72** `Physics.MotionCloth.*` section types carry **no `SupportedGames` field at all** — they are ungated and fully modelled, just not reachable through `SoftBody`. The route to ATK-side GRB cloth is wiring *those* up, which [`tools/motioncloth.py`](../tools/motioncloth.py) already does independently. And the **22 sections GRB uses that ATK does not model at all** (2026-08-09 sweep) remain the most plausible home of the render↔sim binding.
+
+**A reference implementation worth porting.** `SoftBody` exposes `ComputeBarycentric`, `ClosestPointOnTriangle`, `GetSimulationBones` and `ToMesh`/`ToMeshNext`/`ToMeshOld`, and there is a `SoftBodyVertexMapping` type. That is a complete cloth→mesh rebind implementation — for AC-family formats. It is something to **port**, not a switch to flip. This sharpens, rather than replaces, the 2026-07-01 finding that "ATK already has the algorithm".
+
+### Open questions raised here
+- Where does the importer actually decide `VertexFormat`? Grepping the decompiled `AnvilGLTF` for `VertexFormat` returns **nothing** — it is set elsewhere (in `Mesh`, or by the GUI's format picker). Worth pinning down before any write-back, since it is the documented failure point.
+- Do the 5 weightless dropped bones matter in game? GRB may index a mesh's bone table positionally.
+- Are the 22 unmodelled GRB sections where the binding lives? (Carried forward from 2026-08-09; unchanged by today's work, but now the *only* live route on the ATK side.)

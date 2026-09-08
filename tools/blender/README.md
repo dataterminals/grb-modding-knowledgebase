@@ -109,6 +109,13 @@ by hand:
 
 Run this on a mesh **the moment it comes out of ATK**, and again before it goes back in.
 
+> **One thing it deliberately ignores.** Importing a *skinned* GLB makes Blender's own glTF
+> importer synthesise a 42-vertex icosphere as a bone-display shape. It is scaffolding, not
+> content — it isn't in the file — but until 2026-09-08 it was reported as a second mesh and
+> raised a bogus "no vertex colours" warning on **every** rigged GRB garment. It is now
+> filtered out (matched on its `glTF_not_exported` collection and its use as a bone custom
+> shape, not on its name) and listed on an `ignored:` line so nothing is hidden from you.
+
 ### `transfer-weights` — the north-star operation
 
 This is [Sami's move](../../meta/project-goal.md), scripted: take the weight painting off
@@ -204,16 +211,27 @@ that bite.
 ## Where this sits in the pipeline
 
 ```
-   ATK Mesh Viewer              THIS TOOL                ATK Mesh Viewer
-  export mesh → GLB    →    inspect / edit / rebind  →   import GLB, pick
-   (manual, GUI)                (scripted here)          vertex format, replace
-                                                            (manual, GUI)
+     atk_bridge.py              THIS TOOL              atk_bridge.py        ATK / GUI
+  forge .data → GLB    →   inspect / edit / rebind  →  GLB → ATK Mesh   →  write back +
+     (scripted)                 (scripted here)          (scripted)         repack forge
+                                                                          (manual, by policy)
 ```
 
-**The two ends stay manual, and that's not going away soon.** ATK is a WPF desktop
-application with no command-line interface — its own README documents batch operations as
-multi-select inside the GUI. So exporting the donor GLB and importing the finished one are
-things you do by clicking. Everything *between* those two clicks is now scriptable.
+**Update (2026-09-08): only the last step is manual now.** ATK is a WPF app with no
+command-line interface, but `AnvilToolkit.dll` is an ordinary .NET library and both
+directions of its glTF bridge are callable from Python via
+[`../atk_bridge.py`](../atk_bridge.py):
+
+- **Export** — `export_gltf()` drives ATK's own SharpGLTF writer headlessly. Verified
+  2026-09-01, and again 2026-09-08 on `TP_Tacvest_Walker_Coat_LOD0`.
+- **Import** — `AnvilGLTF.FromGLTF(path)` returns `(List<Mesh>, List<ConvexVerticesShape>)`
+  and does the whole import internally. First invoked 2026-09-08; see below.
+
+What stays manual is **writing the result back into a `.data` and repacking the forge**.
+`Mesh.WriteToFile` and `ForgeFile.Serialize` exist in the same callable surface, but
+`atk_bridge.py` is read-only **by policy** — ATK's backup defaults are *application*
+settings and do not apply to direct library calls, so a stray write has no safety net. See
+CLAUDE.md rules 1 and 2.
 
 ---
 
@@ -225,14 +243,34 @@ things you do by clicking. Everything *between* those two clicks is now scriptab
 > completes with 100% weight coverage and survives the GLB round trip. That is what
 > `selftest` checks, and it passes.
 
-> **Not yet verified:** any of this against a **real GRB mesh exported from ATK**, or the
-> result importing cleanly back into ATK and behaving in game. The synthetic selftest
-> proves the *machinery*, not the *pipeline*. The first real garment through this is still
-> an open experiment — and per [`../../docs/10`](../../docs/10-meshes-and-skeletons.md),
-> the vertex-format choice on ATK import is the step most likely to bite.
+> **Verified (2026-09-08): a real GRB garment completed a full headless round trip.**
+> `TP_Tacvest_Walker_Coat_LOD0` went forge `.data` → GLB → back through ATK's own importer.
+> **Geometry is preserved exactly** — 1816 vertices and 3263 faces on both sides — and the
+> GLB carries everything: 5 UV sets, 5 colour sets, tangents, 4 influences per vertex,
+> **0 unweighted vertices**. Two things change on the way back *in*:
+>
+> | | original `.data` | round-tripped |
+> | --- | --- | --- |
+> | Bones | 30 | **25** — the importer keeps only bones carrying weights |
+> | VertexFormat | `…_Tex2s_Joint4_Col4ub` | `…_Tex2s_Joint4` — `Col4ub` dropped |
+>
+> That second row is exactly the vertex-format choice
+> [`../../docs/10`](../../docs/10-meshes-and-skeletons.md) warns is the step most likely to
+> bite. It is now something you can *measure* before shipping rather than discover in game.
+
+> **Still not verified:** whether either of those two changes actually breaks a garment
+> in game, and whether a modified mesh writes back into a `.data` cleanly. Nothing has been
+> written back to a forge. `RemapBuffers` does **not** rebuild the vertex buffer — it only
+> reorders vertices into face order — and where the format is finally decided is still an
+> open question. Don't ship on this yet.
 
 > **Out of scope, by design:** this does **not** solve the `.cloth` rebind. Cloth is welded
-> to one mesh's exact vertices and ATK's GRB cloth reader is gated off — see
+> to one mesh's exact vertices, and ATK's GRB cloth reader is gated off — **and as of
+> 2026-09-08 we know that gate is load-bearing, not conservative.** `SoftBody` is ATK's
+> cloth class, but its `SupportedGames` list is AC-family only; adding GRB to it (in memory
+> or by patching the DLL) makes the reader misparse — it read 257 "states" from a file that
+> really holds 2 cloth LODs, then ran off the end of the stream. GRB cloth is a different
+> format family entirely. **Don't try to unlock it that way.** See
 > [`../../docs/11-cloth-and-physics.md`](../../docs/11-cloth-and-physics.md) and
 > [`../../meta/project-goal.md`](../../meta/project-goal.md). What weight transfer *does*
 > serve is the **bone-physics route** (`.skeleton` / Reflex3), which is transferable

@@ -99,6 +99,34 @@ def load_file(path):
     return [o for o in bpy.data.objects if o not in before]
 
 
+def is_importer_scaffolding(obj):
+    """True for objects Blender's glTF importer added for display, not content.
+
+    Importing a *skinned* GLB makes Blender synthesise a bone-display mesh - a
+    42-vertex icosphere - which is scaffolding, not part of the file. Verified
+    2026-09-08: a rigged GLB produces one, an unrigged GLB does not, and the
+    exported GLB's own JSON contains only the single real mesh.
+
+    Left unfiltered it was reported as a second mesh and raised a spurious
+    "no vertex colors" warning on *every* rigged GRB garment - i.e. on exactly
+    the files this tool exists to validate. See meta/research-log.md 2026-09-08.
+
+    Matched on two structural signals rather than the name, which a real mesh
+    could legitimately share: membership of the importer's own
+    `glTF_not_exported` collection, and being referenced as a pose bone's
+    custom shape.
+    """
+    if any(c.name == "glTF_not_exported" for c in obj.users_collection):
+        return True
+    for arm in bpy.data.objects:
+        if arm.type != "ARMATURE" or arm.pose is None:
+            continue
+        for pbone in arm.pose.bones:
+            if pbone.custom_shape is obj:
+                return True
+    return False
+
+
 # --------------------------------------------------------------------------
 # inspection - the checklist from docs/10-meshes-and-skeletons.md
 # --------------------------------------------------------------------------
@@ -204,15 +232,19 @@ def describe_armature(obj):
 
 
 def describe_scene():
-    meshes, armatures, others = [], [], []
+    meshes, armatures, others, scaffolding = [], [], [], []
     for obj in bpy.data.objects:
+        if is_importer_scaffolding(obj):
+            scaffolding.append(obj.name)
+            continue
         if obj.type == "MESH":
             meshes.append(describe_mesh(obj))
         elif obj.type == "ARMATURE":
             armatures.append(describe_armature(obj))
         else:
             others.append({"object": obj.name, "type": obj.type})
-    return {"meshes": meshes, "armatures": armatures, "other_objects": others}
+    return {"meshes": meshes, "armatures": armatures, "other_objects": others,
+            "ignored_scaffolding": scaffolding}
 
 
 # --------------------------------------------------------------------------
@@ -222,15 +254,23 @@ def describe_scene():
 def pick_mesh(objs, name=None):
     cands = [o for o in objs if o.type == "MESH"]
     if name:
+        # An explicit name is honoured even if it names scaffolding.
         for o in cands:
             if o.name == name:
                 return o
         raise ValueError(
             "no mesh named %r (have: %s)" % (name, ", ".join(o.name for o in cands)))
-    if not cands:
-        raise ValueError("no mesh objects found")
+    # Never auto-pick the glTF importer's bone-display mesh.
+    real = [o for o in cands if not is_importer_scaffolding(o)]
+    if not real:
+        raise ValueError(
+            "no mesh objects found"
+            if not cands
+            else "the only meshes present are glTF importer scaffolding (%s); "
+                 "pass an explicit mesh name to override"
+                 % ", ".join(o.name for o in cands))
     # Biggest mesh wins - the garment, not a stray attachment.
-    return max(cands, key=lambda o: len(o.data.vertices))
+    return max(real, key=lambda o: len(o.data.vertices))
 
 
 def pick_armature(objs):

@@ -172,6 +172,10 @@ def print_scene(report):
     if report["other_objects"]:
         print("OTHER: %s" % ", ".join(
             "%s(%s)" % (o["object"], o["type"]) for o in report["other_objects"]))
+    if report.get("ignored_scaffolding"):
+        print("ignored: %s  (bone-display mesh Blender's glTF importer adds for "
+              "skinned files - not part of the file)"
+              % ", ".join(report["ignored_scaffolding"]))
 
 
 def print_transfer(r):
