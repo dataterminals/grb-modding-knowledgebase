@@ -116,6 +116,12 @@ Run this on a mesh **the moment it comes out of ATK**, and again before it goes 
 > filtered out (matched on its `glTF_not_exported` collection and its use as a bone custom
 > shape, not on its name) and listed on an `ignored:` line so nothing is hidden from you.
 
+> **Read the UV and colour counts as an upper bound.** On a GLB that came out of ATK they
+> count what the *file* carries, not what the mesh really has: ATK's writer emits all five UV
+> and five colour channels unconditionally, padding absent ones with defaults. The Walker
+> coat reports 5 and 5 but its vertex buffer holds **1 UV set and 3 colour channels**. See
+> [the round-trip findings](#what-has-and-hasnt-been-proven) below.
+
 ### `transfer-weights` — the north-star operation
 
 This is [Sami's move](../../meta/project-goal.md), scripted: take the weight painting off
@@ -245,24 +251,61 @@ CLAUDE.md rules 1 and 2.
 
 > **Verified (2026-09-08): a real GRB garment completed a full headless round trip.**
 > `TP_Tacvest_Walker_Coat_LOD0` went forge `.data` → GLB → back through ATK's own importer.
-> **Geometry is preserved exactly** — 1816 vertices and 3263 faces on both sides — and the
-> GLB carries everything: 5 UV sets, 5 colour sets, tangents, 4 influences per vertex,
-> **0 unweighted vertices**. Two things change on the way back *in*:
+> **Geometry is preserved exactly** — 1816 vertices and 3263 faces on both sides, tangents
+> present, 4 influences per vertex, **0 unweighted vertices**. Two things change on the way
+> back *in*:
 >
 > | | original `.data` | round-tripped |
 > | --- | --- | --- |
 > | Bones | 30 | **25** — the importer keeps only bones carrying weights |
 > | VertexFormat | `…_Tex2s_Joint4_Col4ub` | `…_Tex2s_Joint4` — `Col4ub` dropped |
->
-> That second row is exactly the vertex-format choice
-> [`../../docs/10`](../../docs/10-meshes-and-skeletons.md) warns is the step most likely to
-> bite. It is now something you can *measure* before shipping rather than discover in game.
 
-> **Still not verified:** whether either of those two changes actually breaks a garment
-> in game, and whether a modified mesh writes back into a `.data` cleanly. Nothing has been
-> written back to a forge. `RemapBuffers` does **not** rebuild the vertex buffer — it only
-> reorders vertices into face order — and where the format is finally decided is still an
-> open question. Don't ship on this yet.
+> **Where the vertex format is decided — and why that second row happens** (verified
+> 2026-09-08 from decompiled source; corrects an earlier claim here that the importer
+> "guesses" a format — it does not):
+>
+> `Mesh.VertexFormat` is not stored on the mesh. It is a facade over
+> `CompiledMesh.VertexFormat`, falling back to a **hardcoded**
+> `Pos3s_Col1s_Norm3ub_Col1ub_Tan4ub_Binorm4ub_Tex2s_Joint4` when `CompiledMesh` is null —
+> and its **setter silently does nothing** in that same case. The real assignment happens at
+> *write* time, in `Mesh.WriteToFile`, as `VertexFormat = Vertices[0].Format` — **from vertex
+> zero alone**. GRB has its own case there, which first sets `Vertices[0].Version = 3` and
+> `UVScale = 16f`, then nulls `Color3`, `Color4` and `TEXCOORD_4`.
+>
+> `Vertex.Format` is a **dictionary lookup** over 62 entries, keyed on
+> `(Position, Normals, Tangents, Binormals, ColorCount, UVCount, JointCount, Version)` —
+> the counts being simply how many slots are non-null:
+>
+> | | descriptor | → format |
+> | --- | --- | --- |
+> | original, as read | `(T,T,T,T,3,1,4,`**`0`**`)` | `Null` — not in the table |
+> | original, after the GRB write prep | `(T,T,T,T,3,1,4,`**`3`**`)` | ✅ `…_Joint4_Col4ub` — correct |
+> | round-tripped, as imported | `(T,T,T,T,`**`2`**`,1,4,0)` | `…_Joint4` |
+> | round-tripped, after the GRB write prep | `(T,T,T,T,`**`2`**`,1,4,3)` | `…_Joint4` — still wrong |
+>
+> So the **write path is self-consistent** — setting `Version = 3` is what lifts the vanilla
+> descriptor into the table, and it lands on the coat's true format. The defect is
+> **upstream, in `MeshFromGLTF`**, which rebuilds a vertex with `ColorCount` **2** where the
+> original had **3**. That one missing colour channel is the whole cause, and it survives the
+> write because the descriptor is what selects the format.
+
+> ⚠️ **Two silent-failure paths to know about.** `VertexFormats.GetVertexFormat` returns
+> `VertexFormat.Null` for **any** descriptor not among those 62, and `WriteToFile` assigns it
+> without checking — no exception, no warning, and `VertexStride` is then computed from it.
+> And the `VertexFormat` setter no-ops when `CompiledMesh` is null, so the assignment can
+> quietly not happen at all.
+
+> ⚠️ **`inspect`'s UV and colour counts include padding on GRB meshes.** ATK's glTF writer
+> emits all five UV and all five colour channels unconditionally, via `GetUVs()`/`GetColors()`,
+> which substitute defaults for null slots. The Walker coat's actual vertex buffer holds
+> **1 UV set and 3 colour channels** (`UVCount=1` on both sides of the round trip) — so the
+> "5 UV sets, 5 vertex colors" the inspector reports is what the *GLB* carries, not what the
+> mesh really has. Read those numbers as an upper bound.
+
+> **Still not verified:** whether either change above actually breaks a garment in game, and
+> whether a modified mesh writes back into a `.data` cleanly. Nothing has been written back
+> to a forge. `RemapBuffers` does **not** rebuild the vertex buffer — it only reorders
+> vertices into face order. Don't ship on this yet.
 
 > **Out of scope, by design:** this does **not** solve the `.cloth` rebind. Cloth is welded
 > to one mesh's exact vertices, and ATK's GRB cloth reader is gated off — **and as of

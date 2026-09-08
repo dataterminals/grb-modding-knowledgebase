@@ -2209,3 +2209,112 @@ What actually changes is on **re-import**:
 - Where does the importer actually decide `VertexFormat`? Grepping the decompiled `AnvilGLTF` for `VertexFormat` returns **nothing** — it is set elsewhere (in `Mesh`, or by the GUI's format picker). Worth pinning down before any write-back, since it is the documented failure point.
 - Do the 5 weightless dropped bones matter in game? GRB may index a mesh's bone table positionally.
 - Are the 22 unmodelled GRB sections where the binding lives? (Carried forward from 2026-08-09; unchanged by today's work, but now the *only* live route on the ATK side.)
+
+---
+
+## Entry — 2026-09-08 (second) — Where `VertexFormat` is decided; corrects the "importer's format guess" claim from this morning
+
+Answers the first open question left by the entry above, and **corrects that entry**: it
+described the round trip's `Col4ub` loss as "the importer's own format guess". That is wrong.
+Nothing guesses. The format is derived deterministically from a table lookup, and the loss is
+caused by something else entirely. Per house style the earlier entry is left standing; this is
+the correction.
+
+### The chain, verified from decompiled source
+
+**1. `Mesh.VertexFormat` is not stored on the mesh.** It is a facade over `CompiledMesh`:
+
+- **getter** — returns `((CompiledMesh)CompiledMesh).VertexFormat`, or, when `CompiledMesh` is
+  null, a **hardcoded** `Pos3s_Col1s_Norm3ub_Col1ub_Tan4ub_Binorm4ub_Tex2s_Joint4`.
+- **setter** — `if (CompiledMesh != null) { … }` and **nothing otherwise**. A silent no-op.
+
+**2. It is assigned at *write* time, from vertex zero alone.** In `Mesh.WriteToFile`:
+
+```
+VertexFormat = Vertices[0].Format;
+int gsvf = VertexFormatsMap.GetGameSpecificVertexFormat(base.Version, VertexFormat);
+VertexStride = (byte)VertexFormatSizes.GetVertexFormatSize(base.Version, gsvf);
+```
+
+The same three lines appear in `WriteToFileAC1` and `WriteToFileRPG`. There is no format
+picker in `AnvilGLTF` at all — grepping the decompiled `AnvilGLTF` for `VertexFormat` returns
+nothing, which is why the first search missed it.
+
+**3. `WriteToFile` mutates vertex zero per game first, and GRB has its own case:**
+
+```
+case Game.GhostReconBreakpoint:  Vertices[0].Version = 3; UVScale = 16f;  break;
+…
+case Game.GhostReconBreakpoint:  Vertices[0].Color3    = null;
+                                 Vertices[0].Color4    = null;
+                                 Vertices[0].TEXCOORD_4 = null;  break;
+```
+
+**4. `Vertex.Format` is a dictionary lookup.** `AnvilToolkit.Common.Vertex` computes a
+descriptor and hands it to `VertexFormats.GetVertexFormat`:
+
+```
+_Format => (Position != null, Normals != null, Tangents != null, Binormals != null,
+            Color: ColorCount, UV: UVCount, Skinning: JointCount, Version: Version)
+```
+
+`ColorCount` and `UVCount` are plain counts of non-null `COL_0..COL_4` / `TEXCOORD_0..TEXCOORD_4`.
+`VertexFormats.Types` holds **62** entries; a descriptor not among them returns
+`VertexFormat.Null`.
+
+### What that means for the Walker coat — measured
+
+> **Verified 2026-09-08** by reading the real mesh and the re-imported mesh and evaluating the
+> descriptor at each stage (in-memory; nothing written):
+
+| stage | descriptor `(P,N,T,B,Color,UV,Skin,Ver)` | resulting format |
+| --- | --- | --- |
+| original, as read from the forge | `(T,T,T,T,3,1,4,`**`0`**`)` | `Null` — **not in the table** |
+| original, after the GRB write prep | `(T,T,T,T,3,1,4,`**`3`**`)` | `…_Tex2s_Joint4_Col4ub` ✅ correct |
+| round-tripped, as `FromGLTF` returns it | `(T,T,T,T,`**`2`**`,1,4,0)` | `…_Tex2s_Joint4` |
+| round-tripped, after the GRB write prep | `(T,T,T,T,`**`2`**`,1,4,3)` | `…_Tex2s_Joint4` — still wrong |
+
+**The write path is self-consistent.** Setting `Vertices[0].Version = 3` is precisely what
+lifts the vanilla descriptor into the table, and it resolves to the coat's true original
+format. A vanilla GRB mesh would write its format back correctly. GRB's nulling of `Color3`,
+`Color4` and `TEXCOORD_4` is a **no-op on this mesh** — those slots are already empty.
+
+> **The defect is upstream, in `AnvilGLTF.MeshFromGLTF`:** it rebuilds a vertex with
+> `ColorCount` **2** where the original had **3**. That single unreconstructed colour channel
+> is the entire cause of the `Col4ub` loss, and it survives the write because the descriptor
+> is what selects the format. **The fix target is the importer's colour reconstruction, not a
+> format picker** — which is what the earlier entry got wrong.
+
+### Two silent-failure paths worth naming
+
+1. **`VertexFormat.Null` is returned, not thrown.** `GetVertexFormat` falls back to `Null` for
+   any unmapped descriptor, and `WriteToFile` assigns it without checking — then computes
+   `VertexStride` from it. No exception, no log line.
+2. **The `VertexFormat` setter no-ops when `CompiledMesh` is null**, so
+   `VertexFormat = Vertices[0].Format` can quietly not happen while the getter keeps returning
+   the hardcoded default. (Not what happened in the round trip — the re-imported mesh *does*
+   have a `CompiledMesh` — but it is live in this code path.)
+
+### The UV/colour counts in `inspect` are an upper bound, not a measurement
+
+> **Verified:** `AnvilGLTF.CreateGLTF` writes vertex data through `Vertex.GetUVs()` and
+> `Vertex.GetColors()`, which return `new PackedUV()` / `PackedRGBA(1,1,1,1)` for **null**
+> slots. So the writer emits **all five** UV and **all five** colour channels unconditionally,
+> padding the absent ones.
+
+That resolves an apparent contradiction in the entry above: Blender reported 5 UV sets and 5
+colour layers on a mesh whose `VertexFormat` names a single `Tex2s`. Both are true — the GLB
+carries five, the vertex buffer holds **`UVCount = 1` and `ColorCount = 3`**, on both sides of
+the round trip. The earlier entry's "the GLB carries everything: 5 UV sets, 5 colour sets"
+is therefore right about the *file* and misleading about the *mesh*.
+[`tools/blender/README.md`](../tools/blender/README.md) now says so at both places a reader
+would meet those numbers.
+
+### Still open
+- **Why does `MeshFromGLTF` reconstruct only 2 colour channels?** The importer reads all five
+  (`GetVertexColor(0)` … `GetVertexColor(4)`); something downstream of that assigns fewer.
+  This is now the single concrete blocker on a faithful mesh write-back.
+- Do the 5 weightless dropped bones matter in game? (unchanged)
+- `VertexFormatsMap.GetGameSpecificVertexFormat` and `VertexFormatSizes.GetVertexFormatSize`
+  were not read this session — they map the format to a per-game id and a stride, and they sit
+  directly on the write path.
