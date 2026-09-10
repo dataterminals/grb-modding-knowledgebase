@@ -495,12 +495,47 @@ not be; that would write ATK's user config.
 repacking a forge is still manual and still needs a verified backup — by policy, not by
 capability.
 
+### `--xml` — ATK's editable round-trip, without ATK
+
+Some resource types declare `FileActionType.Xml`: `EntityBuilder`, `BuildTable`, `Material`,
+`TextureSet`, `LODSelector`. Those are the community's editable surface, and this reaches
+them without the application.
+
+```
+python atk_bridge.py <file.data> --xml out.xml
+```
+
+Verified 2026-09-09 on `PLAYER_Template` — 651 KB, 11,234 lines, both the base and the patch
+copy. Add types to `ATK_XML_TYPES` as you need them.
+
+Two WPF gates sit on this path, and both are handled:
+
+- **`ToXml` needs an STA thread.** It recurses into `Handle.ToXml` →
+  `XmlUtils.WriteToXMLRef` → `GameFileList.GetFileReference`, which reaches `WpfMessageBox`,
+  and WPF refuses to initialise outside a single-threaded apartment. pythonnet's CLR thread
+  is MTA, so the export dies with *"The calling thread must be STA"* before writing a byte.
+- **`GameFileList` looks for its list at a *relative* path** — `Lists/<ActiveGame>.gfl`,
+  relative to the process working directory — and on a miss offers to **download** it in a
+  dialog. ATK ships `<ATK>/Lists/GhostReconBreakpoint.gfl` (6.8 MB), so `prime_filelist()`
+  points the working directory there for the call and restores it after.
+
+**That second one is not just a workaround.** With the list primed — 1,053,342 entries —
+every 64-bit reference in the XML renders as a real path:
+
+```xml
+<FileReference Name="Value" IsGlobal="0"
+    Path="DataPC\TEAMMATE_Template\PLAYER_SkelAddons.BuildTable">1898138514560</FileReference>
+```
+
+Without it you get `1898138514560` and nothing else. Like `HashedData.CheckStrings`, the list
+loads inside a `Task.Run` and has to be waited for.
+
 Needs `pythonnet`, the .NET 9 runtime, and an ATK install (`GRB_ATK`, default
 `D:\Anvil Toolkit`). The container layer stays **ours** — `data_inspect.py`
 decompresses the `.data` and slices out the resource payload, and only the
 payload goes to ATK. That is what makes the two readers independent.
 
-Five gates — four silent, one very loud. All five are handled here and
+Seven gates — four silent, three very loud. All seven are handled here and
 explained in the module docstring:
 
 1. ATK's dependencies live in `Libs\`, which .NET will not probe on its own.
@@ -516,6 +551,9 @@ explained in the module docstring:
    no UVs, which cannot work headless — this one is loud, not silent, and it kills
    the import outright. `import_gltf` suppresses it and reports the condition
    instead. *(Found 2026-09-09.)*
+6. `ScimitarClass.ToXml` needs an **STA thread**; pythonnet's is MTA. *(2026-09-09.)*
+7. `GameFileList` resolves its file list from a **relative** path and offers to
+   download it in a dialog when it misses. *(2026-09-09.)*
 
 ⚠️ **Do not read a vertex format off `FromGLTF`'s output.** The importer preps
 `Vertices[0]` and *then* calls `RemapBuffers`, which rebuilds the list in
