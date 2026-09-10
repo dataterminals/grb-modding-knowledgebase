@@ -1,12 +1,14 @@
 # Next session
 
-*Rewritten 2026-08-09; lane 3 added 2026-08-24. The 2026-07-03 version described only the
+*Rewritten 2026-08-09; lane 3 added 2026-08-24; **refreshed 2026-09-09** to fold in the 2026-09-08
+round trip and to strike two claims that had gone stale. The 2026-07-03 version described only the
 cloth-rebind investigation, which has been parked since 2026-07-09 while later sessions went
 somewhere else entirely. Every lane is written down now, so none of them gets lost again.*
 
 **Read [`project-goal.md`](project-goal.md) first** — Sami's north star, verbatim, and still the
 reason this repo exists. Then the two 2026-08-09 entries in [`research-log.md`](research-log.md)
 for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-24 entries.
+**For where the tooling actually stands, the two 2026-09-08 entries are the current ones.**
 
 > **⚠️ Paths moved (2026-08-31). Everything is on `D:` now, not `H:`.** GRB install
 > `D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint`, ATK `D:\Anvil Toolkit`, this repo
@@ -17,8 +19,10 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > for it** — [`tools/blender/`](../tools/blender/README.md). `doctor`, `selftest`, `inspect`,
 > `transfer-weights`, `run`. Blender 5.2.1 LTS lives at
 > `D:\SteamLibrary\steamapps\common\Blender`. **This is lane-2B tooling**: a scripted, checkable
-> weight transfer is the Blender-side half of the bone-physics route. The selftest passes on
-> synthetic data; **no real GRB mesh has been through it yet** — that is the next cheap experiment.
+> weight transfer is the Blender-side half of the bone-physics route. ~~The selftest passes on
+> synthetic data; **no real GRB mesh has been through it yet** — that is the next cheap
+> experiment.~~ **SUPERSEDED 2026-09-08** — the Walker coat has since been through the whole
+> bridge, twice; see the 2026-09-08 callout below. The selftest still passes, 7/7.
 
 > **⚙️ New (2026-09-01): ATK's format engine is CALLABLE from Python** —
 > [`tools/atk_bridge.py`](../tools/atk_bridge.py). The 2026-08-31 finding said the types were
@@ -38,9 +42,52 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > actually drives?*, plus influences/coverage/UVs/vertex-colours. **It is the first thing here that
 > needs ATK and this repo's own decoders at once** — ATK reads meshes but is gated out of Reflex3;
 > `reflex3.py` reads Reflex3 but knows nothing about meshes.
-> **Do this before any in-game test**, then spend the launch. Tested on five inputs including the
-> real Blender transfer output; **no real GRB garment has been through it**, because that still
-> needs an ATK GLB export — see lane 2B step 1 below.
+> **Do this before any in-game test**, then spend the launch. ~~Tested on five inputs including
+> the real Blender transfer output; **no real GRB garment has been through it**, because that
+> still needs an ATK GLB export.~~ **SUPERSEDED the same day** — the ATK export got automated
+> and a real garment went through it, which found two bugs, one of them a **false FAIL on
+> known-good input**. ⚠️ **Scope it with `--donor`.** Unscoped, it checks your mesh against *every*
+> bone the rig drives — hair, straps, other garments' bones — and fails a garment that is
+> correct.
+
+> **🔁 New (2026-09-08): the round trip RUNS, and ATK's cloth gate is dead as a route.** Three
+> things landed, and one of them closes a lead rather than opening one.
+>
+> 1. **`AnvilGLTF.FromGLTF` was called for the first time.** One call is the whole import side — it
+>    runs `LoadBoneNodes` and `MeshFromGLTF` itself. The Walker coat went out to GLB, came back in,
+>    and was diffed against the original: **verts and faces round-trip exactly** (1816/3263). Three
+>    deltas — bones **30 → 25** (the importer keeps only bones that carry weight), `VertexStride`
+>    and `VertexBuffer` still `0` (the buffer isn't built until write, and `RemapBuffers` does
+>    **not** rebuild it), and **`Col4ub` dropped** from the vertex format.
+> 2. **⛔ `SoftBody` is the wrong door, and the gate is LOAD-BEARING.** `SoftBody` *is* ATK's cloth
+>    class, and GRB is absent from its `SupportedGames` — but appending GRB at runtime does not
+>    open it, it produces **garbage**: `Read` takes the leading `int32` as a state count, gets
+>    **257**, and runs off the end of a 436 KB file. AC-era `SoftBody` is a list of `ObjectPtr`
+>    states; GRB cloth is a `ClothPackage` of section streams. **Don't spend time patching that
+>    list**, at runtime or in the assembly. What survives is the **72 ungated
+>    `Physics.MotionCloth.*` types**, which [`tools/motioncloth.py`](../tools/motioncloth.py)
+>    already reads independently.
+> 3. **The one concrete blocker on a faithful mesh write-back now has a name.**
+>    `AnvilGLTF.MeshFromGLTF` rebuilds a vertex with `ColorCount` **2** where the original had
+>    **3** — and because the vertex format is a *table lookup on that descriptor*, that single
+>    unreconstructed colour channel is the entire `Col4ub` loss. The importer reads all five
+>    (`GetVertexColor(0..4)`); something downstream assigns fewer. **Find that, and the write-back
+>    is faithful.** Nothing "guesses" the format — an earlier claim that it did is corrected in
+>    the 2026-09-08 (second) log entry.
+>
+> ⚠️ **Two numbers `inspect` reports are upper bounds, not measurements.** ATK's writer emits all
+> five UV and all five colour channels unconditionally, padding the absent ones. The Walker coat's
+> GLB carries five of each; the **mesh** holds `UVCount = 1`, `ColorCount = 3`. Both are true.
+>
+> ⚠️ **The phantom `Icosphere` is Blender's doing**, not the file's — its glTF importer
+> synthesises a bone-display mesh for every skinned GLB. `inspect` filters it as of 2026-09-08;
+> before that it raised a spurious *"no vertex colors"* warning on **every rigged GRB garment**,
+> i.e. on exactly the files it exists to validate.
+>
+> 🖥️ **Blender is drivable live now**, not just headless: the official Blender Lab MCP add-on
+> (`bl_ext.lab_blender_org.mcp`) is installed alongside this repo's `grb_blender_addon`. The
+> Claude-side server was always running — the Blender-side add-on was the missing half, which is
+> why `localhost:9876` was closed.
 
 ---
 
@@ -49,7 +96,7 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 | Lane | State | What it is |
 | --- | --- | --- |
 | **1 — Community tutorial absorption** | idle since 2026-08-09 | Working the *Tier 1 Imports* `#mod-tutorials` forum into the KB, thread by thread |
-| **2A — Cloth→mesh rebind** | **PARKED** since 2026-07-09 | Blocked on an in-game test that is staged but never run |
+| **2A — Cloth→mesh rebind** | **PARKED** since 2026-07-09 | Blocked on an in-game test that is staged but never run. ⛔ Narrowed 2026-09-08: the ATK-side route is `MotionCloth`, **not** `SoftBody` |
 | **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14** | Same goal, different mechanism. Now has a format, a corpus, and a vanilla flowing-coat exemplar |
 | **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-24 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo. **Panel is out of sync — fix that first.** |
 
@@ -162,6 +209,16 @@ has never been validly tested.
 coat's vertices; a poncho needs its binding recomputed. Blocked on cracking the wrap/binding
 encoding **and** on STEP 1. Only pursue heavily if STEP 1 says modified cloths can load.
 
+> ⛔ **2026-09-08 — one hoped-for shortcut is closed.** ATK cannot be talked into reading GRB
+> cloth by appending GRB to `SoftBody.SupportedGames`. The formats are unrelated and the gate is
+> load-bearing; opening it yields garbage, and merely exposes a chain of nested gates on
+> `SoftBodyState`, `SoftBodyLOD`, `SoftBodyConstraint` and `SoftBodyVertexMapping`.
+> **What that leaves standing is worth more than what it cost:** `SoftBody` also carries
+> `ComputeBarycentric`, `ClosestPointOnTriangle`, `GetSimulationBones`, `ToMesh` and a
+> `SoftBodyVertexMapping` type — a complete cloth→mesh rebind implementation, for AC-family
+> formats. Something to **port**, not a switch to flip. It sharpens rather than replaces the
+> 2026-07-01 finding that "ATK already has the algorithm".
+
 **(B) The `.skeleton` bone-physics path — ⭐ START HERE. As of 2026-08-14 this has a name, a
 format, and a vanilla exemplar.** Sami's key lead: GRB's `.skeleton` secondary-motion **transfers
 to new meshes via weight-paint**, and **ATK can read GRB skeletons** (unlike cloth). That system is
@@ -239,6 +296,18 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
        names as strings, are the better bets.
 4. Then: a new mesh weight-painted to a physics-carrying rig. That step **is** the project goal,
    reached without touching `.cloth` at all.
+
+**The pipeline, as of 2026-09-08:**
+
+```
+   ATK export  ──►  Blender transfer  ──►  rebind_check  ──►  ATK import  ──►  repack
+   AUTOMATED        AUTOMATED             AUTOMATED          CALLABLE         manual
+   (09-01)          (08-31)               (09-01)            (09-08)          by policy
+```
+
+The front half runs headlessly, end to end, on real garment data. `FromGLTF` works; what is **not**
+solved is write-back *fidelity* — see the `MeshFromGLTF` colour-channel blocker in the 2026-09-08
+callout at the top. The final write into a `.data`/forge stays manual **by policy, not capability**.
 
 > **Reading is done; writing is not.** Nothing has been written back to a skeleton yet, and any
 > skeleton edit inherits the forge-shadow and hang-on-load hazards from the cloth work.
@@ -416,6 +485,12 @@ payoff.
    isn't player-viewable).
 4. **Decode the wrap weight encoding** (the 6×u16 per-record) + the record↔render-vertex
    correspondence — the remaining blocker for a reskin encoder (only after lead 3 is green).
+4b. **⭐ Port ATK's `SoftBody` rebind maths** (new 2026-09-08). `ComputeBarycentric`,
+   `ClosestPointOnTriangle`, `GetSimulationBones`, `ToMesh`/`ToMeshNext`/`ToMeshOld` and
+   `SoftBodyVertexMapping` are a working cloth→mesh binding implementation sitting in ATK's
+   source — for AC-family formats, readable by decompile. They cannot be *run* on GRB data (the
+   gate is load-bearing, see above), but the algorithm is exactly what lead 4 would otherwise
+   reinvent from nothing. **Read them before writing an encoder.**
 
 **On the skeleton path (route B):**
 
@@ -465,6 +540,9 @@ that is not a forge resource. Full detail in the 2026-08-14 research-log entry.
 **On the cloth work:**
 
 - Don't test parameter tuning as the goal.
+- ⛔ **Don't try to open ATK's cloth gate** by appending GRB to `SoftBody.SupportedGames`, at
+  runtime or by patching the assembly. Tried 2026-09-08: it yields garbage, not cloth, and would
+  do the same in the GUI. The gate is load-bearing because the two formats are unrelated.
 - Don't conclude "params inert" without a shadow-free (confirmed-loaded) test. 44/56 cloths are
   duplicated across `DataPC.forge` **and** a WorldMap base forge — editing only the `DataPC` copy
   proves nothing.
