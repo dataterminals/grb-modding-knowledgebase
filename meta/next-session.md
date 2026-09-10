@@ -114,6 +114,13 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 >   Note the middle step *widens* the stride to 48 before the trim brings it back — fixing the
 >   game alone lands **further** from the truth than the bug did.
 >
+> - **🛠️ There is now a tool for this.** `python atk_bridge.py <donor.data> --import new.glb`
+>   runs the import, applies all three corrections and tells you whether the file would get the
+>   donor's exact format and stride; exit 2 when it would not. It also survives a **sixth gate**
+>   the other tools never hit — `MeshFromGLTF` opens a **WPF modal dialog** for a GLB with no
+>   vertex colours or UVs, which kills a headless import outright. **Run this before any
+>   write-back.**
+>
 > **The rule to carry forward: take the target vertex format from the donor `.data`, never from
 > the round trip.** ⚠️ Still unwritten and unloaded — the format agrees with the original as
 > computed by ATK's own write path; no bytes were produced and nothing was tested in game.

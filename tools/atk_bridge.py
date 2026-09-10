@@ -8,6 +8,7 @@ via pythonnet and reads GRB resources with ATK's *own* readers - which makes ATK
 usable as a second, independent opinion against this repo's hand-written parsers.
 
     python atk_bridge.py <file.data> [more.data ...]
+    python atk_bridge.py <donor.data> --import new.glb    # check a write-back
 
 Verified 2026-09-01 against `TP_Tacvest_Walker_Coat_LOD0/LOD1` - ATK's mesh
 reader agrees with the independent parse recorded on 2026-07-01 (1816 verts /
@@ -410,6 +411,309 @@ def export_gltf(data_path, out_path, skeleton_paths=None, search_dirs=None,
     return out_path, skeleton_paths
 
 
+# --------------------------------------------------------------------------
+# The import side. See the 2026-09-09 research-log entry for why every one of
+# these corrections is needed; none of them is cosmetic.
+# --------------------------------------------------------------------------
+
+_COLS = ["Color0", "Color1", "Color2", "Color3", "Color4"]
+_UVS = ["TEXCOORD_0", "TEXCOORD_1", "TEXCOORD_2", "TEXCOORD_3", "TEXCOORD_4"]
+
+
+def _glb_summary(path):
+    """Read a GLB's JSON chunk directly. Two things ATK will not tell you:
+
+    - the vertex count as the FILE has it, before `RemapBuffers` rebuilds the
+      list from face traversal and silently drops any vertex no face references
+      (`Tsec_Madera_Coat_LOD0`: 12,502 -> 12,498);
+    - whether the file carries any colour or UV channels at all, which is the
+      condition behind ATK's two modal import warnings.
+
+    A GLB is a 12-byte header then chunks; chunk 0 is the JSON document. A plain
+    `.gltf` is that document on its own."""
+    import json
+    with open(path, "rb") as fh:
+        if fh.read(4) == b"glTF":
+            fh.seek(12)
+            length = struct.unpack("<I", fh.read(4))[0]
+            kind = fh.read(4)
+            if kind != b"JSON":
+                raise ValueError(f"{path}: first GLB chunk is {kind!r}, not JSON")
+            doc = json.loads(fh.read(length).decode("utf-8"))
+        else:
+            fh.seek(0)
+            doc = json.loads(fh.read().decode("utf-8"))
+    acc = doc.get("accessors", [])
+    verts, attrs = 0, set()
+    for m in doc.get("meshes", []):
+        for prim in m.get("primitives", []):
+            a = prim.get("attributes", {})
+            attrs.update(a)
+            if "POSITION" in a:
+                verts += acc[a["POSITION"]].get("count", 0)
+    # glTF standardises COLOR_n/TEXCOORD_n; extras take an underscore prefix,
+    # and ATK's GetVertexColor also accepts its own COL.000 spelling.
+    bare = [k.lstrip("_") for k in attrs]
+    return {
+        "vertices": verts,
+        "meshes": len(doc.get("meshes", [])),
+        "attributes": sorted(attrs),
+        "has_color": any(k.startswith(("COLOR_", "COL.")) for k in bare),
+        "has_uv": any(k.startswith("TEXCOORD_") for k in bare),
+    }
+
+
+def _write_prep(mesh):
+    """Replicate `Mesh.WriteToFile`'s prologue - WITHOUT writing anything.
+
+    WriteToFile's first act is to normalise vertex zero for `base.Version` and
+    only then take the format from it:
+
+        Vertices[0].Joints.MaxCount = 8;         // GRB
+        Vertices[0].Version = 3;  UVScale = 16f; // GRB
+        Vertices[0].Color3 = Color4 = TEXCOORD_4 = null;
+        if (Joints.Count == 0) Vertices[0].Binormals = null;
+        VertexFormat = Vertices[0].Format;
+
+    Doing it here means `write_preview` reports the format the file would really
+    get, not the one the importer happened to leave behind. It is idempotent -
+    WriteToFile redoes exactly this - so a prepped mesh is not a damaged one.
+
+    ⚠️ GRB only. Every other game nulls a different set, and running the wrong
+    set is the whole 2026-09-09 finding."""
+    if str(mesh.Version) != "GhostReconBreakpoint":
+        raise ValueError(f"_write_prep is GRB-only; mesh.Version is {mesh.Version}")
+    v0 = mesh.Vertices[0]
+    v0.Joints.MaxCount = 8
+    v0.Version = 3
+    mesh.UVScale = 16.0
+    v0.Color3 = None
+    v0.Color4 = None
+    v0.TEXCOORD_4 = None
+    if v0.Joints.Count == 0:
+        v0.Binormals = None
+    return mesh
+
+
+def write_preview(mesh):
+    """What WriteToFile would compute for this mesh: (format, game id, stride).
+
+    These are literally its three lines - `Vertices[0].Format`, then
+    `GetGameSpecificVertexFormat`, then `GetVertexFormatSize` - evaluated
+    without touching a stream. Call `_write_prep` first."""
+    System, _asm = start()
+    from System import Int32, Enum
+    M = "AnvilToolkit.FileTypes.AnvilNext.Models."
+    p_fmt = T("AnvilToolkit.Common.Vertex").GetProperty("Format")
+    raw = p_fmt.GetValue(mesh.Vertices[0])
+    # pythonnet hands a boxed enum back as an int; re-box it or reflection refuses
+    fmt = Enum.ToObject(T("AnvilToolkit.Utils.VertexFormat"), Int32(int(raw)))
+    gameval = game(str(mesh.Version))
+    gsvf = int(T(M + "VertexFormatsMap")
+               .GetMethod("GetGameSpecificVertexFormat").Invoke(None, [gameval, fmt]))
+    stride = int(T(M + "VertexFormatSizes")
+                 .GetMethod("GetVertexFormatSize").Invoke(None, [gameval, Int32(gsvf)]))
+    return str(raw), gsvf, stride
+
+
+def import_gltf(glb_path, donor=None, index=0, atk_dir=None, verbose=False):
+    """Import a GLB through ATK's own importer, corrected against a donor mesh.
+
+    `AnvilGLTF.FromGLTF` alone does NOT give you a mesh you can write back. It
+    needs three corrections, each of which is silent when missing:
+
+      1. `DataStorage.ActiveGame` must be GRB, or `MeshFromGLTF` runs its Black
+         Flag branch and drops a colour channel from any skinned mesh. `arm()`
+         handles this one for you.
+      2. `mesh.Version` is hardcoded to `Game.BlackFlag` by `MeshFromGLTF`
+         (`ScimitarClassReader.New(Game.BlackFlag, ...)`) and never assigned.
+         `Mesh.WriteToFile` switches on `base.Version` in ten places, so an
+         uncorrected mesh writes itself out as a Black Flag mesh.
+      3. **The importer does not reconstruct a vertex format - it normalises
+         one.** Every skinned GRB mesh comes back as ColorCount 3 / UVCount 4
+         whatever went in, because ATK's glTF *writer* pads all five UV and all
+         five colour channels unconditionally and nothing in the GLB says which
+         were real. So the channel counts must come from the DONOR, and that is
+         what `donor` is for. Most GRB garments already sit at (3, 4) and appear
+         to round-trip perfectly, which is how this hid for so long.
+
+    Trimming vertex zero is enough, and is not a shortcut: `WriteVertexData`
+    writes *every* vertex against the single mesh-level `VertexFormat`, which
+    comes from vertex zero alone. Slots trimmed there are simply not written;
+    slots missing on other vertices are padded by `GetUVs()`/`GetColors()`.
+
+    ⚠️ Do not read a format off `FromGLTF`'s output and believe it. The importer
+    preps `Vertices[0]` and *then* calls `RemapBuffers`, which rebuilds the list
+    in face-traversal order - so the one prepped vertex is wherever that put it.
+    Measured: the Walker coat's stayed at index 0, the selftest poncho's landed
+    at index **67**, leaving a raw (5 colour, 5 UV) vertex at index 0. Writing is
+    unaffected, because `WriteToFile` re-preps whatever is at index 0 by then;
+    only *inspection* is fooled. The `"as_imported"` numbers in the report are
+    therefore "whatever is at index 0", not a property of the mesh.
+
+    Returns `(mesh, report)`. `report["ok"]` is True only when a donor was given
+    and the format AND stride both match it.
+
+    ⚠️ NOTHING IS WRITTEN. The returned Mesh is a live in-memory object; getting
+    it into a `.data` and repacking a forge is still a manual, backed-up step -
+    by policy, not by capability. See CLAUDE.md rules 1 and 2."""
+    System, _asm = start(atk_dir)
+    arm()                    # sets ActiveGame - correction 1
+    prime_hashes()
+
+    glb = _glb_summary(glb_path)
+
+    gltf = T("AnvilToolkit.FileTypes.AnvilNext.Models.AnvilGLTF")
+    m_from = [m for m in gltf.GetMethods() if m.Name == "FromGLTF"][0]
+    from System.IO import StringWriter
+
+    # ⚠️ `MeshFromGLTF` pops a WPF MODAL DIALOG when the GLB has no vertex
+    # colours or no UVs - i.e. on exactly the fresh-from-Blender mesh a modder
+    # brings. Headless there is no dispatcher, so `WpfMessageBox..ctor()` throws
+    # and the whole import dies. Its own `VertexColorMessageShown` guard is
+    # useless here: `FromGLTF` resets that flag on entry. The only lever is the
+    # setting, so borrow it and hand it straight back. We report the same two
+    # conditions ourselves, below, from the GLB - a warning you can grep beats a
+    # dialog nobody is there to click.
+    #
+    # This is an IN-MEMORY property set. `Settings.Save()` is never called here
+    # and must not be: that would write ATK's user config.
+    S = T("AnvilToolkit.Properties.Settings")
+    settings = S.GetProperty("Default").GetValue(None)
+    p_sup = S.GetProperty("SuppressMeshViewerImportErrorMessages")
+    was = p_sup.GetValue(settings)
+    sw = StringWriter()
+    System.Console.SetOut(sw)
+    try:
+        p_sup.SetValue(settings, True)
+        meshes = m_from.Invoke(None, [glb_path]).Item1
+    finally:
+        p_sup.SetValue(settings, was)
+        System.Console.SetOut(System.Console.Out)
+    said = sw.ToString().strip()
+    if meshes.Count == 0:
+        raise RuntimeError(f"FromGLTF returned no meshes. ATK said: {said or '(nothing)'}")
+    mesh = meshes[index]
+
+    v0 = mesh.Vertices[0]
+    report = {
+        "glb": glb_path,
+        "atk_said": said,
+        "glb_carries": glb,
+        "meshes_in_file": meshes.Count,
+        "vertices": mesh.Vertices.Count,
+        "faces": mesh.Faces.Count,
+        "bones": mesh.Bones.Count,
+        "as_imported": {"colors": v0.ColorCount, "uvs": v0.UVCount,
+                        "vertex_version": v0.Version, "game": str(mesh.Version)},
+        "warnings": [],
+        "ok": False,
+    }
+
+    mesh.Version = game()                                    # correction 2
+
+    if not glb["has_color"]:
+        report["warnings"].append(
+            "the GLB carries NO vertex colour channels. ATK substitutes defaults "
+            "(white, white, then black) - and GRB garments use vertex colours, which "
+            "docs/10 names as the 'corrupted shading' failure. In the GUI this is a "
+            "modal warning; here it is this line.")
+    if not glb["has_uv"]:
+        report["warnings"].append(
+            "the GLB carries NO UV channels. Same story - a modal warning in the GUI, "
+            "this line here. The mesh will be untextured.")
+    if glb["vertices"] and mesh.Vertices.Count != glb["vertices"]:
+        report["warnings"].append(
+            f"vertices {glb['vertices']} in the file -> {mesh.Vertices.Count} imported. "
+            f"RemapBuffers rebuilds the list from face traversal, so any vertex no face "
+            f"references is dropped. Usually harmless; never silent again.")
+
+    if donor is not None:                                    # correction 3
+        d = read_mesh(donor, atk_dir=atk_dir)
+        dv = d.Vertices[0]
+        report["donor"] = {
+            "path": donor, "colors": dv.ColorCount, "uvs": dv.UVCount,
+            "format": str(d.VertexFormat), "stride": int(d.VertexStride),
+            "vertices": d.Vertices.Count, "bones": d.Bones.Count,
+        }
+        for n in range(dv.ColorCount, 5):
+            setattr(v0, _COLS[n], None)
+        for n in range(dv.UVCount, 5):
+            setattr(v0, _UVS[n], None)
+        if mesh.Bones.Count == 0 and d.Bones.Count:
+            report["warnings"].append(
+                f"this mesh has NO bones; the donor has {d.Bones.Count}. It is unrigged - "
+                f"weight-paint it to the donor's rig first (tools/blender/ transfer-weights) "
+                f"or it will not deform at all.")
+        elif mesh.Bones.Count < d.Bones.Count:
+            report["warnings"].append(
+                f"bones {d.Bones.Count} -> {mesh.Bones.Count}: the importer keeps only "
+                f"bones that carry weight. Whether GRB indexes a mesh's bone table "
+                f"positionally is UNTESTED.")
+    else:
+        report["warnings"].append(
+            "no donor given - the channel counts below are ATK's normalised constant "
+            "(3 colours / 4 UVs), not a measurement of what this mesh should have. "
+            "Pass the .data you are replacing.")
+
+    _write_prep(mesh)
+    fmt, gsvf, stride = write_preview(mesh)
+    report["corrected"] = {"colors": v0.ColorCount, "uvs": v0.UVCount,
+                           "vertex_version": v0.Version, "game": str(mesh.Version)}
+    report["write_preview"] = {"format": fmt, "game_format_id": gsvf, "stride": stride}
+
+    if fmt == "Null":
+        report["warnings"].append(
+            "VertexFormat is Null - the descriptor is not among VertexFormats.Types' 62 "
+            "entries. GetVertexFormat RETURNS this rather than throwing, and WriteToFile "
+            "assigns it unchecked. Do not write this mesh.")
+    if mesh.CompiledMesh is None:
+        report["warnings"].append(
+            "CompiledMesh is null: the Mesh.VertexFormat setter is a silent no-op in that "
+            "state, and WriteToFile dereferences it on its first line.")
+    if "donor" in report:
+        dfmt, dstride = report["donor"]["format"], report["donor"]["stride"]
+        report["ok"] = (fmt == dfmt and stride == dstride)
+        if not report["ok"]:
+            report["warnings"].append(
+                f"does NOT match the donor: format {fmt} vs {dfmt}, "
+                f"stride {stride} vs {dstride}.")
+    if verbose:
+        print_import_report(report)
+    return mesh, report
+
+
+def print_import_report(report):
+    d = report.get("donor")
+    g = report["glb_carries"]
+    print(f"  GLB           {os.path.basename(report['glb'])}")
+    print(f"  file carries  {g['vertices']} verts, {g['meshes']} mesh(es), "
+          f"colours={g['has_color']} uvs={g['has_uv']}")
+    if report["meshes_in_file"] > 1:
+        print(f"  meshes        {report['meshes_in_file']} (using index 0)")
+    print(f"  Vertices      {report['vertices']}")
+    print(f"  Faces         {report['faces']}")
+    print(f"  Bones         {report['bones']}"
+          + (f"   (donor has {d['bones']})" if d else ""))
+    a, c = report["as_imported"], report["corrected"]
+    print(f"  at index 0    colours={a['colors']} uvs={a['uvs']} "
+          f"vertex.Version={a['vertex_version']} game={a['game']}   (raw)")
+    if d:
+        print(f"  donor         colours={d['colors']} uvs={d['uvs']}  "
+              f"{d['format']} / stride {d['stride']}")
+    print(f"  corrected     colours={c['colors']} uvs={c['uvs']} "
+          f"vertex.Version={c['vertex_version']} game={c['game']}")
+    w = report["write_preview"]
+    print(f"  would write   {w['format']}")
+    print(f"                game format id {w['game_format_id']}, stride {w['stride']}")
+    if d:
+        print(f"  MATCHES DONOR {report['ok']}")
+    for msg in report["warnings"]:
+        print(f"  ! {msg}")
+    if report["atk_said"]:
+        print(f"  ATK said      {report['atk_said']}")
+
+
 def summarize(path):
     mesh = read_mesh(path)
     vb = bytes(mesh.VertexBuffer)
@@ -442,20 +746,38 @@ def summarize(path):
 def main(argv):
     args = list(argv[1:])
     out = None
+    glb_in = None
     skels = []
     if "--export" in args:
         k = args.index("--export")
         out = args[k + 1]
         del args[k:k + 2]
+    if "--import" in args:
+        k = args.index("--import")
+        glb_in = args[k + 1]
+        del args[k:k + 2]
     while "--skeleton" in args:
         k = args.index("--skeleton")
         skels.append(args[k + 1])
         del args[k:k + 2]
+    if glb_in and not args:
+        # no donor: still useful, but say so loudly
+        print("=" * 70)
+        print(f"IMPORT: {os.path.basename(glb_in)}  (no donor)")
+        import_gltf(glb_in, None, verbose=True)
+        return 0
     if not args:
         print(__doc__)
         return 1
     for p in args:
         print("=" * 70)
+        if glb_in:
+            print(f"IMPORT: {os.path.basename(glb_in)}")
+            print(f"  donor       {os.path.basename(p)}")
+            _mesh, rep = import_gltf(glb_in, p, verbose=True)
+            if not rep["ok"]:
+                return 2
+            continue
         print(f"FILE: {os.path.basename(p)}")
         if out:
             path, used = export_gltf(p, out, skels or None, verbose=True)

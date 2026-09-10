@@ -448,12 +448,59 @@ and `CreateGLTF` refuses a skinned mesh whose bones it cannot find. ⚠️ Auto-
 picks by bone coverage alone, so ties between character rigs break arbitrarily; names
 and hierarchy will be right, **rest pose may not be**. Pass `--skeleton` to choose.
 
+### `--import` — check a mesh write-back before you believe it
+
+The other direction, and the one with traps. `--import` runs your GLB through ATK's own
+`AnvilGLTF.FromGLTF` and reports **what vertex format the file would actually get** —
+without writing anything.
+
+```
+python atk_bridge.py <donor.data> --import new.glb
+```
+
+```
+  file carries  1816 verts, 1 mesh(es), colours=True uvs=True
+  Bones         25   (donor has 30)
+  donor         colours=3 uvs=1  …_Tex2s_Joint4_Col4ub / stride 36
+  corrected     colours=3 uvs=1 vertex.Version=3 game=GhostReconBreakpoint
+  would write   Pos3s_Col1s_Norm3ub_Col1ub_Tan4ub_Binorm4ub_Tex2s_Joint4_Col4ub
+                game format id 1, stride 36
+  MATCHES DONOR True
+```
+
+**Give it the donor.** `FromGLTF` on its own does not reconstruct a vertex format — it
+**normalises** one: every skinned GRB mesh comes back as *3 colours / 4 UVs* whatever went
+in, because ATK's glTF *writer* pads all five colour and all five UV channels
+unconditionally and nothing in the GLB says which were real. Most GRB garments already sit
+at (3, 4) and so appear to round-trip perfectly; the Walker coat, at (3, **1**), is the one
+that exposes it. The donor `.data` is where the true channel counts come from. Without one
+the tool still runs and says so, loudly — and reports stride **48** for a coat whose real
+stride is **36**.
+
+It also corrects two things you would otherwise never see: `DataStorage.ActiveGame` (unset,
+it reads as **BlackFlag**, and the importer drops a colour channel from any skinned mesh)
+and `mesh.Version` (hardcoded to `Game.BlackFlag` by `MeshFromGLTF` and never assigned,
+while `Mesh.WriteToFile` switches on it in ten places). Exit status is **2** when the result
+does not match the donor.
+
+⚠️ **It suppresses a modal dialog to work at all.** `MeshFromGLTF` calls
+`WpfMessageBox.Show` when a GLB has no vertex colours or no UVs — i.e. on exactly the
+fresh-from-Blender mesh you are most likely to bring — and headless there is no dispatcher,
+so the import dies in `WpfMessageBox..ctor()`. The bridge borrows
+`Settings.SuppressMeshViewerImportErrorMessages` for the call and hands it straight back,
+then reports the same two conditions itself. **`Settings.Save()` is never called** and must
+not be; that would write ATK's user config.
+
+⚠️ **Nothing is written.** You get a live in-memory `Mesh`. Getting it into a `.data` and
+repacking a forge is still manual and still needs a verified backup — by policy, not by
+capability.
+
 Needs `pythonnet`, the .NET 9 runtime, and an ATK install (`GRB_ATK`, default
 `D:\Anvil Toolkit`). The container layer stays **ours** — `data_inspect.py`
 decompresses the `.data` and slices out the resource payload, and only the
 payload goes to ATK. That is what makes the two readers independent.
 
-Four gates, each silent when you get it wrong — all four are handled here and
+Five gates — four silent, one very loud. All five are handled here and
 explained in the module docstring:
 
 1. ATK's dependencies live in `Libs\`, which .NET will not probe on its own.
@@ -465,6 +512,16 @@ explained in the module docstring:
    The read helpers dodge it by passing the game explicitly, but 68 files consult
    the global; `AnvilGLTF.MeshFromGLTF` is one, and its Black Flag branch silently
    drops a colour channel from any skinned GRB mesh. *(Found 2026-09-09.)*
+5. `MeshFromGLTF` opens a **WPF modal dialog** for a GLB with no vertex colours or
+   no UVs, which cannot work headless — this one is loud, not silent, and it kills
+   the import outright. `import_gltf` suppresses it and reports the condition
+   instead. *(Found 2026-09-09.)*
+
+⚠️ **Do not read a vertex format off `FromGLTF`'s output.** The importer preps
+`Vertices[0]` and *then* calls `RemapBuffers`, which rebuilds the list in
+face-traversal order — so the one prepped vertex is wherever that put it. Measured:
+the Walker coat's stayed at index 0, the selftest poncho's landed at index **67**.
+Writing self-corrects (`WriteToFile` re-preps index 0); only inspection is fooled.
 
 ⚠️ **`mesh.Failed` is not a success signal** for GRB meshes in ATK 1.3.1 — the
 reader wants exactly one byte past the resource payload. The bridge pads one zero

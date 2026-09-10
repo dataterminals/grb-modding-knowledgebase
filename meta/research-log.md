@@ -2445,10 +2445,89 @@ Only trimming them to the donor's real count lands on 36.
 gone. Four in that mesh. Not a defect, but it means vertex counts can legitimately shrink
 across a round trip, and a count check alone will flag it.
 
+### Addendum (same session) — built the write-back checker, and found a sixth gate that is *loud*
+
+Built [`import_gltf()`](../tools/atk_bridge.py) — the import-side counterpart to
+`export_gltf`, and the thing the entry above left in its open questions. It runs a GLB
+through `AnvilGLTF.FromGLTF`, applies the three corrections, and reports **what vertex
+format the file would actually get**, without writing anything. `python atk_bridge.py
+<donor.data> --import new.glb`; exit status 2 when it does not match the donor.
+
+Supporting pieces: `_write_prep()` replicates `Mesh.WriteToFile`'s prologue without a
+stream, `write_preview()` evaluates its three format lines, and `_glb_summary()` reads a
+GLB's JSON chunk directly for the two things ATK will not report — the vertex count as the
+*file* has it, and whether any colour/UV channels exist at all.
+
+> **Verified — trimming vertex zero alone is correct, and not a shortcut.**
+> `Mesh.WriteVertexData` writes *every* vertex as
+> `vertex.WriteToFile(bw, VertexFormat, …)` — one mesh-level format, taken from vertex zero.
+> Slots trimmed there are simply not written; slots missing on other vertices are padded by
+> `GetUVs()`/`GetColors()`. The buffer is uniform by construction, which is what makes a
+> single `VertexStride` meaningful.
+
+### ⚠️ A SIXTH gate — and unlike the other five it is not silent, it is fatal
+
+`MeshFromGLTF` calls **`WpfMessageBox.Show`** when the GLB carries no vertex colours, and
+again when it carries no UVs. Headless there is no WPF dispatcher, so `WpfMessageBox..ctor()`
+throws and the entire import dies — on exactly the fresh-from-Blender mesh a modder is most
+likely to bring. Reproduced on `_selftest/_selftest_poncho.glb`.
+
+> **Verified:** its own guard flag is useless here. `FromGLTF` begins with
+> `VertexColorMessageShown = false;`, so pre-setting the static is undone on entry.
+> (`TexCoordMessageShown` is *not* reset — an inconsistency in ATK, not in us.) The only
+> lever that works for both is
+> `AnvilToolkit.Properties.Settings.Default.SuppressMeshViewerImportErrorMessages`.
+
+`import_gltf` borrows that setting for the call and restores the previous value in a
+`finally`, then reports the same two conditions itself from the GLB. **`Settings.Save()` is
+never called** — an in-memory property set does not touch ATK's user config, and calling
+Save would.
+
+### ⚠️ VERIFIED — `RemapBuffers` moves the prepped vertex, so vertex zero is not reliable
+
+`MeshFromGLTF` normalises `Vertices[0]` and *then* calls `RemapBuffers`, which rebuilds the
+list in face-traversal order. The prepped vertex goes wherever that puts it. Counting the
+per-vertex `(ColorCount, UVCount)` distribution across a whole mesh shows exactly one
+outlier:
+
+| GLB | distribution | prepped vertex ends up at |
+| --- | --- | --- |
+| Walker coat | 1815 × (5,5), 1 × (3,4) | index **0** |
+| selftest poncho | 623 × (5,5), 1 × (3,4) | index **67** |
+
+**Writing is unaffected** — `WriteToFile` re-preps whatever is at index 0 by then, which is
+why this has never broken anything. **Inspection is fooled**, and that is worth knowing: it
+retro-explains why the 2026-09-08 round-trip table was legible at all (the coat's prepped
+vertex happened to stay at index 0; a mesh like the poncho would have reported a raw
+`(5, 5)` and told a different story). `import_gltf`'s report labels those numbers
+`at index 0 … (raw)` rather than "as imported".
+
+### Tested on five inputs, including a negative
+
+| input | donor | result |
+| --- | --- | --- |
+| Walker coat LOD0 round trip | itself | **MATCH** — `…_Tex2s_Joint4_Col4ub`, stride 36 |
+| Walker coat LOD1 round trip | itself | **MATCH** — same format, stride 36 |
+| `Tsec_Madera_Coat_LOD0` round trip | itself | **MATCH** — 4-UV format, stride 48 |
+| `TP_Pants_Tactical_Kilt_LOD0` round trip | itself | **MATCH** — stride 48 |
+| unrigged selftest poncho | Walker coat | **MISMATCH**, exit 2 — and the warnings say why: no vertex colours, no bones, `stride 24 vs 36` |
+| Walker coat round trip | *none* | runs, and says loudly that stride **48** is the normalised constant, not a measurement |
+
+The negative case is the one that matters: an unrigged mesh against a skinned donor is the
+most likely real-world mistake, and it now fails with three specific reasons instead of a
+plausible-looking `Mesh` object.
+
+### Still not done
+- **Nothing is written.** `import_gltf` hands back a live in-memory `Mesh`. Getting it into
+  a `.data` and repacking a forge stays manual, backed-up, and deliberate — CLAUDE.md rules
+  1 and 2. No mesh has been through the game.
+- The donor supplies channel *counts*, not channel *meaning*. Nothing here recovers what a
+  genuinely new mesh's channels ought to be.
+
 ### Open questions
 - Does GRB index a mesh's bone table positionally? (unchanged — bears on the 5 weightless
   bones the importer drops)
 - The **22 unmodelled GRB cloth sections** remain the live ATK-side cloth route (unchanged).
-- Should `import_gltf()` exist in the bridge — one call that does the three corrections
-  against a named donor `.data`? It would make the write-back path as checkable as the
-  export path is. Deliberately not built this session; the write side stays manual by policy.
+- ~~Should `import_gltf()` exist in the bridge?~~ **BUILT, same session** — see the addendum
+  above. What it cannot do is decide what a genuinely new mesh's channels *should* be; it
+  only carries the donor's counts across.
