@@ -8,7 +8,7 @@ somewhere else entirely. Every lane is written down now, so none of them gets lo
 **Read [`project-goal.md`](project-goal.md) first** — Sami's north star, verbatim, and still the
 reason this repo exists. Then the two 2026-08-09 entries in [`research-log.md`](research-log.md)
 for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-24 entries.
-**For where the tooling actually stands, the two 2026-09-08 entries are the current ones.**
+**For where the tooling actually stands, the 2026-09-09 entry is the current one.**
 
 > **⚠️ Paths moved (2026-08-31). Everything is on `D:` now, not `H:`.** GRB install
 > `D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint`, ATK `D:\Anvil Toolkit`, this repo
@@ -28,9 +28,11 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > [`tools/atk_bridge.py`](../tools/atk_bridge.py). The 2026-08-31 finding said the types were
 > *reflectable* and honestly flagged that nothing had been invoked. Now they have: ATK's own mesh
 > reader runs headless and **agrees with this repo's independent parser** on the Walker coat
-> (1816/3263 and 956/1631). Three gates, all silent when wrong — `Libs\` needs an `AssemblyResolve`
+> (1816/3263 and 956/1631). Four gates, all silent when wrong — `Libs\` needs an `AssemblyResolve`
 > handler, `DataStorage.GlobalScimitarClassReader` must be populated before anything is constructed,
-> and `Mesh.Read` swallows its own exceptions into a plausible-looking half-built object.
+> `Mesh.Read` swallows its own exceptions into a plausible-looking half-built object, and
+> `DataStorage.ActiveGame` silently reads as `BlackFlag` until something sets it *(4th found
+> 2026-09-09; `arm()` now handles it)*.
 > ⚠️ **`Failed` is not a success signal** (ATK wants one byte past the payload), and the bridge
 > deliberately never touches `DataFile` — its `Deserialize` writes to your install.
 > ⚠️ **It also corrected a fact this KB carried as VERIFIED since 2026-07-01:** GRB garment meshes
@@ -67,13 +69,10 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 >    list**, at runtime or in the assembly. What survives is the **72 ungated
 >    `Physics.MotionCloth.*` types**, which [`tools/motioncloth.py`](../tools/motioncloth.py)
 >    already reads independently.
-> 3. **The one concrete blocker on a faithful mesh write-back now has a name.**
->    `AnvilGLTF.MeshFromGLTF` rebuilds a vertex with `ColorCount` **2** where the original had
->    **3** — and because the vertex format is a *table lookup on that descriptor*, that single
->    unreconstructed colour channel is the entire `Col4ub` loss. The importer reads all five
->    (`GetVertexColor(0..4)`); something downstream assigns fewer. **Find that, and the write-back
->    is faithful.** Nothing "guesses" the format — an earlier claim that it did is corrected in
->    the 2026-09-08 (second) log entry.
+> 3. **The mesh write-back loses a colour channel.** ~~`AnvilGLTF.MeshFromGLTF` rebuilds a
+>    vertex with `ColorCount` **2** where the original had **3**; find why, and the write-back is
+>    faithful.~~ **ANSWERED 2026-09-09, and it is worse than a colour channel — see the callout
+>    below.**
 >
 > ⚠️ **Two numbers `inspect` reports are upper bounds, not measurements.** ATK's writer emits all
 > five UV and all five colour channels unconditionally, padding the absent ones. The Walker coat's
@@ -88,6 +87,40 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > (`bl_ext.lab_blender_org.mcp`) is installed alongside this repo's `grb_blender_addon`. The
 > Claude-side server was always running — the Blender-side add-on was the missing half, which is
 > why `localhost:9876` was closed.
+
+> **🎯 New (2026-09-09): the write-back does not reconstruct a vertex format — it NORMALISES
+> one.** This answers yesterday's blocker and replaces it with a sharper rule.
+>
+> - **The dropped colour was an unset global.** `DataStorage.ActiveGame` is a `public static Game`
+>   with **no initialiser**, and the sentinel `Game.Null` is **-1** — so unset it reads as
+>   `(Game)0` = **`BlackFlag`**. Only ATK's GUI ever assigns it (`MainWindow`, `GameSelector`);
+>   **68 files read it**. `MeshFromGLTF` is one, and its Black Flag branch carries
+>   `if (Joints.Count != 0) Vertices[0].Color2 = null;` — which fires on every skinned GRB
+>   garment. **Fixed:** [`atk_bridge.py`](../tools/atk_bridge.py)'s `arm()` now sets it. Treat this
+>   as a **fifth silent gate** alongside the four already in that module's docstring.
+> - **⚠️ But do NOT read the round trip as a reconstruction.** With the game set, *every* skinned
+>   GRB mesh comes back as **`ColorCount 3, UVCount 4`** regardless of what went in — measured on
+>   four garments. Most GRB garments already sit at (3, 4), so the round trip *looks* lossless;
+>   the Walker coat, at (3, **1**), is the one that exposed it. Symmetric with the export, which
+>   pads all five channels unconditionally: **nothing in the GLB distinguishes a real channel from
+>   a pad.**
+> - **⚠️ A second wrong-game trap sits on the write path.** `MeshFromGLTF` builds its Mesh with
+>   `ScimitarClassReader.New(Game.BlackFlag, …)` and **never assigns `mesh.Version`**, while
+>   `Mesh.WriteToFile` switches on `base.Version` in ten places. A re-imported mesh claims to be a
+>   Black Flag mesh whatever the active game is. It is settable; set it.
+> - **✅ Three corrections reproduce the Walker coat exactly** — `ActiveGame = GRB`,
+>   `mesh.Version = GRB`, and clear the padded `TEXCOORD_1..4` on vertex zero: format
+>   `…_Tex2s_Joint4_Col4ub`, game id 1, **stride 36**, identical to what is stored on disk.
+>   Note the middle step *widens* the stride to 48 before the trim brings it back — fixing the
+>   game alone lands **further** from the truth than the bug did.
+>
+> **The rule to carry forward: take the target vertex format from the donor `.data`, never from
+> the round trip.** ⚠️ Still unwritten and unloaded — the format agrees with the original as
+> computed by ATK's own write path; no bytes were produced and nothing was tested in game.
+>
+> Incidental: `RemapBuffers` rebuilds the vertex list from face traversal, so vertices no face
+> references are dropped (`Tsec_Madera_Coat_LOD0`: 12,502 → 12,498). A vertex-count check alone
+> will flag that as a loss; it isn't one.
 
 ---
 

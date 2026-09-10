@@ -32,7 +32,7 @@ REQUIREMENTS (all already present on the 2026-08-31 dev machine, unplanned):
   - an ATK install                (default D:\\Anvil Toolkit, or set GRB_ATK)
   - the game's oo2core_7_win64.dll for Oodle, found by data_inspect.py
 
-HOW IT WORKS (three things that are each load-bearing):
+HOW IT WORKS (five things that are each load-bearing):
  1. ATK's dependencies live in `<ATK>\\Libs`, which .NET will not probe on its
     own. Without an AssemblyResolve handler pointing there, `GetTypes()` throws
     ReflectionTypeLoadException and you silently lose types. With it, all 1245
@@ -50,7 +50,14 @@ HOW IT WORKS (three things that are each load-bearing):
     `prime_hashes()` starts it and waits for the count to settle (~820,000 names,
     about a second). Anything that names things - `ScimitarClass.ClassName`,
     `MeshBone.NameString`, `AnvilGLTF.CreateGLTF` - needs this first.
- 4. The container layer is ours, not ATK's: `data_inspect.py` decompresses the
+ 4. `DataStorage.ActiveGame` is a plain `public static Game` with NO initialiser,
+    and `Game.Null` is -1 - so an unset field defaults to `(Game)0`, which is
+    `Game.BlackFlag`. Only `MainWindow` and `GameSelector` ever assign it, i.e.
+    only when a human picks a game in the GUI. The read helpers below dodge it by
+    passing `game()` explicitly, but 68 files consult the global, and
+    `AnvilGLTF.MeshFromGLTF` is one of them: left unset it runs its Black Flag
+    branch over a GRB mesh and silently drops a colour channel. `arm()` sets it.
+ 5. The container layer is ours, not ATK's: `data_inspect.py` decompresses the
     `.data` and slices out the resource payload, and only the payload is handed
     to ATK. That is what makes the comparison independent - and it avoids
     `DataFile` entirely.
@@ -155,17 +162,29 @@ def game(name="GhostReconBreakpoint"):
     return System.Enum.Parse(T("AnvilToolkit.Utils.Game"), name)
 
 
-def arm():
-    """Populate DataStorage.GlobalScimitarClassReader - the GUI-only static that
-    every ScimitarClass copies into its instance ClassReader field. Must run
-    BEFORE constructing anything, or reads fail with a swallowed NullReference."""
+def arm(active_game="GhostReconBreakpoint"):
+    """Set the two GUI-only statics that ATK's format engine reads from anywhere.
+
+    1. `DataStorage.GlobalScimitarClassReader` - every ScimitarClass copies it
+       into its instance ClassReader field. Must be set BEFORE constructing
+       anything, or reads fail with a swallowed NullReference.
+    2. `DataStorage.ActiveGame` - which game the engine believes is open.
+
+    ⚠️ ActiveGame has no initialiser and `Game.Null` is -1, so unset it reads as
+    `(Game)0` = **BlackFlag**: a real game with real, wrong code paths, and
+    nothing throws. Verified 2026-09-09: with it unset, `AnvilGLTF.MeshFromGLTF`
+    takes its BlackFlag branch on a GRB mesh and, because the coat is skinned,
+    hits `if (Joints.Count != 0) Vertices[0].Color2 = null;` - which is the
+    entire "importer drops a colour channel" defect. Setting it restores
+    ColorCount 3. See the 2026-09-09 research-log entry."""
     if _state["armed"]:
         return
     System = _state["System"]
     reader = System.Activator.CreateInstance(
         T("AnvilToolkit.FileTypes.AnvilNext.ScimitarClassReader"))
-    T("AnvilToolkit.Utils.DataStorage") \
-        .GetField("GlobalScimitarClassReader").SetValue(None, reader)
+    DS = T("AnvilToolkit.Utils.DataStorage")
+    DS.GetField("GlobalScimitarClassReader").SetValue(None, reader)
+    DS.GetField("ActiveGame").SetValue(None, game(active_game))
     _state["armed"] = True
 
 

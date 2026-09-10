@@ -2318,3 +2318,137 @@ would meet those numbers.
 - `VertexFormatsMap.GetGameSpecificVertexFormat` and `VertexFormatSizes.GetVertexFormatSize`
   were not read this session — they map the format to a per-game id and a stride, and they sit
   directly on the write path.
+
+---
+
+## Entry — 2026-09-09 — The dropped colour channel is an unset global, and the importer does not reconstruct a vertex format at all
+
+Answers the blocker the 2026-09-08 (second) entry left as *"Why does `MeshFromGLTF`
+reconstruct only 2 colour channels?"* — and **corrects that entry twice over**. It named
+"the importer's colour reconstruction" as the fix target. The reconstruction is fine; it
+writes all five channels unconditionally. And the deeper answer is that the importer does
+not reconstruct the format in *any* sense — it normalises every skinned GRB mesh to the
+same descriptor. Per house style the earlier entry is left standing; this is the correction.
+
+### What I did
+Decompiled `AnvilGLTF`, `AnvilToolkit.Common.Vertex`, `Mesh`, `DataStorage` and the `Game`
+enum from `AnvilToolkit.dll` 1.3.1, then measured the round trip through
+[`tools/atk_bridge.py`](../tools/atk_bridge.py) on four real garments. Everything was
+in-memory or into a scratch directory; the install was read-only throughout.
+
+### VERIFIED — the colour is dropped by a *game branch*, not by the reconstruction
+
+`MeshFromGLTF`'s per-vertex loop assigns **all five** colour and **all five** UV slots
+unconditionally, substituting a default when the GLB has no such accessor:
+
+```
+vertex.Color0 = (list6 != null) ? new PackedRGBA(...) : new PackedRGBA(1,1,1,1);
+vertex.Color1 = (list7 != null) ? new PackedRGBA(...) : new PackedRGBA(1,1,1,1);
+vertex.Color2 = (list8 != null) ? new PackedRGBA(...) : new PackedRGBA(0,0,0,0);
+…  and the same shape for TEXCOORD_0..4
+```
+
+Nothing is lost there. The loss happens afterwards, in a `switch (DataStorage.ActiveGame)`
+that nulls slots on **`Vertices[0]` only** — the vertex whose descriptor selects the
+format:
+
+| branch | nulls on vertex zero |
+| --- | --- |
+| `GhostReconBreakpoint` | `Color3`, `Color4`, `TEXCOORD_4` |
+| `BlackFlag`/`Rogue`/`AC2`/`Brotherhood`/`AC3`/`AC3Remastered` | `TEXCOORD_1..4`, `Color3`, `Color4`, **and `Color2` when `Joints.Count != 0`** |
+
+> **Verified:** the Walker coat is skinned, so under the Black Flag branch that last clause
+> fires and takes `Color2` with it. `ColorCount` **3 → 2**. That one clause is the whole of
+> the "importer drops a colour channel" defect.
+
+### VERIFIED — why the Black Flag branch ran at all: a global nobody set
+
+```
+public static Game ActiveGame;          // AnvilToolkit.Utils.DataStorage
+public enum Game { Null = -1, BlackFlag, Rogue, AC2, … }
+```
+
+No initialiser, and the sentinel `Game.Null` is **-1** — so an unset field reads as
+`(Game)0`, which is **`BlackFlag`**: a real game with real, wrong code paths. Nothing
+throws. It is assigned in exactly **two** places, `MainWindow.cs:325` and
+`GameSelector.cs:182` — i.e. only when a human picks a game in ATK's GUI — and **68 files
+read it**, including `Schema`, `XmlUtils`, `Reference`, `Object`, the compression manager
+and `AnvilGLTF`.
+
+The bridge's read helpers were never affected, because they pass `game()` explicitly to
+each constructor. Anything that consults the global was.
+
+> **⚠️ A fifth silent gate, of the same family as the four already catalogued in
+> [`atk_bridge.py`](../tools/atk_bridge.py)'s docstring.** Wrong value, valid enum, plausible
+> output, no error. **Fixed** — `arm()` now sets `DataStorage.ActiveGame` alongside
+> `GlobalScimitarClassReader`, which is exactly its job: make ATK's GUI-only statics look
+> like a game is open.
+
+### VERIFIED — and the bigger finding: the importer NORMALISES, it does not reconstruct
+
+With the global set, the coat comes back with `ColorCount = 3`, matching the original. That
+is **coincidence, not fidelity.** The GRB branch always leaves exactly `Color0..2` and
+`TEXCOORD_0..3` standing, so *every* skinned GRB mesh returns from `FromGLTF` as
+**`ColorCount 3, UVCount 4`** whatever went in. Measured on four garments:
+
+| mesh | original (col/uv) | round-tripped | |
+| --- | --- | --- | --- |
+| `TP_Tacvest_Walker_Coat_LOD0` | 3 / **1** | 3 / **4** | DIFFERS |
+| `TP_Tacvest_Walker_Coat_LOD1` | 3 / **1** | 3 / **4** | DIFFERS |
+| `Tsec_Madera_Coat_LOD0` | 3 / 4 | 3 / 4 | matches — it was already at the constant |
+| `TP_Pants_Tactical_Kilt_LOD0` | 3 / 4 | 3 / 4 | matches — it was already at the constant |
+
+**That is how this stays invisible.** Most GRB garments already sit at (3, 4), so the round
+trip looks lossless; the Walker coat, at (3, 1), is what exposed it.
+
+The cause is symmetric with the export. `CreateGLTF` writes all five UV and all five colour
+channels unconditionally through `GetUVs()`/`GetColors()`, padding absent ones (2026-09-08),
+so the GLB cannot distinguish a real channel from a pad — and the importer, reading it back,
+has nothing to distinguish them by either. **The target format must come from the donor
+`.data`, not be inferred from the round trip.**
+
+### VERIFIED — a second wrong-game trap, on the write path
+
+`MeshFromGLTF` builds its result with `ScimitarClassReader.New(Game.BlackFlag, 1096652136u)`
+and **never assigns `mesh.Version`**. `Mesh.WriteToFile` switches on `base.Version` — not on
+`ActiveGame` — in ten places, including `GetGameSpecificVertexFormat(base.Version, …)` and
+`GetVertexFormatSize(base.Version, …)`. So a re-imported mesh claims to be a Black Flag mesh
+no matter what the active game is. Measured: `mesh.Version = BlackFlag` with `ActiveGame`
+unset **and** with it set to GRB. The property is settable, so a caller can correct it.
+
+### VERIFIED — three corrections reproduce the original exactly
+
+Evaluating `WriteToFile`'s own three lines (`VertexFormat = Vertices[0].Format` →
+`GetGameSpecificVertexFormat` → `GetVertexFormatSize`) without writing anything:
+
+| stage | col | uv | format | game id | stride |
+| --- | --- | --- | --- | --- | --- |
+| original on disk | 3 | 1 | `…_Tex2s_Joint4_Col4ub` | 1 | **36** |
+| round trip as the bridge ran it | 2 | 1 | `…_Tex2s_Joint4` | 0 | 32 |
+| `+ ActiveGame = GRB`, `+ mesh.Version = GRB` | 3 | 4 | `…_Tex2s_Tex2s_Tex2s_Joint4_Col4ub_Tex2s` | 5 | 48 |
+| `+ padded TEXCOORD_1..4 cleared on vertex zero` | 3 | 1 | `…_Tex2s_Joint4_Col4ub` | **1** | **36** ✅ |
+
+The third row is worth staring at: fixing the game **widens** the stride from 32 to 48,
+further from the truth than the bug was, because the padded UV channels are now believed.
+Only trimming them to the donor's real count lands on 36.
+
+### NOT verified
+- **Whether any of this matters in game.** No mesh has been written back. The stride and
+  format now agree with the original *as computed by ATK's own write path*; no bytes were
+  produced and nothing was loaded.
+- **Whether trimming by donor UV count is right in general.** It is right when the donor's
+  count is known. Nothing here recovers a *new* mesh's intended channel count.
+
+### Incidental — `RemapBuffers` drops orphan vertices
+`Tsec_Madera_Coat_LOD0` came back **12,498** vertices against the original's **12,502**.
+`RemapBuffers` rebuilds the list from face traversal, so any vertex no face references is
+gone. Four in that mesh. Not a defect, but it means vertex counts can legitimately shrink
+across a round trip, and a count check alone will flag it.
+
+### Open questions
+- Does GRB index a mesh's bone table positionally? (unchanged — bears on the 5 weightless
+  bones the importer drops)
+- The **22 unmodelled GRB cloth sections** remain the live ATK-side cloth route (unchanged).
+- Should `import_gltf()` exist in the bridge — one call that does the three corrections
+  against a named donor `.data`? It would make the write-back path as checkable as the
+  export path is. Deliberately not built this session; the write side stays manual by policy.

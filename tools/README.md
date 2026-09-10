@@ -453,13 +453,18 @@ Needs `pythonnet`, the .NET 9 runtime, and an ATK install (`GRB_ATK`, default
 decompresses the `.data` and slices out the resource payload, and only the
 payload goes to ATK. That is what makes the two readers independent.
 
-Three gates, each silent when you get it wrong — all three are handled here and
+Four gates, each silent when you get it wrong — all four are handled here and
 explained in the module docstring:
 
 1. ATK's dependencies live in `Libs\`, which .NET will not probe on its own.
 2. `DataStorage.GlobalScimitarClassReader` is a static only the GUI populates.
 3. `Mesh.Read` **catches its own exceptions** and hands back a half-built object
    that looks plausible.
+4. `DataStorage.ActiveGame` has **no initialiser**, and `Game.Null` is -1 — so unset
+   it reads as `(Game)0` = **BlackFlag**, a real game with real, wrong code paths.
+   The read helpers dodge it by passing the game explicitly, but 68 files consult
+   the global; `AnvilGLTF.MeshFromGLTF` is one, and its Black Flag branch silently
+   drops a colour channel from any skinned GRB mesh. *(Found 2026-09-09.)*
 
 ⚠️ **`mesh.Failed` is not a success signal** for GRB meshes in ATK 1.3.1 — the
 reader wants exactly one byte past the resource payload. The bridge pads one zero
