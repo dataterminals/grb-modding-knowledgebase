@@ -150,10 +150,10 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > **DONE 2026-09-09**, and the answer moved the target: a rig assignment is **not** an
 > `EntityBuilder` field at all. `PLAYER_Template` reaches its rigs through a `BuildTable` named
 > **`PLAYER_SkelAddons`** (ID `1898138514560`), which it **shares with `TEAMMATE_Template`**.
-> **The new step 1 is: find where that BuildTable lives.** It is not a top-level entry in
-> `DataPC`, `DataPC_patch_01`, `DataPC_extra_patch_01` or `DataPC_Resources` — all four indexes
-> were searched — so it is a resource inside some other container. It is what any rig-assignment
-> edit would target, so nothing downstream can start until it is located.
+> ~~The new step 1 is: find where that BuildTable lives.~~ **FOUND, same day.** It is a
+> `BuildTable` resource **inside the `TEAMMATE_Template.data` container** — verified in bytes at
+> offset 94,195 of the patch copy. **The new blocker is our own code:** `data_inspect.py`
+> mis-parses that container, so the resource cannot yet be read or exported. See step 1c below.
 
 ---
 
@@ -334,11 +334,22 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
    from `SubTables`. **`PLAYER_Template` and `TEAMMATE_Template` share it.** It also **corrected**
    the 2026-08-14 claim that an EntityBuilder assigns skeletons: the EntityBuilder resource
    contains **zero** skeleton records — all 11 are elsewhere in the container.
-1b. **⭐ NEW step 1 — find `PLAYER_SkelAddons.BuildTable`.** Not a top-level entry in `DataPC`,
-   `DataPC_patch_01`, `DataPC_extra_patch_01` or `DataPC_Resources`; ATK's file list knows a path
-   for it, so it is a resource inside another container. **This is the file a rig-assignment edit
-   targets** — everything below waits on it. `data_inspect.py` over candidate containers, or
-   ATK's file list entry, are the two ways in.
+1b. ~~**Find `PLAYER_SkelAddons.BuildTable`.**~~ **DONE 2026-09-09.** ATK's file list entry was
+   the way in: `GameFileListEntry` is `{ForgeIndex, DataIndex, Name, Extension}` and its path is
+   literally **forge / container / resource** — not an authoring path, which is how it was
+   misread. `PLAYER_SkelAddons` is a `BuildTable` **inside the `TEAMMATE_Template.data`
+   container** in `DataPC`. Verified in bytes: the record
+   `int32 len(17) | "PLAYER_SkelAddons" | 0x00 | u64 1898138514560` sits at **offset 94,195** of
+   the patch copy. *(The list holds 1,053,342 resources across 413,452 containers — a resource
+   that is not its own container is the normal case, not an oddity.)*
+1c. **⭐ NEW step 1 — fix `data_inspect.py`'s container segmentation.** It reports
+   `TEAMMATE_Template.data` as **2** typed resources: an `EntityBuilder`, then one blob with a
+   binary-garbage name and a type id that differs between base and patch. The segmentation is
+   lost after the first resource. For scale, the `BuildTable` type id **585940579 appears 34,636
+   times** in that payload — it is the whole player/teammate customization set, and we see one
+   resource of it. **Until a resource inside a multi-resource container can be addressed by name
+   or ID, `PLAYER_SkelAddons` cannot be read or run through `export_xml()`** — and every later
+   step targets exactly that resource. This one is our bug, not an ATK gate.
 2. **The goal-shaped experiment:** add or re-point a skeleton record in the **player** template
    aiming at a physics-carrying add-on rig, copying the kilt/scarf entries as the pattern. First
    end-to-end test of route 2B.

@@ -2666,3 +2666,64 @@ live one. Same hazard as cloths and skeletons: an edit must target the patch, or
 plateau-wait), `_on_sta()` (gate 6) and `export_xml()`, plus `--xml out.xml` on the CLI and an
 `ATK_XML_TYPES` map of the resource types that declare `FileActionType.Xml`. **Read-only
 against the install; it writes only the XML path you name.**
+
+### Addendum (same session) — found it: an ATK file-list path is `forge / container / resource`
+
+The entry above left "where does `PLAYER_SkelAddons.BuildTable` live?" open, having searched
+four forge indexes for its ID and found nothing. The search was wrong, not the question: it is
+not a top-level forge entry, and **the path ATK printed was already the answer** — I read it as
+an authoring path.
+
+> **Verified from source and confirmed with controls.** `GameFileListEntry` holds
+> `{int ForgeIndex, int DataIndex, string Name, uint Extension}` and
+> `GetPath(ForgeFiles, DataFiles)` is
+> `Path.Combine(ForgeFiles[ForgeIndex], DataFiles[DataIndex], Name) + "." + Extension.GetHashedString()`.
+> So every path in the list decomposes as **forge / container / resource-name . type**.
+
+Reading the fields back by reflection for three IDs:
+
+| ID | forge | container | name |
+| --- | --- | --- | --- |
+| 1898138514560 | `DataPC` | **`TEAMMATE_Template`** | `PLAYER_SkelAddons` |
+| 1536663434687 *(control)* | `DataPC` | `PLAYER_Template` | `PLAYER_Template` |
+| 1707208439117 *(control)* | `DataPC_Resources` | `TP_Tacvest_Walker_Coat_LOD0` | `TP_Tacvest_Walker_Coat_LOD0` |
+
+The two controls are resources that *are* their own container, which is the common case and
+exactly why the distinction was easy to miss. `PLAYER_SkelAddons` is not: **it is a
+`BuildTable` resource inside the `TEAMMATE_Template.data` container.**
+
+The list holds **1,053,342 resources across 413,452 containers and 27 forges** — about 2.5
+resources per container, so this is not a rare shape.
+
+### VERIFIED in bytes
+
+Searching the decompressed container for the exact 30-byte record
+`int32 len(17) | "PLAYER_SkelAddons" | 0x00 | u64 1898138514560`:
+
+| copy | payload our slicer yields | exact record |
+| --- | --- | --- |
+| base `DataPC.forge\28398_-_TEAMMATE_Template.data` | 236,119 B | **0** |
+| patch `DataPC_patch_01.forge\23_-_TEAMMATE_Template.data` | 8,342,705 B | **1**, at offset 94,195 |
+
+The little-endian ID `80 34 df f1 b9 01 00 00` follows the name directly, so the record is
+name-then-ClassID — the same shape as the `EntityBuilder` skeleton records from 2026-08-14.
+
+> **Inferred, NOT verified:** that the base copy lacks it. Our slicer is demonstrably wrong on
+> this container (below), so 236,119 B is not a trustworthy reading of what the base holds.
+> What is verified is that the record **is** in the patch copy — which is the live one anyway.
+
+### ⚠️ Our own container slicer mis-parses `TEAMMATE_Template.data`
+
+`data_inspect.py` reports this container as **2** typed resources: an `EntityBuilder`, and a
+second whose name field decodes as binary garbage and whose "type id" differs between the two
+copies (`#3971900160` base, `#444870144` patch) at 173,858 B and 8,340,098 B. Those are not
+two readings of the same thing; the segmentation is lost after the first resource.
+
+For scale on what is being missed: the `BuildTable` type id **585940579 appears 34,636 times**
+in the patch payload. This container is a large bundle of build tables — the player/teammate
+customization set — and we currently see one resource of it.
+
+**This is now the blocker.** `PLAYER_SkelAddons` is located, but it cannot be cleanly *read* —
+let alone exported to XML through `export_xml()` — until the container layer can address a
+resource inside a multi-resource container by name or ID. That is a `data_inspect.py` fix, in
+our own code, not an ATK gate.
