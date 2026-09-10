@@ -129,6 +129,23 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > references are dropped (`Tsec_Madera_Coat_LOD0`: 12,502 → 12,498). A vertex-count check alone
 > will flag that as a loss; it isn't one.
 
+> **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
+>
+> **What now works.** Export a real GRB garment to GLB, move weights in Blender, check the
+> result against the rig's physics bones, import it back through ATK, and be told whether the
+> file you would write is *structurally identical to the original* — all headless, all scripted,
+> all read-only. Four garments have been through it end to end.
+>
+> **What that is NOT.** Nothing has been written into a `.data`. **No modified mesh and no
+> modified skeleton has ever been confirmed to load in GRB** — that wall has not moved since
+> July, and every tool built since assumes past it. "ATK's own arithmetic says the bytes would
+> match" is a much weaker claim than "the game accepted it", and the gap between them is the
+> whole remaining risk.
+>
+> **What to do next.** Lane 2B step 1, below: **get an ATK XML export of `PLAYER_Template`.**
+> Un-run since 2026-08-14, read-only, cheap, and it settles which `EntityBuilder` field holds a
+> rig assignment — the thing every later write depends on. Do that before spending a game launch.
+
 ---
 
 ## Three lanes. Know which one you're in.
@@ -337,17 +354,21 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
 4. Then: a new mesh weight-painted to a physics-carrying rig. That step **is** the project goal,
    reached without touching `.cloth` at all.
 
-**The pipeline, as of 2026-09-08:**
+**The pipeline, as of 2026-09-09:**
 
 ```
    ATK export  ──►  Blender transfer  ──►  rebind_check  ──►  ATK import  ──►  repack
-   AUTOMATED        AUTOMATED             AUTOMATED          CALLABLE         manual
-   (09-01)          (08-31)               (09-01)            (09-08)          by policy
+   AUTOMATED        AUTOMATED             AUTOMATED          CHECKED          manual
+   (09-01)          (08-31)               (09-01)            (09-09)          by policy
 ```
 
-The front half runs headlessly, end to end, on real garment data. `FromGLTF` works; what is **not**
-solved is write-back *fidelity* — see the `MeshFromGLTF` colour-channel blocker in the 2026-09-08
-callout at the top. The final write into a `.data`/forge stays manual **by policy, not capability**.
+Everything up to the write runs headlessly on real garment data, and the import end now **tells you
+when it would produce a wrong file** — `atk_bridge.py <donor.data> --import new.glb`, exit 2 on a
+mismatch. Write-back *fidelity* was the 2026-09-08 blocker and is closed: the format and stride the
+file would receive match the donor exactly, for four garments.
+
+⚠️ **"Would match" is arithmetic, not evidence.** No bytes have been produced and nothing has been
+loaded. The final write into a `.data`/forge stays manual **by policy, not capability**.
 
 > **Reading is done; writing is not.** Nothing has been written back to a skeleton yet, and any
 > skeleton edit inherits the forge-shadow and hang-on-load hazards from the cloth work.
