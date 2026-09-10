@@ -9,6 +9,7 @@ usable as a second, independent opinion against this repo's hand-written parsers
 
     python atk_bridge.py <file.data> [more.data ...]
     python atk_bridge.py <donor.data> --import new.glb    # check a write-back
+    python atk_bridge.py <file.data> --xml out.xml        # ATK's XML round-trip
 
 Verified 2026-09-01 against `TP_Tacvest_Walker_Coat_LOD0/LOD1` - ATK's mesh
 reader agrees with the independent parse recorded on 2026-07-01 (1816 verts /
@@ -714,6 +715,118 @@ def print_import_report(report):
         print(f"  ATK said      {report['atk_said']}")
 
 
+def prime_filelist(timeout=120.0, atk_dir=None):
+    """Load ATK's game file list, so 64-bit IDs render as NAMES instead of numbers.
+
+    `GameFileList.CheckStrings()` looks for `Lists/<ActiveGame>.gfl` at a
+    **relative** path - relative to the process working directory - and, not
+    finding one, calls `WpfMessageBox.Show` to offer downloading it. Headless
+    that is fatal. ATK ships the file at `<ATK>\\Lists\\GhostReconBreakpoint.gfl`
+    (6.8 MB), so the fix is to point the working directory at the ATK folder for
+    the duration; then the list loads and no dialog is ever constructed.
+
+    Like `HashedData.CheckStrings`, it loads inside a `Task.Run` and returns
+    immediately, so this polls until the count settles. ~1,053,000 entries.
+
+    Without this, `Handle.ToXml` and anything else going through
+    `XmlUtils.WriteToXMLRef` emits bare decimal IDs - technically correct, and
+    unreadable. Returns the number of entries."""
+    import time
+    System, _asm = start(atk_dir)
+    from System.IO import Directory
+    gfl = T("AnvilToolkit.Utils.GameFileList")
+    field = gfl.GetField("List")
+    d = field.GetValue(None)
+    if d is not None and d.Count:
+        return d.Count
+    was = Directory.GetCurrentDirectory()
+    Directory.SetCurrentDirectory(atk_dir or ATK_DIR)
+    try:
+        gfl.GetMethod("CheckStrings").Invoke(None, [])
+        t0, last = time.time(), -1
+        while time.time() - t0 < timeout:
+            d = field.GetValue(None)
+            count = 0 if d is None else d.Count
+            if count > 0 and count == last:
+                return count
+            last = count
+            time.sleep(0.4)
+        return last
+    finally:
+        Directory.SetCurrentDirectory(was)
+
+
+def _on_sta(fn):
+    """Run fn() on a fresh STA thread and return its value, re-raising errors.
+
+    ⚠️ `ScimitarClass.ToXml` reaches WPF - `WpfMessageBox` at minimum - and WPF
+    refuses to initialise outside a single-threaded apartment. pythonnet's CLR
+    thread is MTA, so an XML export dies with "The calling thread must be STA"
+    before it writes a byte. This is the workaround; priming the file list first
+    is what stops the STA thread then *showing* the dialog."""
+    System, _asm = start()
+    from System.Threading import Thread, ThreadStart, ApartmentState
+    box = {}
+
+    def runner():
+        try:
+            box["value"] = fn()
+        except Exception as exc:            # noqa: BLE001 - re-raised below
+            box["error"] = exc
+
+    t = Thread(ThreadStart(runner))
+    t.SetApartmentState(ApartmentState.STA)
+    t.Start()
+    t.Join()
+    if "error" in box:
+        raise RuntimeError(str(box["error"])[:400])
+    return box.get("value")
+
+
+def export_xml(data_path, type_name, atk_type, out_path=None, index=0, atk_dir=None):
+    """Export one XML-backed resource to XML, the way ATK's GUI would.
+
+    `EntityBuilder`, `Material`, `TextureSet`, `LODSelector` and friends declare
+    `FileActionType.Xml` and carry a `WriteXml()` that returns an `XElement`.
+    That is the community's editable round-trip surface, and this reaches it
+    without the application.
+
+    Returns the XML string; also writes `out_path` when given. Verified
+    2026-09-09 on `PLAYER_Template` (base and patch): 651 KB, 11,234 lines.
+
+    ⚠️ Writes only `out_path`. Point it somewhere that is NOT your install."""
+    System, _asm = start(atk_dir)
+    arm()
+    prime_hashes()
+    prime_filelist(atk_dir=atk_dir)
+    obj = read_typed(data_path, type_name, atk_type, index=index, atk_dir=atk_dir)
+    from System.IO import StringWriter, Directory
+    was = Directory.GetCurrentDirectory()
+    Directory.SetCurrentDirectory(atk_dir or ATK_DIR)   # ToXml re-checks the list
+    sw = StringWriter()
+    System.Console.SetOut(sw)
+    try:
+        xml = _on_sta(lambda: obj.WriteXml(None).ToString())
+    finally:
+        System.Console.SetOut(System.Console.Out)
+        Directory.SetCurrentDirectory(was)
+    if out_path:
+        with open(out_path, "w", encoding="utf-8") as fh:
+            fh.write(xml)
+    return xml
+
+
+# type_name (as data_inspect names it) -> the ATK class that can write it as XML.
+# Extend freely; anything whose class declares FileActionType.Xml belongs here.
+ATK_XML_TYPES = {
+    "EntityBuilder": "AnvilToolkit.FileTypes.AnvilNext.Tables.EntityBuilder",
+    "BuildTable": "AnvilToolkit.FileTypes.AnvilNext.Tables.BuildTable",
+    "Material": "AnvilToolkit.FileTypes.AnvilNext.Materials.Material",
+    "TextureSet": "AnvilToolkit.FileTypes.AnvilNext.Materials.TextureSet",
+    "LODSelector": "AnvilToolkit.FileTypes.AnvilNext.Models.LODSelector",
+}
+
+
 def summarize(path):
     mesh = read_mesh(path)
     vb = bytes(mesh.VertexBuffer)
@@ -756,6 +869,11 @@ def main(argv):
         k = args.index("--import")
         glb_in = args[k + 1]
         del args[k:k + 2]
+    xml_out = None
+    if "--xml" in args:
+        k = args.index("--xml")
+        xml_out = args[k + 1]
+        del args[k:k + 2]
     while "--skeleton" in args:
         k = args.index("--skeleton")
         skels.append(args[k + 1])
@@ -779,6 +897,19 @@ def main(argv):
                 return 2
             continue
         print(f"FILE: {os.path.basename(p)}")
+        if xml_out:
+            res = resources(p)
+            if not res:
+                print("  no typed resources")
+                continue
+            tn = res[0]["type_name"]
+            atk_type = ATK_XML_TYPES.get(tn)
+            if atk_type is None:
+                print(f"  no XML export mapping for {tn} - add it to ATK_XML_TYPES")
+                continue
+            xml = export_xml(p, tn, atk_type, xml_out)
+            print(f"  {tn} -> {xml_out} ({len(xml):,} chars, {xml.count(chr(10)) + 1:,} lines)")
+            continue
         if out:
             path, used = export_gltf(p, out, skels or None, verbose=True)
             print(f"  exported -> {path} ({os.path.getsize(path):,} B)")

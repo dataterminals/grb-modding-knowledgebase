@@ -2531,3 +2531,138 @@ plausible-looking `Mesh` object.
 - ~~Should `import_gltf()` exist in the bridge?~~ **BUILT, same session** — see the addendum
   above. What it cannot do is decide what a genuinely new mesh's channels *should* be; it
   only carries the donor's counts across.
+
+---
+
+## Entry — 2026-09-09 (third) — Lane 2B step 1 is done: `PLAYER_Template` exports to XML, and it does **not** assign skeletons
+
+Step 1 of lane 2B, un-run since 2026-08-14: *"Get an ATK XML export of `PLAYER_Template`.
+Cheapest possible check — it settles which `EntityBuilder` field the reference records live
+in, and gives an editable round-trip path."* Done. The answer is **none of them**, and the
+route to a rig assignment is one level further out than this KB has been assuming.
+
+### VERIFIED — the XML export runs headlessly, and it took two more gates
+
+| | base `28359_-_PLAYER_Template.data` | patch `22_-_PLAYER_Template.data` |
+| --- | --- | --- |
+| EntityBuilder payload | 63,625 B | 63,625 B |
+| `Failed` | False | False |
+| XML | 651,239 chars / 11,234 lines | 652,906 chars / 11,262 lines |
+
+> **⚠️ Gate 6 — `WriteXml` needs an STA thread.** `ScimitarClass.ToXml` recurses into
+> `Handle.ToXml` → `XmlUtils.WriteToXMLRef` → `GameFileList.GetFileReference`, which reaches
+> `WpfMessageBox`; WPF refuses to initialise outside a single-threaded apartment, and
+> pythonnet's CLR thread is MTA. It dies with *"The calling thread must be STA"* before
+> writing a byte. Fix: run the call on a `Thread` with `SetApartmentState(STA)`.
+
+> **⚠️ Gate 7 — `GameFileList` looks for its list at a RELATIVE path, and asks to download it
+> when it cannot find one.** `GameFileList.CheckStrings()` opens
+> `"Lists/" + DataStorage.ActiveGame + ".gfl"` — relative to the **process working
+> directory** — and on a miss calls `WebUtils.CheckWebsite` and then
+> `WpfMessageBox.Show("Game File List", "…do you want to download it now?")`. On an STA
+> thread that dialog now *constructs*, and dies on a missing XAML resource instead. ATK ships
+> the file at `D:\Anvil Toolkit\Lists\GhostReconBreakpoint.gfl` (6.8 MB, dated Oct 2025), so
+> the fix is to point the working directory at the ATK folder for the call. Then it loads —
+> **1,053,342 entries** — and no dialog is ever built.
+
+**That second one is worth more than a workaround.** With the list primed, every 64-bit
+reference in the XML renders as a real path. Without it they are bare decimal numbers:
+technically correct, unreadable, and useless for the editing this step exists to enable.
+Note it is also loaded in a `Task.Run` and must be waited for, exactly like
+`HashedData.CheckStrings` (2026-09-01).
+
+### VERIFIED — where a rig assignment actually lives
+
+`PLAYER_Template`'s `EntityBuilder`, by field:
+
+| field | base | patch |
+| --- | --- | --- |
+| `BuildColumns` | 6 | 6 |
+| `BuildRows` | 3 | 3 |
+| `SubTables` | **2,885** | **2,893** |
+| `Template` | 1536663478066 | 1536663478066 |
+| `TemplateOverrides` / `Tables` / `Dependencies` / `ForceBuilTableTOCOrder` | 0 | 0 |
+
+The rigs are reached through a **`BuildTable` named `PLAYER_SkelAddons`**, ID
+**1898138514560**, which appears **four times** — three inside `BuildRows`, once in
+`SubTables`:
+
+```xml
+<DynamicProperty Index="42">
+  <Value Name="DataType" Type="UInt32" HashName="BuildTable">585940579</Value>
+  <Value Name="Type" Type="UInt32">1835008</Value>
+  <Value Name="Unk00" Type="UInt32">0</Value>
+  <Reference>
+    <FileReference Name="Value" IsGlobal="0"
+        Path="DataPC\TEAMMATE_Template\PLAYER_SkelAddons.BuildTable">1898138514560</FileReference>
+  </Reference>
+</DynamicProperty>
+```
+
+So the chain is `EntityBuilder → BuildRows → BuildRow → Components → DynamicProperty(Index 42,
+DataType `BuildTable`) → Reference → FileReference`. **`PLAYER_SkelAddons` is the editable
+surface**, not `PLAYER_Template` itself.
+
+> **Two side-effects of reading this.** (1) `Type` here is **1835008 = `0x1C0000`** — the same
+> unexplained `Type` UInt32 that [`buildtable-xml.md`](../reference/buildtable-xml.md) lists as
+> open from the lane-1 pants export. A second sighting, in a different category, with a
+> `DataType` of `BuildTable`. (2) The path string says `DataPC\TEAMMATE_Template\…` while the
+> *player* template references it, so **`PLAYER_Template` and `TEAMMATE_Template` share one
+> skeleton-addon table.** That softens the 2026-08-14 framing of "player-wearable precedents"
+> as a property of `TEAMMATE_Template`: they are the same list.
+
+### ⚠️ CORRECTION — an `EntityBuilder` does not contain the skeleton records
+
+The 2026-08-14 entry says: *"An **`EntityBuilder`** assigns skeletons — nothing else does."*
+Measured today, that is not right about the **resource**:
+
+> **Verified:** the `EntityBuilder` payload — all **63,625 B** of it, parsed cleanly by ATK's
+> own reader with `Failed = False` — contains **zero** occurrences of the 19-byte skeleton
+> reference prefix. The whole decompressed container is **188,342 B** and
+> [`entity_skeletons.py`](../tools/entity_skeletons.py) finds **11** in it.
+
+So the records are real, and they are in the container, but **outside the typed
+`EntityBuilder` resource**. `data_inspect` reports the container as holding exactly one typed
+resource, so ~125 KB of it is not accounted for as a typed resource at all. The 2026-08-14
+sweep decompressed whole resources and matched a byte pattern — which finds the records
+correctly and attributes them to the wrong owner. **What holds them is now open.**
+
+### The 11 rigs, and which ones move
+
+Unchanged between base and patch:
+
+| slot | skeleton | Reflex3 blob |
+| --- | --- | --- |
+| 1 | `Regular_Male_Reflex_SklAdd` | **107,350 B** |
+| 12 | `BodyUp_Skeleton` | 10,443 B |
+| 11 | `Watch_Skeleton` | 5,556 B |
+| 1792 | `Tpri_Schultz_Beard_Addon` | 2,710 B |
+| 3328 | `Tpri_Schultz_gloves_addon` | 1,166 B |
+| 5 / 4 / 2816 / 3 / 10 / 4864 | head, body, props, costume head, hat, weapon-attach rigs | — |
+
+**`Regular_Male_Reflex_SklAdd` carries 107,350 B of bone physics and is referenced by the
+PLAYER.** That is **2.5×** the `Tsec_Trench_AddonSkeleton` blob (43,494 B) which 2026-08-14
+called the vanilla flowing-coat exemplar *and* flagged as NPC-only. The largest bone-physics
+rig found so far is on the player already.
+
+### ⚠️ `PLAYER_Template` is forge-shadowed too
+
+Base 188,206 B vs patch 188,342 B, and `SubTables` **2,885 → 2,893**. The patch copy is the
+live one. Same hazard as cloths and skeletons: an edit must target the patch, or both.
+
+### NOT verified / open
+- **Where `PLAYER_SkelAddons.BuildTable` (1898138514560) actually lives.** It is **not** a
+  top-level entry in `DataPC`, `DataPC_patch_01`, `DataPC_extra_patch_01` or
+  `DataPC_Resources` — all four indexes were dumped and searched. ATK's file list knows a path
+  for it, so it exists; it is presumably a resource inside another container. Finding it is
+  the next concrete step, because it is what a rig-assignment edit would target.
+- **Which part of the container holds the 11 skeleton records** (see the correction above).
+- `TEAMMATE_Template`'s container holds a second resource of unknown type `#444870144`,
+  **15,973,783 B**, which `data_inspect` mis-slices (its name field reads as binary). Not
+  chased.
+
+### Tooling
+[`atk_bridge.py`](../tools/atk_bridge.py) gains `prime_filelist()` (gate 7, with the
+plateau-wait), `_on_sta()` (gate 6) and `export_xml()`, plus `--xml out.xml` on the CLI and an
+`ATK_XML_TYPES` map of the resource types that declare `FileActionType.Xml`. **Read-only
+against the install; it writes only the XML path you name.**

@@ -32,7 +32,11 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > handler, `DataStorage.GlobalScimitarClassReader` must be populated before anything is constructed,
 > `Mesh.Read` swallows its own exceptions into a plausible-looking half-built object, and
 > `DataStorage.ActiveGame` silently reads as `BlackFlag` until something sets it *(4th found
-> 2026-09-09; `arm()` now handles it)*.
+> 2026-09-09; `arm()` now handles it)*. **Three more are loud rather than silent, and all three
+> are WPF** — `MeshFromGLTF` shows a modal dialog for a GLB with no colours/UVs; `ToXml` needs an
+> **STA thread**; and `GameFileList` offers to *download* its file list unless
+> `Lists/<Game>.gfl` resolves from the **working directory**. `import_gltf` and `export_xml`
+> handle all three *(found 2026-09-09)*.
 > ⚠️ **`Failed` is not a success signal** (ATK wants one byte past the payload), and the bridge
 > deliberately never touches `DataFile` — its `Deserialize` writes to your install.
 > ⚠️ **It also corrected a fact this KB carried as VERIFIED since 2026-07-01:** GRB garment meshes
@@ -142,9 +146,14 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > match" is a much weaker claim than "the game accepted it", and the gap between them is the
 > whole remaining risk.
 >
-> **What to do next.** Lane 2B step 1, below: **get an ATK XML export of `PLAYER_Template`.**
-> Un-run since 2026-08-14, read-only, cheap, and it settles which `EntityBuilder` field holds a
-> rig assignment — the thing every later write depends on. Do that before spending a game launch.
+> **What to do next.** ~~Lane 2B step 1: get an ATK XML export of `PLAYER_Template`.~~
+> **DONE 2026-09-09**, and the answer moved the target: a rig assignment is **not** an
+> `EntityBuilder` field at all. `PLAYER_Template` reaches its rigs through a `BuildTable` named
+> **`PLAYER_SkelAddons`** (ID `1898138514560`), which it **shares with `TEAMMATE_Template`**.
+> **The new step 1 is: find where that BuildTable lives.** It is not a top-level entry in
+> `DataPC`, `DataPC_patch_01`, `DataPC_extra_patch_01` or `DataPC_Resources` — all four indexes
+> were searched — so it is a resource inside some other container. It is what any rig-assignment
+> edit would target, so nothing downstream can start until it is located.
 
 ---
 
@@ -317,9 +326,19 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
 
 **Do next, in order:**
 
-1. **Get an ATK XML export of `PLAYER_Template`.** Cheapest possible check — it settles which
-   `EntityBuilder` field the reference records live in, and gives an editable round-trip path. Use
-   [`tools/entity_skeletons.py`](../tools/entity_skeletons.py) first to see the build sheet.
+1. ~~**Get an ATK XML export of `PLAYER_Template`.**~~ **DONE 2026-09-09** —
+   `python atk_bridge.py <PLAYER_Template.data> --xml out.xml`, 651 KB / 11,234 lines, headless.
+   ⚠️ **It answered "which `EntityBuilder` field?" with "none".** The rigs are reached through a
+   `BuildTable` named **`PLAYER_SkelAddons`** (`1898138514560`), referenced from
+   `BuildRows → BuildRow → Components → DynamicProperty(Index 42, DataType=BuildTable)` and again
+   from `SubTables`. **`PLAYER_Template` and `TEAMMATE_Template` share it.** It also **corrected**
+   the 2026-08-14 claim that an EntityBuilder assigns skeletons: the EntityBuilder resource
+   contains **zero** skeleton records — all 11 are elsewhere in the container.
+1b. **⭐ NEW step 1 — find `PLAYER_SkelAddons.BuildTable`.** Not a top-level entry in `DataPC`,
+   `DataPC_patch_01`, `DataPC_extra_patch_01` or `DataPC_Resources`; ATK's file list knows a path
+   for it, so it is a resource inside another container. **This is the file a rig-assignment edit
+   targets** — everything below waits on it. `data_inspect.py` over candidate containers, or
+   ATK's file list entry, are the two ways in.
 2. **The goal-shaped experiment:** add or re-point a skeleton record in the **player** template
    aiming at a physics-carrying add-on rig, copying the kilt/scarf entries as the pattern. First
    end-to-end test of route 2B.
