@@ -530,8 +530,13 @@ every 64-bit reference in the XML renders as a real path:
 Without it you get `1898138514560` and nothing else. Like `HashedData.CheckStrings`, the list
 loads inside a `Task.Run` and has to be waited for.
 
-Needs `pythonnet`, the .NET 9 runtime, and an ATK install (`GRB_ATK`, default
-`D:\Anvil Toolkit`). The container layer stays **ours** — `data_inspect.py`
+Needs `pythonnet`, the .NET 9 runtime, and an ATK install. **It finds ATK itself**
+(2026-09-10) — every drive root plus `Program Files`, `Games`, `Modding`, `Tools`
+and your user folders, for anything named `*anvil*` holding `AnvilToolkit.dll`;
+`--atk <dir>` or `$GRB_ATK` overrides, and the same search finds the GRB install
+(by `GRB.exe`) for `find_skeletons_for`. It used to hardcode `D:`, which meant it
+only ran on one of the two machines this repo is worked on. The container layer
+stays **ours** — `data_inspect.py`
 decompresses the `.data` and slices out the resource payload, and only the
 payload goes to ATK. That is what makes the two readers independent.
 

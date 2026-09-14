@@ -2727,3 +2727,79 @@ customization set — and we currently see one resource of it.
 let alone exported to XML through `export_xml()` — until the container layer can address a
 resource inside a multi-resource container by name or ID. That is a `data_inspect.py` fix, in
 our own code, not an ATK gate.
+
+---
+
+## Entry — 2026-09-10 — `atk_bridge.py` finds ATK instead of hardcoding it; and the `D:`/`H:` split was never drift
+
+Two machines, not one, and the KB had been treating the difference as rot.
+
+### VERIFIED — the drive letters are per-machine, and both sets of docs are right
+
+Confirmed by Sylvia: this project is worked from **two** computers.
+
+| Machine | Layout |
+| --- | --- |
+| **SylG5** | everything under `D:` — GRB install, ATK, this repo |
+| **SylDesk** | repo + GRB on `H:`, ATK on `E:`, Blender on `G:` |
+
+So [`next-session.md`](next-session.md)'s 2026-08-31 banner (*"everything is on `D:` now"*) is
+**correct for SylG5**, and the older research-log entries naming `H:` are **correct for
+SylDesk**. Neither is stale. What they lack is a machine name — a future session should add
+one rather than "fixing" the drive letters, which would just break them for the other machine.
+
+> **This corrects a claim made earlier today**, before Sylvia clarified: that the D: paths were
+> drift to be cleaned up. They are not.
+
+### VERIFIED — but the tooling *was* genuinely broken on one machine
+
+`atk_bridge.py` hardcoded `D:` in two places — `ATK_DIR` (via `GRB_ATK`, defaulted to
+`D:\Anvil Toolkit`) and `DEFAULT_SEARCH` (two `D:` forge `Extracted\` paths). On SylDesk that
+is not a wrong default, it is a **non-functional tool**: every entry point starts with
+`start()`, which resolved a path that does not exist. Everything the 2026-09-01 → 09-09
+sessions built on top of it — `export_gltf`, `import_gltf`, `export_xml`, `rebind_check`'s ATK
+half — was therefore SylG5-only, silently.
+
+`tools/blender/grbblend.py` already had this right: it *searches* for Blender across every
+drive rather than naming one. The fix ports that approach.
+
+### Fixed — the bridge searches, the way the Blender bridge already did
+
+- **`candidate_atk_dirs()` / `find_atk(explicit=None)`.** `$GRB_ATK` → cache → search: every
+  drive root plus `Program Files`, `Program Files (x86)`, `Games`, `Modding`, `Tools`, and
+  `~/Desktop`, `~/Downloads`, `~/Documents`, for any folder whose name contains *anvil* and
+  which holds `AnvilToolkit.dll`. The **directory** is the unit, not the exe — `Libs\` (gate 1)
+  and `Lists\` (gate 7) resolve relative to it. Resolved once and cached in `_state`.
+- **`candidate_grb_installs()` / `default_search_dirs()`.** Finds the game by `GRB.exe` across
+  the Steam/Ubisoft layouts, then offers each install's `Extracted\DataPC.forge` and
+  `…\DataPC_Resources.forge` to `find_skeletons_for`. Checking for `GRB.exe` — not for the
+  directory — is what makes it correct: this machine has an empty
+  `F:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint\` stub holding one orphaned DLL, and
+  the search rejects it.
+- **`--atk <dir>`** on the CLI, which seeds the same cache, so every downstream call sees it.
+- A failure now names **everywhere it looked**. That is deliberate: a 2026-07-09 session
+  searched three directories, concluded ATK *"was not found on disk"*, and wrote that into this
+  log as a blocker on the staged in-game cloth test, where it sat for a month.
+
+### Measured on SylDesk
+
+| | |
+| --- | --- |
+| ATK found | `E:\Anvil Toolkit` (the only candidate) |
+| GRB found | `H:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint` (F: stub correctly rejected) |
+| search cost | **0.01 s** for both searches |
+| `atk_bridge.py <coat>.data` | runs — 1816 verts / 3263 faces, stride 36, format `…_Tex2s_Joint4_Col4ub`, influences `{1: 490, 2: 53, 3: 238, 4: 1035}` |
+
+Those numbers are **identical to the ones recorded on SylG5** on 2026-09-01 and 2026-09-08, so
+this is the first confirmation that the ATK bridge reproduces across machines rather than
+across sessions on one machine.
+
+> **Verified, not inferred:** the bridge was run end to end on SylDesk against the real install.
+> Still read-only — nothing was written, and the write-back remains untested in game.
+
+### Tooling
+
+[`tools/atk_bridge.py`](../tools/atk_bridge.py): `_drive_roots()`, `candidate_atk_dirs()`,
+`find_atk()`, `candidate_grb_installs()`, `default_search_dirs()`, the `--atk` flag, and a
+`__main__` that prints an `EnvironmentError` as a message instead of a stack trace.
+`ATK_DIR` and `DEFAULT_SEARCH` are gone; nothing outside the module referenced either.

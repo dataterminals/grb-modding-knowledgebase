@@ -31,7 +31,8 @@ REQUIREMENTS (all already present on the 2026-08-31 dev machine, unplanned):
   - pythonnet + clr_loader        (pip install pythonnet)
   - .NET 9 runtime                (ATK targets it; brought up from ATK's own
                                    AnvilToolkit.runtimeconfig.json)
-  - an ATK install                (default D:\\Anvil Toolkit, or set GRB_ATK)
+  - an ATK install                (found by searching; --atk <dir>, or
+                                   $GRB_ATK to name it exactly)
   - the game's oo2core_7_win64.dll for Oodle, found by data_inspect.py
 
 HOW IT WORKS (five things that are each load-bearing):
@@ -77,10 +78,127 @@ import sys
 import struct
 import importlib.util
 
-ATK_DIR = os.environ.get("GRB_ATK", r"D:\Anvil Toolkit")
 _REPO_TOOLS = os.path.dirname(os.path.abspath(__file__))
 
 _state = {"started": False, "asm": None, "System": None, "armed": False}
+
+
+# --------------------------------------------------------------------------
+# finding the install - this is not the only machine
+# --------------------------------------------------------------------------
+# The machines this repo gets worked on disagree about drive letters: one keeps
+# ATK and the game on D:, the other has ATK on E: and the game on H:. A
+# hardcoded default makes the tool look broken on whichever machine it was not
+# written on, so search instead - the same thing tools/blender/grbblend.py
+# already does for Blender.
+
+_WIN_DRIVES = "CDEFGHIJKLMNOPQRSTUVWXYZ"
+
+
+def _drive_roots():
+    """Drive roots that exist, C: first. Empty off Windows."""
+    if os.name != "nt":
+        return []
+    roots = ["%s:%s" % (d, os.sep) for d in _WIN_DRIVES]
+    return [r for r in roots if os.path.isdir(r)]
+
+
+def candidate_atk_dirs():
+    """Every directory that looks like an ATK install, best guess first.
+
+    "Looks like" = holds `AnvilToolkit.dll`. The DIRECTORY is what callers want,
+    never the exe: `Libs` (gate 1) and `Lists` (gate 7) resolve relative to it,
+    and `start()` reads `AnvilToolkit.runtimeconfig.json` out of it."""
+    seen, out = set(), []
+
+    def add(d):
+        if not d:
+            return
+        d = os.path.abspath(d)
+        if d not in seen and os.path.isfile(os.path.join(d, "AnvilToolkit.dll")):
+            seen.add(d)
+            out.append(d)
+
+    add(os.environ.get("GRB_ATK"))
+
+    home = os.path.expanduser("~")
+    parents = [os.path.join(home, d) for d in ("Desktop", "Downloads", "Documents")]
+    for root in _drive_roots():
+        parents += [root,
+                    os.path.join(root, "Program Files"),
+                    os.path.join(root, "Program Files (x86)"),
+                    os.path.join(root, "Games"),
+                    os.path.join(root, "Modding"),
+                    os.path.join(root, "Tools")]
+
+    for parent in parents:
+        try:                                  # unreadable or disconnected drive
+            entries = sorted(os.listdir(parent))
+        except OSError:
+            continue
+        for entry in entries:
+            if "anvil" in entry.lower():
+                add(os.path.join(parent, entry))
+    return out
+
+
+def find_atk(explicit=None):
+    """Resolve the ATK install directory, once per process.
+
+    Order: an explicit path, then whatever is already cached, then $GRB_ATK,
+    then a search. The failure raises EnvironmentError naming everywhere it
+    looked - a 2026-07-09 session searched three places, concluded ATK "was not
+    found on disk", and wrote that into the research log as a blocker, where it
+    sat for a month."""
+    if explicit:
+        if not os.path.isfile(os.path.join(explicit, "AnvilToolkit.dll")):
+            raise EnvironmentError(
+                "no AnvilToolkit.dll in %s\n"
+                "Point --atk (or GRB_ATK) at the folder holding it." % explicit)
+        return os.path.abspath(explicit)
+    if _state.get("atk_dir"):
+        return _state["atk_dir"]
+    found = candidate_atk_dirs()
+    if not found:
+        raise EnvironmentError(
+            "Could not find an Anvil Toolkit install - a folder holding "
+            "AnvilToolkit.dll.\n"
+            "Looked at: $GRB_ATK, then every drive root plus Program Files, "
+            "Program Files (x86), Games, Modding, Tools,\n"
+            "and your Desktop / Downloads / Documents, for any folder whose "
+            "name contains \"anvil\".\n"
+            "Pass --atk <dir>, or set the GRB_ATK environment variable.")
+    _state["atk_dir"] = found[0]
+    return found[0]
+
+
+def candidate_grb_installs():
+    """Every Ghost Recon Breakpoint install on this machine, best guess first.
+
+    Identified by `GRB.exe`, which rejects the stub directories Steam leaves
+    behind on libraries the game is no longer installed to."""
+    seen, out = set(), []
+
+    def add(d):
+        if not d:
+            return
+        d = os.path.abspath(d)
+        if d not in seen and os.path.isfile(os.path.join(d, "GRB.exe")):
+            seen.add(d)
+            out.append(d)
+
+    add(os.environ.get("GRB_INSTALL"))
+    for root in _drive_roots():
+        for lib in ("SteamLibrary",
+                    os.path.join("Program Files (x86)", "Steam"),
+                    "Steam", "Games"):
+            add(os.path.join(root, lib, "steamapps", "common",
+                             "Ghost Recon Breakpoint"))
+        add(os.path.join(root, "Ubisoft", "Ghost Recon Breakpoint"))
+        add(os.path.join(root, "Program Files (x86)", "Ubisoft",
+                         "Ubisoft Game Launcher", "games",
+                         "Ghost Recon Breakpoint"))
+    return out
 
 
 class ResourceNotFound(LookupError):
@@ -104,11 +222,8 @@ def start(atk_dir=None):
     """Bring up .NET, load AnvilToolkit.dll with <ATK>\\Libs on the probe path.
 
     Returns (System, assembly). Idempotent."""
-    atk = atk_dir or ATK_DIR
+    atk = find_atk(atk_dir)
     dll = os.path.join(atk, "AnvilToolkit.dll")
-    if not os.path.isfile(dll):
-        raise EnvironmentError(f"AnvilToolkit.dll not found at {dll}\n"
-                               f"Set GRB_ATK to your ATK folder.")
     if not _state["started"]:
         import clr_loader
         from pythonnet import set_runtime
@@ -308,10 +423,19 @@ def read_skeleton(path, index=0, atk_dir=None):
                       index=index, atk_dir=atk_dir)
 
 
-DEFAULT_SEARCH = [
-    r"D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint\Extracted\DataPC.forge",
-    r"D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint\Extracted\DataPC_Resources.forge",
-]
+def default_search_dirs():
+    """Where `find_skeletons_for` looks when the caller names no directory.
+
+    The `Extracted` folders beside whichever GRB install this machine has -
+    ATK's own unpack target. Returns [] when nothing has been unpacked yet,
+    which surfaces as "no skeletons found" rather than a crash."""
+    out = []
+    for install in candidate_grb_installs():
+        for forge in ("DataPC.forge", "DataPC_Resources.forge"):
+            d = os.path.join(install, "Extracted", forge)
+            if os.path.isdir(d):
+                out.append(d)
+    return out
 
 
 def find_skeletons_for(mesh, search_dirs=None, verbose=False):
@@ -335,7 +459,7 @@ def find_skeletons_for(mesh, search_dirs=None, verbose=False):
     import glob
     want = {b.Name for b in mesh.Bones}
     cands = []
-    for d in (search_dirs or DEFAULT_SEARCH):
+    for d in (search_dirs or default_search_dirs()):
         cands += glob.glob(os.path.join(d, "*Skeleton*.data"))
         cands += glob.glob(os.path.join(d, "*Addon*.data"))
     scored = []
@@ -740,7 +864,7 @@ def prime_filelist(timeout=120.0, atk_dir=None):
     if d is not None and d.Count:
         return d.Count
     was = Directory.GetCurrentDirectory()
-    Directory.SetCurrentDirectory(atk_dir or ATK_DIR)
+    Directory.SetCurrentDirectory(find_atk(atk_dir))
     try:
         gfl.GetMethod("CheckStrings").Invoke(None, [])
         t0, last = time.time(), -1
@@ -802,7 +926,7 @@ def export_xml(data_path, type_name, atk_type, out_path=None, index=0, atk_dir=N
     obj = read_typed(data_path, type_name, atk_type, index=index, atk_dir=atk_dir)
     from System.IO import StringWriter, Directory
     was = Directory.GetCurrentDirectory()
-    Directory.SetCurrentDirectory(atk_dir or ATK_DIR)   # ToXml re-checks the list
+    Directory.SetCurrentDirectory(find_atk(atk_dir))   # ToXml re-checks the list
     sw = StringWriter()
     System.Console.SetOut(sw)
     try:
@@ -858,6 +982,10 @@ def summarize(path):
 
 def main(argv):
     args = list(argv[1:])
+    if "--atk" in args:                  # everything downstream reads the cache
+        k = args.index("--atk")
+        _state["atk_dir"] = find_atk(args[k + 1])
+        del args[k:k + 2]
     out = None
     glb_in = None
     skels = []
@@ -921,4 +1049,7 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv))
+    try:
+        sys.exit(main(sys.argv))
+    except EnvironmentError as exc:   # no ATK found, or a bad --atk path
+        sys.exit(str(exc))            # a message, not a stack trace

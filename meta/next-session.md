@@ -10,10 +10,24 @@ reason this repo exists. Then the two 2026-08-09 entries in [`research-log.md`](
 for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-24 entries.
 **For where the tooling actually stands, the 2026-09-09 entry is the current one.**
 
-> **⚠️ Paths moved (2026-08-31). Everything is on `D:` now, not `H:`.** GRB install
-> `D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint`, ATK `D:\Anvil Toolkit`, this repo
-> `D:\Github Repositories\grb-modding-knowledgebase`. Older research-log entries name `H:` and are
-> left alone on purpose — they record where things were at the time.
+> **🖥️ Which machine are you on? (clarified 2026-09-10 — this is NOT path drift.)**
+> This project is worked from **two** computers, and they disagree about drive letters:
+>
+> | | **SylG5** | **SylDesk** |
+> | --- | --- | --- |
+> | GRB install | `D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint` | `H:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint` |
+> | ATK | `D:\Anvil Toolkit` | `E:\Anvil Toolkit` |
+> | Blender | `D:\SteamLibrary\steamapps\common\Blender` | `G:\SteamLibrary\steamapps\common\Blender` |
+> | This repo | `D:\Github Repositories\grb-modding-knowledgebase` | `H:\Github Repositories\grb-modding-knowledgebase` |
+>
+> The 2026-08-31 banner this replaces said "everything is on `D:` now" — true, on SylG5. Older
+> research-log entries naming `H:` are equally true, on SylDesk. **Do not "fix" either set of
+> drive letters**; they are records of a real machine, not rot. Forge backups live on `D:` on
+> both.
+>
+> ✅ **The tooling no longer cares** (2026-09-10). `atk_bridge.py` searches for ATK and for the
+> GRB install rather than hardcoding `D:` — `--atk <dir>` or `$GRB_ATK` to override. It had been
+> SylG5-only since it was written; `tools/blender/grbblend.py` always searched.
 
 > **🧊 New (2026-08-31): Blender is scriptable from the command line, and there is now a bridge
 > for it** — [`tools/blender/`](../tools/blender/README.md). `doctor`, `selftest`, `inspect`,
