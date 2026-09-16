@@ -6,11 +6,16 @@
 > **verified**; the grouping and any reading of what a type *does* is **inferred from its name**.
 > Background and method: [`../docs/14-ai-and-npc-behaviour.md`](../docs/14-ai-and-npc-behaviour.md).
 > Provenance: [`../meta/research-log.md`](../meta/research-log.md) (2026-09-16).
+>
+> ⚠️ **Totals corrected later on 2026-09-16.** The first walk stopped at the container's first
+> unnamed record, 16.5 MB into 56.8 MB. Re-generated from a full walk, **all 217 rows below came out
+> identical** — the records it missed are not in these types — so only the totals in the next
+> paragraph changed (they read 50,098 / 23,617 / 1,008 / 26,481).
 
-The container holds **50,098 records** — 23,617 `DB*`-named across **1,008 types**, plus 26,481
-others (`TGT_*`, `WaveSetting_*`, `*_SpawnEntityDescriptor`, quest/dialogue plumbing). This file
-lists the **217 types** whose names place them in the AI / NPC / combat / drone area:
-**2,674 instances** in total.
+The container holds **61,426 records** — 23,914 `DB*`-named across **1,012 types**, plus 37,512
+others (`TGT_*`, `WaveSetting_*`, `*_SpawnEntityDescriptor`, quest/dialogue plumbing, effects,
+store and UI records). This file lists the **217 types** whose names place them in the AI / NPC /
+combat / drone area: **2,674 instances** in total.
 
 ## How to read the table
 

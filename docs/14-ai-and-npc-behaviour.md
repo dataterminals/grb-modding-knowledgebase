@@ -5,6 +5,12 @@
 > (written for this pass), and the §5 worked example is a byte-level diff of an installed mod
 > against the vanilla records it replaces. Field *semantics* are inferred and flagged as such.
 > Provenance: [`../meta/research-log.md`](../meta/research-log.md) (2026-09-16 entry).
+>
+> ⚠️ **Corrected later on 2026-09-16.** The first walk of the container stopped at its first
+> unnamed record, so the container totals and the base/patch comparison were counts over a
+> prefix. They are corrected below (61,426 records, not 50,098). **Every per-type count in this
+> document held up in the full walk.** §9's bytes 38–49 are corrected too. See the research-log
+> entry *"The container walker was one byte off"*.
 
 Every other doc in this repo is about *art* — meshes, textures, cloth, item definitions. This
 one is about the other half of the game: **how enemies see, hear, think, call for help, and
@@ -22,32 +28,38 @@ DataPC.forge            / <N>_-_DBContainerEntry_0X104634F921.data     ← base
 DataPC_patch_01.forge   / <N>_-_DBContainerEntry_0X104634F921.data     ← patch (override here)
 ```
 
-That single 13.9 MB entry decompresses to ~57 MB and holds **50,098 named records**.
+That single 13.9 MB entry decompresses to ~57 MB and holds **61,426 named records**.
 
 > **Verified (2026-09-16).** `python tools/db_inspect.py <DBContainerEntry…data>` on the base
-> container of this install reports: 50,098 records — 23,617 `DB*`-named, 26,481 other —
-> spanning **1,008 distinct DB types** over 825 type ids.
+> container of this install reports: 61,426 records — 23,914 `DB*`-named, 37,512 other —
+> spanning **1,012 distinct DB types** over 830 type ids, and the walk ends exactly on the last
+> byte of the block, agreeing with the container's own metadata index. This install's patch copy
+> holds 61,446.
 
-[`data_inspect.py`](../tools/data_inspect.py) reports this entry as *one* typed resource and
-stops, because the records are nested **one level deeper** in their own stream. That is why
-this layer stayed invisible to earlier passes of this knowledgebase, not because it is hidden.
+The records are simply this container's **resources**, framed like any other `.data`'s. The layer
+stayed invisible to earlier passes of this knowledgebase because, until 2026-09-16,
+[`data_inspect.py`](../tools/data_inspect.py) could not read past the first resource of *any*
+container — not because the records are hidden or nested.
 
-The 26,481 non-`DB*` records are the same database: spawn descriptors (`TGT_Heavy_Marks1`),
+The 37,512 non-`DB*` records are the same database: spawn descriptors (`TGT_Heavy_Marks1`),
 reinforcement waves (`WaveSetting_Hunt_UNI_BA_D01`, 198 of them), entity spawn descriptors
-(`…_SpawnEntityDescriptor`, 225), quest and dialogue plumbing.
+(`…_SpawnEntityDescriptor`, 225), quest and dialogue plumbing, and a long tail of effects
+(`GFX_*`, `FX_*`), store and UI records.
 
 ### The record format
 
-> **Verified.** The decompressed *files* block is a flat stream of:
+> **Verified — from ATK's source and from bytes.** The decompressed *files* block is a flat stream of:
 >
 > ```
-> [uint32 typeId][int32 payloadLen][int32 nameLen][name bytes][0x00][payload]
+> [uint32 typeId][int32 payloadLen][int32 nameLen][name bytes][FileHeader][payload]
 > ```
 >
-> The `0x00` after the name is **not counted by `nameLen`**. Miss it and the walk desyncs on
-> record 0. With it, the walk consumes all 50,098 records and lands exactly on the end of the
-> block. Record 0 is the container's own `DBContainerEntry_0X104634F921` header; the rest are
-> the database.
+> The FileHeader is counted by **neither** length. It is one `0x00` byte for almost every record;
+> when that byte is `0x01` an object-block-allocator table follows and the header is `8 + 12N`
+> bytes (17 `Animation` records here). Some records have no name at all (`nameLen == 0`). The
+> payload starts with the record's own 64-bit ClassID. Record 0 is a `DBContainerEntry` resource;
+> the rest are the database. An ATK-unpacked record file is FileHeader + payload — which is why the
+> files are one byte longer than the payload.
 
 `typeId` is the **schema**; the name is the **instance**. All 48 `DBNpcHealth_*` records carry
 typeId `0xefb394e7` and are each exactly 408 B. 76 type ids are shared by more than one name
@@ -76,7 +88,7 @@ one. That sounds worse than it is, because of the next section.
 
 ## 3. Why binary patching is tractable here: fixed sizes and the game's own "off" switches
 
-> **Verified.** 775 of the 1,008 DB types have a **single fixed record size** across every
+> **Verified.** 777 of the 1,012 DB types have a **single fixed record size** across every
 > instance. `DBNpcHealth` is always 408 B; `DBSoldierVisualDetectionConfig` always 525 B;
 > `DBSoldierSoundDetectionConfig` always 303 B; `DBSoldierAimingModifierConfig` always 29 B.
 
@@ -167,7 +179,7 @@ The installed `FearTheRadio_DBContainer` mod ships five records into
 1_-_TGT_Rusher_Marks1.GR_SpawnNpcDescriptor                272 B
 ```
 
-`DBAIRadioCallConfig` is one of the ~230 **variable-size** types. Vanilla ships three:
+`DBAIRadioCallConfig` is one of the 235 **variable-size** types. Vanilla ships three:
 
 | Record | Size | Content |
 | --- | ---: | --- |
@@ -184,8 +196,11 @@ byte-for-byte compare against vanilla `CallBodark` differs in **31 of 224 bytes*
 
 Each wave entry is the `f8 00 00 00 00` marker, 4 bytes identical in every entry
 (`34 c4 61 39`), an int32 count, two floats, two bytes (`01 00`), then a 64-bit handle at
-marker + 23. **The handles resolve** — see *Resolving a handle* below — so here is what
-each config actually summons:
+marker + 23. *(Inferred 2026-09-16 from ATK's serializer, which writes an embedded object as a
+file-local ID `0xF80000nn` followed by a class hash — a pattern checked byte by byte in build tables
+and in §9: the "marker" is the top five bytes of each wave object's ID and `34 c4 61 39` its class
+hash. The offsets are unchanged.)* **The handles resolve** — see *Resolving a handle*
+below — so here is what each config actually summons:
 
 | Wave | Floats | Count | vanilla `CallBodark` → | Fear the Radio `CallPMC` → |
 | ---: | --- | ---: | --- | --- |
@@ -217,7 +232,7 @@ Vanilla `CallPMC` has one entry — floats (20, 180), count −1 — pointing at
 
 > **Verified.** A 64-bit handle inside a record is the **ClassID of its target**, and every
 > record's payload *begins* with its own ClassID. So index `payload[0:8]` across the container —
-> 50,436 ClassIDs between base and patch — and every handle becomes a name by lookup. No schema
+> 61,452 ClassIDs between base and patch — and every handle becomes a name by lookup. No schema
 > needed, and it works for any record type.
 
 ### The generalisable technique
@@ -249,12 +264,17 @@ against an offset map you got from `--diff` (§3). No size change means no conta
    unpack **that** too. You get one file per record, named `<name>.<TypeName>`.
 3. Edit the record bytes in a hex editor. Use `tools/db_inspect.py --diff` first to know which
    offsets matter.
-4. **Repack inside-out**: the `DBContainerEntry` container first, let it finish, *then*
+4. **Mind the number in front of the file.** ATK's repack keeps the **lowest-numbered** file per
+   ClassID and silently drops the rest — so if you save your edit as a copy beside the vanilla file
+   (rather than overwriting it), give the copy a lower number, the way installed mods ship
+   `1_-_…` files. See [`08-naming-conventions.md`](08-naming-conventions.md).
+5. **Repack inside-out**: the `DBContainerEntry` container first, let it finish, *then*
    `DataPC_patch_01.forge`. This is the same two-stage rule as `TEAMMATE_Template` and
    `Dbcontainer` — see [`../reference/mod-anatomy.md`](../reference/mod-anatomy.md) §5.
-5. Keep edited `.data` **compressed**. Raw/uncompressed blocks hang GRB at load — the cloth work
-   established this the hard way ([`../meta/research-log.md`](../meta/research-log.md),
-   2026-07-02).
+6. Compression: the cloth work found raw/uncompressed blocks hang GRB at load
+   ([`../meta/research-log.md`](../meta/research-log.md), 2026-07-02) — but this install's DB
+   container is already fully raw after ATK's repack and reportedly plays, so the rule is narrower
+   than it sounds (§8).
 
 To read a record without ATK:
 
@@ -272,7 +292,11 @@ python tools/db_inspect.py "<install>/Extracted/DataPC.forge/5_-_DBContainerEntr
 ## 7. Open questions
 
 - **Where does MK1/2/3 tier scaling live?** Not `DBNpcHealth` (§4). Check `TGT_*_Marks*`
-  (`GR_SpawnNpcDescriptor`, 54 records, 278–303 B) — Fear the Radio shipped exactly these.
+  (`GR_SpawnNpcDescriptor`, 54 records, 278–483 B) — Fear the Radio shipped exactly these.
+- **What are the 1,557 `[MVET] AI_*` and `[VECN] AI_*` records?** 940 and 617 of them, one type id
+  each, named per mission (`[MVET] AI_TU_2E4_MIS_Z03_…`, `[VECN] AI_TGT_SYS_NME_SPE_INT_…`). The
+  first walk never reached them. Their naming matches the `[VE] AI_…` voice events found on
+  2026-08-14, so dialogue plumbing is more likely than behaviour — *inferred from names only*.
 - **What are the seven bands** in `DBSoldierSoundDetectionConfig`? Alert states or sound classes.
 - **Which cheat config does a given NPC use?** `DBAICheatConfig` has no `_Wolves` or `_Rifleman`
   instance, so the NPC → cheat-config mapping runs through handles in `DBNpcGeneralConfig`
@@ -291,15 +315,20 @@ answered on 2026-09-16 — see §8. "What does `DBAICheatConfig` grant?" was ans
 >
 > | Container | Records | Entry size | Blocks |
 > | --- | ---: | ---: | --- |
-> | base `DataPC.forge` | 50,098 | 13,908,748 B | all Oodle-compressed (ratio 0.24) |
-> | **pristine** `DataPC_patch_01.forge` (Sept 2023 backup, pre-modding) | **50,121** | 13,911,655 B | all Oodle-compressed (ratio 0.27) |
-> | **live, modded** `DataPC_patch_01.forge` | **50,434** | 57,688,741 B | **all raw/uncompressed** (ratio 1.00) |
+> | base `DataPC.forge` | 61,426 | 13,908,748 B | all Oodle-compressed (ratio 0.24) |
+> | **pristine** `DataPC_patch_01.forge` (Sept 2023 backup, pre-modding) | **61,452** | 13,911,655 B | all Oodle-compressed (ratio 0.27) |
+> | **live, modded** `DataPC_patch_01.forge` | **61,446** | 57,688,741 B | **all raw/uncompressed** (ratio 1.00) |
 >
-> Record-by-record against base, the live patch container reproduces **49,265 records
-> byte-for-byte**, changes 160, adds 597 and drops 264. Ubisoft's own untouched 2023 patch
-> container is the same shape. So there is no record-level override mechanism here: the whole
-> container wins by ID, the way any forge entry does
+> Matched by ClassID against base, the live patch container reproduces **61,030 records
+> byte-for-byte**, changes 390, adds 26 and drops 6. Ubisoft's own untouched 2023 patch container
+> is the same shape — against base it changes 71 and adds 26 — and the installed mods account for
+> the rest: **319 changed, 6 removed, none added.** So there is no record-level override mechanism
+> here: the whole container wins by ID, the way any forge entry does
 > ([`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)).
+>
+> *(Corrected 2026-09-16: the first version of this table came from walks that stopped early and
+> compared records by name — 50,098 / 50,121 / 50,434 records, and 49,265 identical, 160 changed,
+> 597 added, 264 dropped. The conclusion did not change.)*
 
 ### But mods *do* stack — verified
 
@@ -355,7 +384,7 @@ Layout, read off a `_NoCheat` vs `_Miter_Omniscience` hex diff:
 | 8–12 | `9f cb be 07 01` — the typeId echoed, then a constant. Identical in all 44. |
 | 13, 18, 19, 35, 36, 37 | **group A** single-byte flags — `0` in the default |
 | 14, 20, 28 | three floats. A fourth at **24** is used by exactly one record (`_Miter_Omniscient_InFight`, = 10). |
-| 38–49 | `…f8 00 00 00 00` handle marker + a 64-bit handle. **Identical in all 44** — every cheat config points at the same thing. |
+| 38–49 | `00 00 00 f8 00 00 00 00` + `b9 a6 e0 c8`: an **embedded object's header** — file-local ID `0xF8000000` and class hash `0xC8E0A6B9`. **Identical in all 44** because every cheat config embeds one object of the same class, not because they share a target. *(Corrected 2026-09-16; first published as "a handle marker + a 64-bit handle".)* |
 | 50–55 | **group B** single-byte flags — all `1` in the default. Omniscience clears **51–55**; byte 50 is `1` in 43 of 44 (only `_FactionWarfare` clears it). |
 | 56, 57, 58 | three more flags — `_NoPerception` sets 56, `_Children` and `_LE2_Low_Stim` set 57, `_FactionWarfare` sets 57 and 58 |
 | 59–161 | zero in **40** of 44. A sparse further flag bank at 62, 63, 73, 78, 81, 83, 88, 108, 115, 123, 129, 143, 148, 160, 161, used only by `_Children`, `_LE2_Low_Stim`, `_FactionWarfare` and `_Suicide`. |

@@ -6,12 +6,12 @@ GRB keeps almost all of its *gameplay tuning* - AI perception, fighting
 behaviour, NPC health, reinforcement waves, loot, economy - as tens of thousands
 of small named records inside ONE forge entry:
 
-    DataPC.forge / <N>_-_DBContainerEntry_0X104634F921.data      (50,098 records)
+    DataPC.forge / <N>_-_DBContainerEntry_0X104634F921.data      (61,426 records)
     DataPC_patch_01.forge / <N>_-_DBContainerEntry_0X104634F921.data
 
-`data_inspect.py` stops at that entry and reports a single typed resource,
-because the records are nested one level deeper, in their own record stream.
-This tool walks that stream.
+The records are simply that container's resources - the same framing as any
+`.data`, walked by `data_inspect.walk()`. This tool adds what a database needs on
+top: name filters, per-type statistics, extraction, and a field diff.
 
     python db_inspect.py <DBContainerEntry...data>                    # summary
     python db_inspect.py <...data> --grep '^DBSoldierSoundDetection'  # list
@@ -23,20 +23,24 @@ point that somewhere that is NOT your install.
 
 HOW IT WORKS
  1. The `.data` is an ordinary GRB container - two `CompressedFileData` blocks,
-    Oodle Mermaid. `data_inspect.read_cfd` decodes both; this reuses it, so the
-    Oodle DLL search and the container format live in exactly one place.
- 2. The decompressed *files* block is a flat stream of records:
+    Oodle Mermaid - and its records are that container's resources. Decoding and
+    walking both come from `data_inspect.py`, so the Oodle DLL search and the
+    container format live in exactly one place.
+ 2. Each record is framed
 
-        [uint32 typeId][int32 payloadLen][int32 nameLen][name][0x00][payload]
+        [uint32 typeId][int32 payloadLen][int32 nameLen][name][FileHeader][payload]
 
-    The NUL after the name is not counted by `nameLen` and is easy to miss - a
-    walk without it desyncs on the very first record. Walking with it reads all
-    50,098 records of the base container and lands exactly on the end.
- 3. Record 0 is the container's own `DBContainerEntry_0X104634F921` header; the
-    remaining records are the database proper.
- 4. `typeId` is the schema, the *name* is the instance - e.g. every one of the
-    48 `DBNpcHealth_*` records carries typeId 0xefb394e7 and is exactly 408 B.
-    76 type ids are shared by more than one name prefix (the four
+    The FileHeader is counted by neither length: one 0x00 byte, or 12*n+8 bytes
+    when it starts 0x01 (17 records in this container do). Some records have no
+    name at all. Handling both, the walk reads all 61,426 records of the base
+    container and lands exactly on the end of the block.
+    ⚠️ Before 2026-09-16 this tool stopped at the first unnamed record and
+    reported 50,098 - a prefix covering 16.5 MB of the 56.8 MB block.
+ 3. Record 0 is a `DBContainerEntry` resource (776 KB); the rest are the
+    database proper.
+ 4. `typeId` is the schema, the *name* is the instance - e.g. every
+    `DBNpcHealth_*` record carries typeId 0xefb394e7 and is exactly 408 B.
+    Several type ids are shared by more than one name prefix (the four
     `DB*StrafeBehaviour` / `DB*FightingBehaviour` families pair up this way), so
     trust the id for layout and the name for meaning.
 
@@ -65,18 +69,13 @@ def records(path, oodle=None, oodle_dll=None):
     up from the file's own path."""
     if oodle is None:
         oodle = di.Oodle(di.find_oodle(path, oodle_dll))
-    b = open(path, "rb").read()
-    meta, off, _ = di.read_cfd(b, 0, oodle)
-    files, _, _ = di.read_cfd(b, off, oodle)
-    o = 0
-    while o + 12 < len(files):
-        tid, plen, slen = struct.unpack_from("<Iii", files, o)
-        if slen < 1 or slen > 400 or plen < 0 or o + 12 + slen + 1 + plen > len(files):
-            break
-        name = files[o + 12: o + 12 + slen].decode("latin-1")
-        p0 = o + 12 + slen + 1                 # +1: the NUL nameLen does not count
-        yield name, tid, files[p0: p0 + plen], o
-        o = p0 + plen
+    _meta, files = di.read_container(path, oodle)
+    res, end = di.walk(files)
+    if end != len(files):
+        print(f"  !! {os.path.basename(path)}: walk stopped at byte {end:,} of "
+              f"{len(files):,} - every count below is INCOMPLETE", file=sys.stderr)
+    for r in res:
+        yield r.name, r.type_id, r.payload, r.offset
 
 
 def summarize(path, oodle_dll=None):
@@ -167,7 +166,8 @@ def main(argv):
                 m += 1
                 print(f"{name}\ttypeId=0x{tid:08x}\t{len(payload)} B")
                 if out:
-                    with open(os.path.join(out, name + ".bin"), "wb") as fh:
+                    fname = name or f"_unnamed_at_{off}"     # some records carry no name
+                    with open(os.path.join(out, fname + ".bin"), "wb") as fh:
                         fh.write(payload)
         print(f"-- {m:,} of {n:,} records matched {pat!r}"
               + (f", written to {out}" if out and m else ""), file=sys.stderr)

@@ -738,6 +738,11 @@ was modified.**
 ### VERIFIED (new)
 
 **On the ragdoll question — the answer is negative, and cleanly so:**
+
+> ⚠️ **Corrected 2026-09-16 — reopened.** GRB *does* ship `LiteRagdoll` resources, nested inside
+> containers (`TP_WalkerCoat_Ragdoll` in `TP_WalkerCoat_Cloth.data`, one each in `PLAYER_Template`
+> and `TEAMMATE_Template`). Every absence argument below counts **forge entries**, which name only a
+> container's first resource. See the 2026-09-16 entry *"The container walker was one byte off"*.
 - **GRB ships no ragdoll resource.** ATK registers `LiteRagdoll` (`2299544533`) plus
   `LiteRagdollCapsule` / `Shape` / `CapsuleGroupFlags` / `ExternalCapsule`, but
   `LiteRagdoll.SupportedGames` lists twelve Assassin's Creed titles and **excludes
@@ -847,6 +852,13 @@ record the ID sits in, and validated the decode. **Read-only throughout.**
 - **The physics is not inherited. It is embedded in the skeleton resource itself** (established in
   the previous entry: `Reflex3SkeletonConstraints` is an *inline* object, `ObjectPtr` tag 0/4).
   What gets assigned is the **skeleton**.
+> ⚠️ **Corrected 2026-09-16.** The hits below were attributed to whole containers (named after their
+> first resource, an `EntityBuilder`) and to the nearest string. Walked properly, skeletons are
+> assigned by **`BuildTable` row components** — the kilt by `TP_PANT_Kilt`, Blake's trench coat by
+> `Tsec_IanBlake_Trench_Mcloth_MISSION` — and each record **starts** with an `i32 Index`; the
+> "`u32 Slot`" read after the ClassID is the next component's Index. ClassIDs were right. See the
+> 2026-09-16 entry *"The container walker was one byte off"*.
+
 - **`EntityBuilder` is the assigning layer — nothing else assigns a skeleton.** 37 references
   found; **32 of the 35 non-`Entity` hits are `EntityBuilder`s** (the rest: 3 `Entity`, 2
   `#1767772698` cinematic configs). No standalone `BuildTable` references any of the four.
@@ -1848,6 +1860,12 @@ It is neither. It is:
    `Console.Out` or you get no message at all.
 
 ### ⚠️ `Failed` is not a success signal for GRB meshes in ATK 1.3.1
+
+> ⚠️ **Resolved 2026-09-16 — it was our slicer, not ATK.** The container walk started each payload
+> one byte early and so cut off its last byte; the pad replaced it. Sliced correctly, the read ends
+> exactly on the payload with `Failed = False` and no pad. See the 2026-09-16 entry *"The container
+> walker was one byte off"*.
+
 Even on a fully correct read, ATK wants **exactly one byte more** than the resource payload holds:
 it ends at `88089/88089` with *"Unable to read beyond the end of the stream"* and `Failed = True`.
 Append a single zero byte and `Failed` is `False` with byte-identical geometry. Confirmed on both
@@ -2629,6 +2647,13 @@ correctly and attributes them to the wrong owner. **What holds them is now open.
 
 ### The 11 rigs, and which ones move
 
+> ⚠️ **Corrected 2026-09-16.** The `slot` column is misread — each value belongs to the *next*
+> component. The real Indexes: Reflex 2, BodyUp 11, Watch 10, Beard 2, gloves 5, head 2, body 1,
+> props 4, costume head 2, hat 9, weapon-attach 12. And these 11 are assigned by
+> `TPri_Schultz_*` / `TPri_CIN_Hawkins_Head_Costume` build tables inside the container, not by the
+> player. `Regular_Male_Reflex_SklAdd` does reach the player — through `PLAYER_SkelAddons`, Index 4.
+> See the 2026-09-16 entry *"The container walker was one byte off"*.
+
 Unchanged between base and patch:
 
 | slot | skeleton | Reflex3 blob |
@@ -2711,6 +2736,10 @@ name-then-ClassID — the same shape as the `EntityBuilder` skeleton records fro
 > **Inferred, NOT verified:** that the base copy lacks it. Our slicer is demonstrably wrong on
 > this container (below), so 236,119 B is not a trustworthy reading of what the base holds.
 > What is verified is that the record **is** in the patch copy — which is the live one anyway.
+>
+> ⚠️ **Corrected 2026-09-16:** the base copy has it too — resource 2 of 2,451, 679 B, holding five
+> rigs where the live copy (modded by the Bison Belt mod) holds four. The slicer below was off by
+> one byte; see the 2026-09-16 entry *"The container walker was one byte off"*.
 
 ### ⚠️ Our own container slicer mis-parses `TEAMMATE_Template.data`
 
@@ -2813,6 +2842,12 @@ installed (a forge-integrated Spartan port, and "Fear the Radio"). This knowledg
 **nothing** on gameplay logic — 13 docs, all about art. It does now.
 
 ### VERIFIED — the gameplay DB is one nested forge entry, and it was hiding in plain sight
+
+> ⚠️ **Corrected later the same day.** The walk below stopped at the first unnamed record, 16.5 MB
+> into the 56.8 MB block: the container holds **61,426** records (23,914 `DB*`-named, 37,512 other;
+> 1,012 `DB*` types over 830 type ids; 777 fixed-size), and they are the container's own resources,
+> not a nested stream. Every per-type AI count in this entry holds in the full walk. See *"The
+> container walker was one byte off"*.
 
 `DataPC.forge / 5_-_DBContainerEntry_0X104634F921.data` (13.9 MB, decompressing to ~57 MB)
 holds **50,098 named records**: 23,617 `DB*`-named across **1,008 types** over 825 type ids,
@@ -2937,6 +2972,11 @@ can coexist. Answered, plus two findings that were not being looked for.
 
 ### VERIFIED — full copy, not a delta, and that is Ubisoft's own shape
 
+> ⚠️ **Corrected later the same day.** These counts come from walks that stopped early. Full walks:
+> base **61,426**, pristine 2023 patch **61,452**, live **61,446**; by ClassID, base → live is 61,030
+> identical, 390 changed, 26 added, 6 dropped, and the installed mods account for 319 changed and 6
+> removed. The full-copy conclusion stands. See *"The container walker was one byte off"*.
+
 | Container | Records | Entry size | Blocks |
 | --- | ---: | ---: | --- |
 | base `DataPC.forge` | 50,098 | 13,908,748 B | all Oodle-compressed (0.24) |
@@ -3027,6 +3067,10 @@ Two flag groups move in **opposite directions** between `_NoCheat` and `_Miter_O
 Invariant in all 44: bytes 8–12 (typeId echo + a constant) and **38–49** — the handle marker
 plus a 64-bit handle, i.e. every cheat config references the same target.
 
+> ⚠️ **Corrected later the same day.** Bytes 38–49 are `00 00 00 f8 00 00 00 00 | b9 a6 e0 c8`: an
+> embedded object's header (file-local ID `0xF8000000` + class hash `0xC8E0A6B9`), not a handle.
+> Every cheat config embeds one object of the same class; nothing says they share a target.
+
 ### Inferred, but strongly patterned
 
 Group A (13/18/19/35/36/37) reads as **cheat grants**, off by default; group B (51–55) as
@@ -3091,3 +3135,221 @@ still-unlinked edit.
 Corrected in place: `docs/14` §4/§5/§7/§9, `examples/mod-catalog.md`, and this day's earlier
 entries. Consequence: the `DBNpcGeneralConfig` -> cheat-config mapping is a lookup nobody has run
 yet, not an open research problem.
+
+> ⚠️ **Corrected later the same day** — see *"The container walker was one byte off"* below: the
+> container holds 61,426 records, not 50,098; the records are the container's own resources, not a
+> nested stream; the handle index spans 61,452 ClassIDs; and cheat-config bytes 38–49 are an
+> embedded object's header, not a handle. The per-type AI counts and the Fear the Radio decode stand.
+
+---
+
+## Entry — 2026-09-16 — The container walker was one byte off; fixing it from ATK's source re-reads six conclusions
+
+**Trigger:** lane 2B step 1c. `data_inspect.py` reported `TEAMMATE_Template.data` as two resources,
+so `PLAYER_SkelAddons` could not be read. This morning's `db_inspect.py` had found an uncounted byte
+after each record name; `data_inspect.py` never skipped it. Following that byte through every tool
+that walks a container turned up errors in six places, including this morning's database totals.
+Read-only throughout. ATK 1.3.1 was decompiled into the session scratchpad (`ilspycmd -p`) so each
+question below is answered from source, then checked against real files.
+
+### VERIFIED — the container frame, from ATK's source and from bytes
+
+```
+files block: { u32 TypeId | i32 len | i32 nameLen | name | FileHeader | payload[len] } x count
+FileHeader:  00                                  normally (1 B)
+             01 | u16 2 | u8 0 | i32 N | N x 12  object-block-allocator table follows (8 + 12N B)
+meta block:  u16 count | count x { u64 ClassID | i32 recordSize | u16 0 }
+```
+
+- **The byte after the name is a header flag, not a NUL.** `ScimitarFile.WriteHeader` writes
+  `objectBlockAllocator != null`; `DataFile.ReadFileHeader` returns one byte, or `12 * int32@+4 + 8`
+  bytes when that byte is 1. `DataFile.Deserialize` reads `TypeId, len, ReadStringEnc32` (length +
+  bytes, no terminator), then the header, then `len` bytes — so **neither length counts the
+  header**, and for GRB the counted payload begins directly with the resource's own u64 ClassID.
+  Unnamed resources (`nameLen == 0`) exist and still carry the header.
+  *(Other AnvilNext games write a further `01` byte inside the counted payload. GRB does not, which
+  is where the KB's old "payload begins [FileHeader][ClassID]" layout came from — don't copy byte
+  layouts from Assassin's Creed tooling.)*
+- **The long form is real.** 17 resources in the gameplay DBContainer carry it, all `Animation`
+  (`RamonPC_RTA_opening`, `ProtectNodes_01`, …). ATK's own unpacked
+  `50431_-_RamonPC_RTA_opening.Animation` is 1,370 B = the 44 B header + the 1,326 B payload.
+- **The old reading was exactly one byte early.** The "garbage" type id `data_inspect.py` printed
+  for base `TEAMMATE_Template` was `3971900160` = `0xECBE6300` — `BuildTable`'s `0x22ECBE63` read
+  one byte early.
+- **Handled properly, every walk ends on the last byte, and the metadata block agrees with every
+  one.** On 9 containers, original and ATK-repacked, the meta block's `u16` count equals the walk's
+  count and every `(ClassID, recordSize = 12 + nameLen + header + len)` entry matches. ATK-repacked
+  containers carry 98 more bytes after the index; original ones carry none.
+- **An ATK-unpacked resource file is FileHeader + payload.** `1_-_PLAYER_SkelAddons.BuildTable` in
+  ATK's unpack folder is 655 B: `00`, then byte-for-byte the 654 B payload the walk slices out of the
+  live container. So spncryn's "bytes 1-8 are the ID" is exact whenever the flag is 0; after a long
+  header the ClassID starts at 8 + 12N.
+
+| container | resources — **walked** (previously reported) |
+| --- | --- |
+| `TP_Tacvest_Walker_Coat_LOD0.data` | **3**: Mesh, Material, TextureSet (1) |
+| `TP_WalkerCoat_Cloth.data` | **3**: Cloth, SoftBodySettings, LiteRagdoll (1) |
+| `PLAYER_Template.data` | **44** (1) |
+| `TEAMMATE_Template.data`, base / live | **2,451 / 3,963** (2 / 2) |
+| `DBContainerEntry_0X104634F921.data`, base / live / pristine 2023 patch | **61,426 / 61,446 / 61,452** (50,098 / 50,434 / 50,121) |
+
+### ⚠️ CORRECTIONS
+
+1. **The gameplay database is 61,426 records, not 50,098 — and "lands exactly on the end" was never
+   true.** This morning's walker handled the header byte but stopped at the first resource with no
+   name, 16.5 MB into a 56.8 MB block, and reported what it had read as the container. Full walk,
+   base: **23,914 `DB*`-named + 37,512 other; 1,012 `DB*` types over 830 type ids (76 shared); 777
+   fixed-size.** What lay past the stop is mostly not tuning (`GFX_*` 1,672, `StoreObjectInfo_*`
+   1,469, `FX_*` 1,018, `ColMat*`, `Evidence*`, 308 unnamed), and **every per-type count quoted in
+   `docs/14`, and all 217 rows of `reference/ai-db-records.md`, come out identical in the full
+   walk.** The AI findings stand; the container totals and comparisons did not.
+2. **The records are not "nested one level deeper".** They are that container's own resources,
+   framed like any other `.data`'s. It only looked like nesting because the old `data_inspect.py`
+   could not read past any container's first resource.
+3. **The base → patch comparison** (this morning: 49,265 identical, 160 changed, 597 added, 264
+   dropped — by name, over partial walks) is, **by ClassID over full walks: base → live 61,030
+   identical, 390 changed, 26 added, 6 dropped.** Ubisoft's own 2023 patch against base: 71
+   changed, 26 added. The installed mods on top of that: **319 changed, 6 removed, none added.** The
+   conclusion — a full copy, not a delta — is unchanged. The handle index covers **61,452**
+   ClassIDs, not 50,436.
+4. **`DBAICheatConfig` bytes 38–49 are not "a handle marker plus a 64-bit handle".** They are
+   `00 00 00 f8 00 00 00 00 | b9 a6 e0 c8`: the header of an **embedded object** — file-local ID
+   `0xF8000000` plus class hash `0xC8E0A6B9`. Identical in all 44 because each cheat config embeds
+   one object of the same class, **not** because they all point at one target (see the `f8`
+   explanation below). The flag and float findings are unaffected.
+5. **`atk_bridge.py`'s "ATK wants one byte more than the payload" (2026-09-01) was our slicer.**
+   Starting one byte early, every slice lost the payload's last byte and the zero pad stood in for
+   it (the Walker coat's last payload byte is `0x00`, hence the "byte-identical" reads). Handed
+   FileHeader + full payload, ATK reads the mesh with `Failed = False` and no pad, geometry
+   identical. Resolved; `pad` now defaults to 0.
+6. **"GRB ships no `LiteRagdoll` resource" (2026-08-14) is wrong.** `TP_WalkerCoat_Ragdoll` (3,573 B,
+   type `2299544533` = CRC32("LiteRagdoll")) sits inside `TP_WalkerCoat_Cloth.data`;
+   `LiteRagdoll_0X1540F8CCAB7` inside `PLAYER_Template.data`; `LiteRagdoll_0X146CEDA57E` inside
+   `TEAMMATE_Template.data`. The 2026-08-14 absence arguments — zero forge entries of that type,
+   1,564 `Animation` entries, keyword sweeps of 415,177 entry names — all examine **forge entries,
+   which name only a container's first resource**; none of them can see a nested one. The ragdoll
+   question is **reopened, not re-answered**: a census of nested resources is what would answer it.
+
+Skeleton "slots" and their owners were also wrong (2026-08-14, 2026-09-09) — next two sections.
+
+### VERIFIED — how a rig is assigned (ATK `BuildRow.Read`, `DynamicProperty`, `PropertyRegistry`, and ATK's own XML)
+
+A `BuildTable` declares typed **columns** and fills them from **rows**:
+
+```
+BuildColumn component:  u32 (ATK writes 0x2CECF817) | DynamicProperty
+BuildRow component:     i32 Index                   | DynamicProperty
+DynamicProperty:        u32 DataType | u32 Type | u32 Unk00 | value, sized by Type
+  Type 0x120000  Handle     u8 (ignored) | u64 ClassID          -> 25 B with its Index
+  Type 0x1C0000  Reference  u8 kind | u8 IsGlobal | u64 ID      -> 26 B
+```
+
+- **A skeleton assignment is a `Handle` in a row component, and its `Index` comes first.** Exported
+  with the fixed bridge, `PLAYER_SkelAddons` declares **five `Skeleton` columns (Index 1–5)** as
+  empty `Reference`s, and its row fills them:
+  `<DynamicProperty Index="1">` … `<Handle><Value Name="Value" Type="UInt64" Path="DataPC\Player_FakeGun_Addon\Player_FakeGun_Addon.Skeleton">1439949280727</Value></Handle>`.
+  **`Index` is the column a component fills.**
+- **The old "u32 Slot after the ClassID" was the next component's Index** — or, after a row's last
+  component, the start of whatever follows. Checked byte by byte for `PLAYER_SkelAddons`' `3328`:
+  it is `00 0d 00 00`, the table's `u8 Shuffle` followed by the low bytes of its `RowSelector`'s
+  local ID `0xF800000D` (then `8a 7b bd f5` = CRC32("RowSelector")). The other stray values (1792,
+  2816, 4864) have the same shape.
+- **Columns and rows split cleanly.** Across `PLAYER_Template` and both `TEAMMATE_Template`
+  copies: **3,966 `Skeleton` Handles — every one a row component, every one resolving to a real
+  skeleton**; **2,046 `Skeleton` References — every one a column declaration with ID 0.**
+- **`f8 00 00 00 00` is not a marker.** It is the top five bytes of a file-local object ID
+  `0xF80000nn`, and the four bytes after it are that object's class hash — `ScimitarClass.Serialize`
+  writes `WriteClassID(ID); Write(Hash)`. `45 53 bd 11` after one = CRC32("BuildTags"). The same
+  reading explains the DB wave entries' "marker" and correction 4 above.
+- **Read in source, not tested:** `BuildRow.Read` keeps a component's Index only as a dictionary key,
+  but `Write` emits the property's own Index field, which a binary read never sets. A direct binary
+  re-save through ATK would write Index 0 everywhere; the XML round trip preserves it.
+
+### VERIFIED — who assigns which rig
+
+| rig | assigned by (resource, Index) |
+| --- | --- |
+| `Player_FakeGun_Addon`, `ENVInfluence_Addon`, `Player_Props_Addon`, `Regular_Male_Reflex_SklAdd` (107,350 B), `Player_Holster_NoSling_Addon` | `PLAYER_SkelAddons` — 1, 5, 2, 4, **3** (base) |
+| `Player_Kilt_Addon` (394 B) | **`TP_PANT_Kilt`**, Index 10 — next to its `GraphicObject` at 11 |
+| `TP_HunterScarf_A_Skeleton` (9,991 B) | 8 mask/head tables: `TP_FullMask_Flycatcher`, `_Rosebud`, `_RaidSniper`, `_RaidMedic`, `TP_Mask_RaidIngineer`, `TP_FullMaskBodark_E`, `Head_Fyodor_Archinov_Icon`, `Head_Katya_Maksimov_Icon` |
+| `Tsec_Trench_AddonSkeleton` (43,494 B) | **`Tsec_IanBlake_Trench_Mcloth_MISSION`** (in `TSec_MIS_Blake(184)`) and `MIS_Y2E4_Wassili_Kropotkine_Trench`, both Index 4 — nothing in either player template |
+| `Delta_Holster_Addon` | `TP_PANT_Bodark_A`, `TP_VestLight_AliceChestRig` — Index 3 |
+| `PLAYER_Template`'s 11 | `TPri_Schultz_*` and `TPri_CIN_Hawkins_Head_Costume` tables inside that container |
+
+So the flowing trench coat's rig is assigned **by the coat's own build table** (2026-08-14 had it
+"sitting beside" it), and the "player-wearable precedents under a node named `PLAYER_SkelAddons`"
+were attributed by nearest string: **the shared table holds five player-wide rigs; a garment's rig
+comes from the garment's own table.** That retargets lane 2B's goal experiment from the player
+template to a garment's BuildTable — and gives it three vanilla patterns to copy (kilt, scarf,
+trench), all through ATK's supported XML round trip.
+
+*Inferred:* Index 3 is the holster column — vanilla assigns holster rigs at 3 from item tables, and
+the shared table's default holster sits at 3.
+
+### VERIFIED — installed mods already make this edit
+
+The live `PLAYER_SkelAddons` differs from base and from the pristine 2023 patch in exactly two
+places: the row's component count `05 → 04`, and one 25-byte component removed —
+`Player_Holster_NoSling_Addon` at Index 3. That file is shipped verbatim by
+**`GRBMods\bisonbelt_mainfiles`**, together with a `TP_LEGHOLSTER_Platform.BuildTable` that now
+assigns the same rig at Index 3. **`GRBMods\Tactical Human Set`** ships
+`TP_TacticalHuman_Belt-Skeleton.BuildTable`, which assigns `Player_Holster_NoSling_Addon` and a
+`Player_Holster_Tactical-Human_Addon` skeleton at Index 3. Each shipped file byte-matches its live
+resource after the FileHeader byte. A per-item rig assignment in a working install: lane 2B step 2's
+template. *(These are rigid rigs with no Reflex3 data — they prove the assignment path, not the
+flowing-garment one.)*
+
+### VERIFIED — the leading number decides ATK's repack (lane 1's open test)
+
+Both repack paths sort files by the integer before `_-_` and **silently skip any file whose ID was
+already packed**:
+
+```csharp
+list = list.OrderBy((string file) => file.GetUntilOrEmptyInt("_-_")).ToList();   // DataFile and ForgeFile
+if (dictionary2.ContainsKey(key)) { biendianBinaryReader2.Close(); continue; }      // DataFile.Serialize
+if (ReadIDs.TryGetValue(forgeEntry.ID, out value)) continue;                         // ForgeFile
+```
+
+Measured on this install's ATK unpack folder for the live `TEAMMATE_Template`: 4,234 files, 3,963
+distinct ClassIDs, 3,963 resources in the container. **259 ClassIDs have more than one file, and in
+259 of 259 the container holds the lowest-numbered one** (e.g. `1_-_TP_BalaclavaC-Nomad` over
+`1228_-_TP_BalaclavaC-Nomad`).
+
+**So renumbering a mod file to `1_-_` does change what reaches the game** — at ATK's repack, not in
+the engine: when a vanilla copy and a mod copy of one resource share a folder, the lower number is
+packed and the other is dropped without a word. Both field cases in `docs/08` — the vest that showed
+UI-only until renumbered, and localization edits beaten by "the one that starts with 39 in
+patch01" — fit this exactly. *(Mechanism read in source and measured on disk; neither case was
+re-run in game.)* The same repack gives unnamed resources names: base DB 308 unnamed, live 0.
+
+### NOT verified / open
+- **Nothing written has been loaded in game.** Everything above is read-only.
+- A census of nested resources across all forges (`LiteRagdoll`, `Animation`) — the honest way to
+  re-answer the ragdoll question.
+- 940 `[MVET] AI_*` and 617 `[VECN] AI_*` records past the old stop, unexamined. Named like the
+  `[VE] AI_…` voice events of 2026-08-14, so plausibly dialogue plumbing rather than behaviour
+  (inferred from names only).
+- What the 98 bytes after an ATK-repacked metadata index are (they begin `5d 00 00 40 00`,
+  LZMA-header-shaped).
+
+### Tooling
+- [`tools/data_inspect.py`](../tools/data_inspect.py): `walk()` — both header forms, unnamed
+  resources, reports where it stopped — plus `header_len()`, `read_container()`, `class_id()`. Above
+  40 resources it prints a per-type summary; `--all` lists everything. **Every other tool now walks
+  containers through it.**
+- [`tools/db_inspect.py`](../tools/db_inspect.py): uses `walk()` and warns when a walk is incomplete.
+- [`tools/entity_skeletons.py`](../tools/entity_skeletons.py): rewritten — row-component Handles
+  only, with the holding resource and Index for each; `--grep`.
+- [`tools/atk_bridge.py`](../tools/atk_bridge.py): `resources()` goes through `walk()` and refuses a
+  partial one; ATK is handed FileHeader + payload; `pad` defaults to 0; `read_typed(name=…)`,
+  `export_xml(name=…)` and **`--resource NAME`**:
+  `python atk_bridge.py 23_-_TEAMMATE_Template.data --xml out.xml --resource PLAYER_SkelAddons`.
+- Regression, all on real files: single-resource ClassIDs and sizes unchanged; `skeleton_reflex`
+  and `reflex3` output identical; `PLAYER_Template` still exports to 651,239 chars / 11,234 lines;
+  the Walker coat's GLB export → import still reports `MATCHES DONOR True`.
+
+### Method note
+**A walk that does not end on the last byte is not a count.** This morning's 50,098 was written up
+as landing "exactly on the end of the block" without that check being run. Every container carries
+its own check — the metadata block's count and per-resource sizes — and `walk()` now reports where
+it stopped.

@@ -24,16 +24,31 @@ Inside a `.data`'s (decompressed) file table, each record is:
 
 ```
 uint32  TypeId          // = CRC32(typeName) = the ForgeEntry.Extension
-int32   PayloadLength
-string  Name            // length-prefixed (ReadStringEnc32)
-byte[]  Payload:
-        ├─ FileHeader   // 1 byte (=0) normally; if first byte==1: 12*int32@+4 + 8 bytes
+int32   PayloadLength   // counts the payload only
+int32   NameLength      // 0 is legal: unnamed resources exist
+bytes   Name            // NameLength bytes, no terminator (ReadStringEnc32)
+bytes   FileHeader      // NOT counted by either length:
+                        //   0x00                                  normally (1 byte)
+                        //   0x01 | u16 2 | u8 0 | i32 N | N x 12  object-block-allocator table (8 + 12N bytes)
+byte[]  Payload         // PayloadLength bytes
         ├─ uint64 ClassID     // the resource's own 64-bit id
         ├─ uint32 Extension   // == TypeId above (redundant, same value)
         └─ … resource data
 ```
 
-On unpack, ATK writes each record to `<index>_-_<Name>.<GetHashedString(TypeId)>`.
+The container's **metadata block** indexes the same records: `u16 count`, then per record
+`u64 ClassID | i32 recordSize | u16 0`, where `recordSize = 12 + NameLength + FileHeader + PayloadLength`.
+
+On unpack, ATK writes each record to `<index>_-_<Name>.<GetHashedString(TypeId)>`, containing
+**FileHeader + Payload** — so in an unpacked file the ClassID sits at bytes 1–8 (or at 8 + 12N after
+a long header).
+
+> **Verified 2026-09-16** from ATK 1.3.1 (`DataFile.Deserialize`, `DataFile.ReadFileHeader`,
+> `ScimitarFile.WriteHeader`) and on real files: walked this way, containers of 1 to 61,426
+> resources end exactly on their last byte and agree with their metadata block entry for entry.
+> **Corrected:** until then this section placed the FileHeader *inside* `PayloadLength`, which is
+> true of other AnvilNext games (they add an extra `01` byte inside the payload) but not of GRB —
+> and a parser built on it reads every resource after the first one byte early.
 
 ## The ids that matter for GRB modding
 

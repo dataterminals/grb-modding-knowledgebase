@@ -138,14 +138,14 @@ So a `DynamicProperty` is *"a slot of type T, pointing at resource R"*. See [`re
 | Element / attribute | Reading |
 | --- | --- |
 | `ForceBuiltTableTOCOrder` | A `FileReference` list, empty here. Name implies an explicit **table-of-contents ordering** override for built tables. *(inferred; unexercised in this sample)* |
-| `BuildColumn` `Index` | Observed `1`, `2`, `10` — sparse, so the index is a **meaningful slot number**, not a position. *(inferred)* |
+| `BuildColumn` `Index` | Observed `1`, `2`, `10` — sparse, so the index is a **meaningful column number**, not a position. **Verified 2026-09-16:** a row's `DynamicProperty Index="N"` fills the column with `Index="N"` — `PLAYER_SkelAddons` declares five `Skeleton` columns (Index 1–5) and its row fills them at 1, 5, 2, 4, 3. |
 | `Pass` = `PropertyModifications2` (`5`) | Enum `BuildColumnPass`; which build pass the column applies in. *(inferred)* |
 | `PropertyPath` / `Nodes` / `TargetMustBeUnique` / `SetWholeArray` | Addresses the target property the column writes into. `Nodes` empty in this sample. *(inferred)* |
 | `HasTableRef` (Byte) | `1` on the columns seen; flags that the column references another table. *(inferred)* |
-| `DynamicProperty` `Index` | Observed `13`, `18` on rows — again sparse slot numbers. *(inferred)* |
-| `Type` (UInt32) | `1835008` = `0x1C0000`, `1179648` = `0x120000`. Both are `<byte> << 16`. Meaning unknown — a slot/usage code. **Open.** |
+| `DynamicProperty` `Index` | Observed `13`, `18` on rows. **Verified 2026-09-16:** the Index of the column the component fills (above). In the binary it is an `i32` written **before** the property; column components carry an unused `u32` there instead (ATK writes `0x2CECF817`). ⚠️ ATK's `BuildRow.Read` keeps it only as a dictionary key, so a binary re-save through ATK would write `0` — edit through XML *(read in source, untested)*. |
+| `Type` (UInt32) | **Resolved 2026-09-16 — the property's value type**, from ATK's `PropertyRegistry` (the byte in `<byte> << 16`): `0x00`–`0x10` scalars, vectors and matrices; `0x110000` ObjectID (u64); **`0x120000` Handle** (`u8` ignored + `u64` ID — a real target); `0x130000` Object; `0x140000` ObjectPtr; `0x150000` BaseObjectPtr; `0x160000` BaseObject; `0x190000` Enum; `0x1A0000` String; `0x1B0000` LString; **`0x1C0000` Reference** (`u8` kind + `u8` IsGlobal + `u64` ID). Columns declare their type with a `Reference`; rows fill them with a `Handle`. |
 | `Unk00` | Named `Unk00` by ATK itself, i.e. unknown to the tool too. `0` throughout. |
-| `Reference` / `FileReference IsGlobal="0" Path="0">0` | An **empty/null** reference — the "no target" form, contrasted with `Handle` which carries a real one. *(inferred)* |
+| `Reference` / `FileReference IsGlobal="0" Path="0">0` | An **empty/null** reference — the "no target" form, contrasted with `Handle` which carries a real one. **Verified 2026-09-16** for skeleton columns: 2,046 of 2,046 `Skeleton` References across `PLAYER_Template` and `TEAMMATE_Template` are column declarations with ID 0. |
 | `ShuffleSelection`, `DefaultSelections`, `RowSelector`, `BuildColumnMask`, `StableRandomSeed`, `SelectedTags`/`BuildTags` | Selection machinery — how the game picks a row (randomized/tagged variants). *(inferred)* |
 | `DynamicTable` = `True` | *(inferred)* the table is resolved at runtime rather than fully baked. |
 | `x73B5D0A0`, `x67660D91` | **Unresolved name hashes.** ATK prints `x<HEX>` when a field-name hash isn't in its dictionary (`0x73B5D0A0` = `1941295264`, `0x67660D91` = `1734741393`). `x67660D91` holds the gender-tag handles. Good candidates for the hash dictionary. |

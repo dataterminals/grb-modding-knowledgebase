@@ -1,14 +1,18 @@
 # Next session
 
-*Rewritten 2026-08-09; lane 3 added 2026-08-24; **refreshed 2026-09-09** to fold in the 2026-09-08
-round trip and to strike two claims that had gone stale. The 2026-07-03 version described only the
-cloth-rebind investigation, which has been parked since 2026-07-09 while later sessions went
-somewhere else entirely. Every lane is written down now, so none of them gets lost again.*
+*Rewritten 2026-08-09; lane 3 added 2026-08-24; refreshed 2026-09-09 to fold in the 2026-09-08
+round trip; **refreshed again 2026-09-16** — lane 4 (the gameplay/AI database) written down, lane
+2B's container blocker closed, and the claims a one-byte walker bug had propped up struck. The
+2026-07-03 version described only the cloth-rebind investigation, which has been parked since
+2026-07-09 while later sessions went somewhere else entirely. Every lane is written down now, so
+none of them gets lost again.*
 
 **Read [`project-goal.md`](project-goal.md) first** — Sami's north star, verbatim, and still the
 reason this repo exists. Then the two 2026-08-09 entries in [`research-log.md`](research-log.md)
 for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-24 entries.
-**For where the tooling actually stands, the 2026-09-09 entry is the current one.**
+**For where the tooling and lane 2B actually stand, read the last 2026-09-16 entry, *"The container
+walker was one byte off"*.** It corrects entries from 2026-08-14, 2026-09-01, 2026-09-09 and earlier
+the same day.
 
 > **🖥️ Which machine are you on? (clarified 2026-09-10 — this is NOT path drift.)**
 > This project is worked from **two** computers, and they disagree about drive letters:
@@ -51,8 +55,10 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > **STA thread**; and `GameFileList` offers to *download* its file list unless
 > `Lists/<Game>.gfl` resolves from the **working directory**. `import_gltf` and `export_xml`
 > handle all three *(found 2026-09-09)*.
-> ⚠️ **`Failed` is not a success signal** (ATK wants one byte past the payload), and the bridge
-> deliberately never touches `DataFile` — its `Deserialize` writes to your install.
+> ~~⚠️ **`Failed` is not a success signal** (ATK wants one byte past the payload)~~ **RESOLVED
+> 2026-09-16 — that byte was our container slicer cutting off the payload's last byte; sliced
+> correctly, `Failed` is False with no pad.** The bridge still deliberately never touches `DataFile`
+> — its `Deserialize` writes to your install.
 > ⚠️ **It also corrected a fact this KB carried as VERIFIED since 2026-07-01:** GRB garment meshes
 > are **four-influence**, not two-bone. That matters directly to lane 2B's weight transfer.
 
@@ -166,25 +172,39 @@ for the current state of lane 2 — and, for lane 3, the 2026-08-23 and 2026-08-
 > **`PLAYER_SkelAddons`** (ID `1898138514560`), which it **shares with `TEAMMATE_Template`**.
 > ~~The new step 1 is: find where that BuildTable lives.~~ **FOUND, same day.** It is a
 > `BuildTable` resource **inside the `TEAMMATE_Template.data` container** — verified in bytes at
-> offset 94,195 of the patch copy. **The new blocker is our own code:** `data_inspect.py`
-> mis-parses that container, so the resource cannot yet be read or exported. See step 1c below.
+> offset 94,195 of the patch copy. ~~**The new blocker is our own code:** `data_inspect.py`
+> mis-parses that container, so the resource cannot yet be read or exported. See step 1c below.~~
+> **CLOSED 2026-09-16.** The walker was one byte off: it never skipped the FileHeader byte between a
+> resource's name and its payload. Fixed from ATK's source, `TEAMMATE_Template` walks to its last
+> byte as 2,451 resources (3,963 live), and `PLAYER_SkelAddons` exports to XML headlessly
+> (`atk_bridge.py … --xml out.xml --resource PLAYER_SkelAddons`).
+>
+> **And reading it moved the target again.** `PLAYER_SkelAddons` holds five **player-wide** rigs
+> (FakeGun, ENVInfluence, Props, `Regular_Male_Reflex_SklAdd`, a default holster). **A garment's rig
+> is assigned from the garment's own build table:** the kilt from `TP_PANT_Kilt` (Index 10), the
+> scarf from eight mask/head tables, and Blake's flowing trench coat from
+> `Tsec_IanBlake_Trench_Mcloth_MISSION` (Index 4). Two installed mods, Bison Belt and Tactical Human
+> Set, already assign rigs per item this way, in files that byte-match the live container. The next
+> step is lane 2B step 2 below, retargeted.
 
 ---
 
-## Three lanes. Know which one you're in.
+## Four lanes. Know which one you're in.
 
 | Lane | State | What it is |
 | --- | --- | --- |
-| **1 — Community tutorial absorption** | idle since 2026-08-09 | Working the *Tier 1 Imports* `#mod-tutorials` forum into the KB, thread by thread |
+| **1 — Community tutorial absorption** | idle since 2026-08-09; its open test **answered 2026-09-16** at ATK's repack layer | Working the *Tier 1 Imports* `#mod-tutorials` forum into the KB, thread by thread |
 | **2A — Cloth→mesh rebind** | **PARKED** since 2026-07-09 | Blocked on an in-game test that is staged but never run. ⛔ Narrowed 2026-09-08: the ATK-side route is `MotionCloth`, **not** `SoftBody` |
-| **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14** | Same goal, different mechanism. Now has a format, a corpus, and a vanilla flowing-coat exemplar |
-| **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-24 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo. **Panel is out of sync — fix that first.** |
+| **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14**; read side complete 2026-09-16 | Same goal, different mechanism. Has a format, a corpus, vanilla exemplars, the exact record that assigns a rig, and mod precedents |
+| **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-30 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo |
+| **4 — Gameplay / AI database** | **active 2026-09-16** | How enemies see, hear, call for backup and cheat — `DBContainerEntry` records, binary-patched. Sylvia's own second track, not a detour from lane 2 |
 
 Lane 1 is not a detour — it turns the only real primary documentation GRB modding has into
 something durable, and it produced independent corroboration of the 64-bit ID model from a
 direction (hex editing) that had nothing to do with ATK. Lane 3 is provenance, not engine work: it
 explains where a large slice of the catalogued mods came from and why so many of them never reached
-Nexus. But **lane 2 is the north star**, and neither of the others may be allowed to quietly become
+Nexus. Lane 4 is gameplay, not art: the AI database, with its own doc tree and its own reasons to
+exist. But **lane 2 is the north star**, and none of the others may be allowed to quietly become
 the whole project.
 
 **2026-08-14 changed which sub-lane is live.** Chasing an unrelated community question about
@@ -206,7 +226,21 @@ screenshots; several threads carry their key information only in images).
 
 Three threads are absorbed. The forum has many more. The user intends to work through all of it.
 
-### The one test worth doing before more reading
+### ~~The one test worth doing before more reading~~ — ANSWERED 2026-09-16, at ATK's repack
+
+> **Yes, renumbering changes what reaches the game — through ATK, not the engine.** Both of ATK's
+> repack paths (`DataFile.Serialize` for a container, `ForgeFile` for a forge) sort files by the
+> number before `_-_` and **silently skip any file whose ClassID was already packed**. So when a
+> vanilla copy and a mod copy of one resource share a folder, the **lower number wins** and the other
+> is dropped without a message. Measured on this install: 259 ClassIDs with more than one file in
+> the live `TEAMMATE_Template` unpack folder, and the container holds the lowest-numbered copy in
+> **259 of 259**. Both field cases below fit it exactly — including *"the one that starts with 39 in
+> patch01 … overwriting your edited ones"*. Source and measurement: the 2026-09-16 entry *"The
+> container walker was one byte off"*; write-up in
+> [`docs/08-naming-conventions.md`](../docs/08-naming-conventions.md). Re-running the vest case in
+> game would confirm it, but no longer decides it.
+>
+> The original framing is kept below for provenance.
 
 **Does renumbering a mod file to `1_-_` ever change in-game outcome?** There are now **two
 independent field cases** where renumbering coincided with a behaviour change, and both are
@@ -235,10 +269,15 @@ only the embedded `ClassID` decides what the game replaces.
 - **Locate spncryn's BuildTable tutorial.** Referenced by SamiPuma as the thorough method for
   **cross-category** slot moves (scarf → face paint), where his quick copy-paste isn't safe. Would
   extend [`buildtable-xml.md`](../reference/buildtable-xml.md). Thread not yet found.
-- **ID byte offset in DB resources.** spncryn says "bytes 1-8"; our
+- ~~**ID byte offset in DB resources.** spncryn says "bytes 1-8"; our
   [`resource-type-ids.md`](../reference/resource-type-ids.md) layout says a payload begins with a
   `FileHeader` byte, putting the ClassID at offset 1. Either these types write no header byte or
-  the phrasing is loose. Needs a hex check against a real `.DBToolSetting`.
+  the phrasing is loose. Needs a hex check against a real `.DBToolSetting`.~~ **ANSWERED
+  2026-09-16: both are right.** An ATK-unpacked resource file is `[FileHeader][payload]`; the
+  header is one `00` byte for almost every resource, so the ClassID is at bytes 1–8. (In the
+  container itself the header sits *between* the name and the counted payload.) Only resources
+  carrying an object-block-allocator table — 17 `Animation`s in the DB container — have a longer
+  header, putting the ClassID at 8 + 12N.
 - **ATK 1.3.4 is in the wild**; this KB's format facts were decompiled from **1.3.1**. Confirm
   nothing relevant changed before treating 1.3.1 behaviour as current. *(Partly settled 2026-08-09:
   the build installed on this machine — `E:\Anvil Toolkit\` — **is 1.3.1**, so KB facts match the
@@ -320,23 +359,37 @@ What changed:
   rigs, backpack straps, and `Player_Kilt_Addon` (394 B — the kilt has bone physics *as well as*
   its cloth).
 
-**The layer above is solved too** (2026-08-14, second session). An **`EntityBuilder`** assigns
-skeletons — nothing else does; confirmed by decompressing all 66,899 resources in `DataPC`/`extra`
-+ patches and finding every reference. The record is:
+**The layer above is solved too** — *rewritten 2026-09-16; the 2026-08-14 version attributed the
+references to whole containers and read the record from the wrong end.* A rig is assigned by a
+**`BuildTable` row component**, verified from ATK's `BuildRow.Read` / `DynamicProperty` and from
+ATK's own XML export:
 
 ```
-u32 TypeHash(0x24AECB7C = Skeleton) | u16 0000 | u8 0x12 | 6x 00 | u64 ClassID | u32 Slot
+i32 Index | u32 DataType (0x24AECB7C = Skeleton) | u32 Type (0x120000 = Handle) | u32 Unk00 | u8 (ignored) | u64 ClassID
 ```
 
-validated 16/16 against the skeleton sweep. So **a rig assignment is a plain 64-bit ID** — the same
-shape as the community's hex item swaps — and `EntityBuilder` is `FileActionType.Xml` with GRB in
-`SupportedGames`, so ATK can round-trip it as XML instead.
+`Index` is the `BuildColumn` the component fills; the table declares that column as an empty
+`Skeleton` `Reference`. All 3,966 such Handles across `PLAYER_Template` and both
+`TEAMMATE_Template` copies resolve to real skeletons. So **a rig assignment is a plain 64-bit ID**,
+and `BuildTable` round-trips through ATK as XML:
 
-⚠️ **But the trench rig is NPC-only.** `Tsec_Trench_AddonSkeleton` is referenced by
-`TSec_MIS_Blake(184)`, `TSec_CIN_Blake(184)` and `MIS_Y2E4_Wassili_Kropotkine` — **never** by
-`PLAYER_Template` or `TEAMMATE_Template`. The player-wearable precedents are `Player_Kilt_Addon`
-and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a node named
-`PLAYER_SkelAddons`).
+```xml
+<DynamicProperty Index="10">
+  <Value Name="DataType" Type="UInt32" HashName="Skeleton">615435132</Value>
+  <Value Name="Type" Type="UInt32">1179648</Value>
+  <Value Name="Unk00" Type="UInt32">0</Value>
+  <Handle>
+    <Value Name="Value" Type="UInt64" Path="DataPC\Player_Kilt_Addon\Player_Kilt_Addon.Skeleton">1889064665537</Value>
+  </Handle>
+</DynamicProperty>
+```
+
+**Who assigns which rig:** the kilt's from **`TP_PANT_Kilt`** (Index 10, beside its mesh at 11); the
+scarf's from eight mask/head tables; Blake's flowing trench coat's from
+**`Tsec_IanBlake_Trench_Mcloth_MISSION`** and Kropotkine's from `MIS_Y2E4_Wassili_Kropotkine_Trench`
+(both Index 4). `PLAYER_SkelAddons` carries only the five player-wide rigs. The trench rig is still
+never assigned by a player template — but it is assigned by a *coat's* table, which is exactly the
+shape a player garment would copy.
 
 **Do next, in order:**
 
@@ -356,17 +409,31 @@ and `TP_HunterScarf_A_Skeleton`, which *are* in `TEAMMATE_Template` (under a nod
    `int32 len(17) | "PLAYER_SkelAddons" | 0x00 | u64 1898138514560` sits at **offset 94,195** of
    the patch copy. *(The list holds 1,053,342 resources across 413,452 containers — a resource
    that is not its own container is the normal case, not an oddity.)*
-1c. **⭐ NEW step 1 — fix `data_inspect.py`'s container segmentation.** It reports
-   `TEAMMATE_Template.data` as **2** typed resources: an `EntityBuilder`, then one blob with a
-   binary-garbage name and a type id that differs between base and patch. The segmentation is
-   lost after the first resource. For scale, the `BuildTable` type id **585940579 appears 34,636
-   times** in that payload — it is the whole player/teammate customization set, and we see one
-   resource of it. **Until a resource inside a multi-resource container can be addressed by name
-   or ID, `PLAYER_SkelAddons` cannot be read or run through `export_xml()`** — and every later
-   step targets exactly that resource. This one is our bug, not an ATK gate.
-2. **The goal-shaped experiment:** add or re-point a skeleton record in the **player** template
-   aiming at a physics-carrying add-on rig, copying the kilt/scarf entries as the pattern. First
-   end-to-end test of route 2B.
+1c. ~~**⭐ NEW step 1 — fix `data_inspect.py`'s container segmentation.**~~ **DONE 2026-09-16.**
+   The walker never skipped the FileHeader byte between a resource's name and its payload, and
+   stopped at unnamed resources. Fixed from ATK's source in `data_inspect.walk()`, which every tool
+   now shares: `TEAMMATE_Template` walks to its last byte as 2,451 resources (3,963 live), confirmed
+   against the container's own metadata index. `PLAYER_SkelAddons` reads and exports to XML:
+   `python atk_bridge.py <TEAMMATE_Template.data> --xml out.xml --resource PLAYER_SkelAddons`.
+2. **⭐ NOW step 1 — the goal-shaped experiment, retargeted to a garment's own build table.** Not
+   the player template: a garment's rig comes from the garment's table (see above).
+   - **Diff the two working precedents first.** `GRBMods\bisonbelt_mainfiles` moves
+     `Player_Holster_NoSling_Addon` out of `PLAYER_SkelAddons` and into `TP_LEGHOLSTER_Platform`
+     (Index 3); `GRBMods\Tactical Human Set` assigns it from `TP_TacticalHuman_Belt-Skeleton`. Both
+     byte-match the live container, and both are rigid rigs, so they prove the assignment path
+     but not bone physics.
+   - **Then add one row component to a wearable garment's table**, pointing a `Skeleton` Handle at a
+     physics-carrying rig and copying `TP_PANT_Kilt` (Index 10) or
+     `Tsec_IanBlake_Trench_Mcloth_MISSION` (Index 4). Check that the table declares a `Skeleton`
+     column at that Index — in `PLAYER_SkelAddons` every row component fills a same-Index column
+     *(inferred to be required)*. Edit through the XML round trip: ATK's binary `BuildRow.Write`
+     would write every Index as 0 *(read in source, untested)*.
+   - ⚠️ **Number the edited file below the vanilla copy** (`1_-_…`). Both of ATK's repack paths keep
+     the lowest-numbered file per ClassID and silently drop the rest.
+   - ⚠️ **Back up the live `DataPC_patch_01.forge` (1.63 GB, modded) first.** On SylG5 the only
+     full copy found is the pristine 2023 one in `Backups\`; restoring that would wipe every
+     installed mod.
+   - First end-to-end test of route 2B, and the first edit of ours that would be confirmed in game.
 3. ~~**Finish the constraint-blob decode.**~~ **DONE 2026-08-14.** The blob is readable —
    [`tools/reflex3.py`](../tools/reflex3.py) prints the driven bone, its parent, swing limits in
    degrees, gravity and damping; the walk accounts for every byte in 204 of 205 skeletons.
@@ -555,6 +622,49 @@ dates and outcomes are always a hand edit in both places.
 
 ---
 
+## Lane 4 — the gameplay / AI database
+
+**What it is.** How enemies see, hear, fight, call for backup and cheat lives in one forge entry,
+`DBContainerEntry_0X104634F921.data` — **61,426** records in the base container, 61,446 in this
+install's patch. Written up in [`docs/14-ai-and-npc-behaviour.md`](../docs/14-ai-and-npc-behaviour.md),
+catalogued in [`reference/ai-db-records.md`](../reference/ai-db-records.md), read with
+[`tools/db_inspect.py`](../tools/db_inspect.py). It exists because Sylvia plays with AI overhaul
+mods installed (a forge-integrated Spartan port and Fear the Radio) and asked what else could be
+changed. It is a second track in its own right, not a detour from lane 2.
+
+**Verified so far (all 2026-09-16, read-only):**
+- ATK has no `DB*` classes, so this layer is **binary patching**. It is tractable: 777 of the 1,012
+  `DB*` types are fixed-size, and Ubisoft ships null variants (`_NoDetection`, `_NoCall`,
+  `_NoCheat`) to diff against.
+- **Fear the Radio** is `CallBodark`'s six-wave schedule transplanted onto `CallPMC`, with all six
+  wave handles repointed at existing high-threat spawners.
+- **Omniscience is a profile, not a flag:** `DBAICheatConfig_Miter_Omniscience` sets six grant
+  flags, clears five honesty gates and raises three floats.
+- A handle inside a record is its target's ClassID; index `payload[0:8]` over the container and
+  every handle becomes a name.
+- The patch container is a **full copy** of the database. DB mods still stack, because each ATK
+  repack rebuilds it from the unpacked folder — but a mod that ships a whole
+  `DBContainerEntry…data` wipes every other DB mod.
+- ⚠️ The morning's "50,098 records" was a prefix — the walker stopped at the first unnamed record.
+  Every per-type count in `docs/14` held up in the full walk; the container totals did not.
+
+**Do next, in order:**
+1. **Map NPCs to cheat configs.** `DBAICheatConfig` has no `_Wolves` or `_Rifleman` instance; which
+   config a soldier gets is a handle in `DBNpcGeneralConfig` (61 × 38 B). Resolving it is a lookup,
+   not research, and it is what stands between `docs/14` §9 and "make the Wolves omniscient".
+2. **The first write test:** a single-field change to one fixed-size record whose effect can be
+   seen (`docs/14` §3 suggests the hearing-radius run in `DBSoldierSoundDetectionConfig_Default`).
+   ⚠️ Back up the live `DataPC_patch_01.forge` first; number the edited record `1_-_` so ATK packs
+   it rather than the vanilla copy; repack the container, then the forge.
+3. **Where MK1/2/3 tier scaling lives** — not `DBNpcHealth`; `TGT_*_Marks*`
+   (`GR_SpawnNpcDescriptor`, 54 records, 278–483 B) is the lead.
+4. **The 1,557 `[MVET] AI_*` / `[VECN] AI_*` records** the old walker never reached. Unexamined;
+   the names match the `[VE] AI_…` voice events seen on 2026-08-14, so dialogue plumbing is more
+   likely than behaviour.
+5. Which installed mod is the Spartan port — no folder under `Extracted\GRBMods\` is named for it.
+
+---
+
 ## Parked leads (don't lose these)
 
 Open threads that aren't captured above but stay relevant to the north star. Roughly ordered by
@@ -611,7 +721,17 @@ payoff.
    LeftShoulder ×4 — no spine, pelvis or legs). It is the coat cloth's collision proxy set, named
    after the bones it follows. **Not** a death-ragdoll rig, and not a binding mechanism.
 
-**Do not re-chase — the community ragdoll question (2026-08-14):**
+**~~Do not re-chase~~ REOPENED 2026-09-16 — the community ragdoll question (2026-08-14):**
+
+> ⚠️ **The absence argument below does not hold.** GRB *does* ship `LiteRagdoll` resources, nested
+> inside containers: `TP_WalkerCoat_Ragdoll` in `TP_WalkerCoat_Cloth.data`, and one each in
+> `PLAYER_Template` and `TEAMMATE_Template`. All three legs of the original answer counted **forge
+> entries**, which name only a container's first resource, so none of them could see a nested
+> resource of any type — nested `Animation`s included (17 sit in the DB container alone).
+> **What would answer it:** a census of nested resources across all forges with
+> `data_inspect.walk()` — how many `LiteRagdoll`s there are, what holds them, and which `Animation`s
+> exist once nested ones count. Until that runs, the question is open. The original answer is kept
+> below for provenance.
 
 Releptive asked in `#shit-talk` whether GRB deaths could ragdoll instantly the way hostage-guard
 kills do. **Answer: not with today's data surface, and the reason is absence, not difficulty.**
@@ -641,6 +761,19 @@ that is not a forge resource. Full detail in the 2026-08-14 research-log entry.
 ---
 
 ## Don't repeat
+
+**On reading containers (added 2026-09-16):**
+
+- **Don't quote a count from a walk that stopped early.** A container walk is complete only when it
+  ends on the files block's last byte, and the metadata block's `u16` count is a free second check.
+  The DB's "50,098 records, landing exactly on the end" was a 16.5 MB prefix of 56.8 MB, written up
+  without that check being run.
+- **Don't credit a byte-pattern hit to the nearest string or to the container's name.** Walk the
+  container and name the resource that holds the bytes. "An `EntityBuilder` assigns skeletons" and
+  "the precedents sit under `PLAYER_SkelAddons`" both came from that shortcut.
+- **Don't treat a forge-entry sweep as a resource census.** A forge entry is a container named after
+  its first resource. Nested resources are the normal case, about 2.5 per container, and a sweep of
+  entry names or extensions cannot see them. That is how "GRB ships no `LiteRagdoll`" got written.
 
 **On the cloth work:**
 

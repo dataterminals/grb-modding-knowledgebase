@@ -389,96 +389,119 @@ Full table: regenerate with the sweep described below.
 
 ---
 
-## The layer above: how an `EntityBuilder` names a skeleton
+## The layer above: how a build table assigns a skeleton
 
-*Answered 2026-08-14, empirically.* The physics is **not inherited** — it is embedded in the
-skeleton resource itself. What gets assigned is the **skeleton**, and the thing that assigns it is
-an **`EntityBuilder`**, not a standalone BuildTable.
+*First answered 2026-08-14; **rewritten 2026-09-16.** The 2026-08-14 version searched decompressed
+forge entries for skeleton IDs and credited each hit to its container, named after the container's
+first resource (an `EntityBuilder`), and to the nearest string. It also read the record from the
+wrong end. Walked resource by resource with the fixed `data_inspect.walk()`, the picture below is
+what holds. The ClassIDs were always right.*
 
-### How it was found
+The physics is **not inherited** — it is embedded in the skeleton resource itself. What gets
+assigned is the **skeleton**, and the thing that assigns it is a **`BuildTable` row component**.
 
-Rather than guess, every resource in `DataPC.forge`, `DataPC_extra.forge` and both patches
-(**66,899 resources**) was decompressed and searched for the raw little-endian `uint64` ClassID of
-four skeletons. Anvil stores cross-resource references as bare 64-bit IDs, so whatever points at a
-skeleton contains its ID verbatim. **37 references found, and 32 of 35 non-`Entity` hits are
-`EntityBuilder`s** — no other resource type assigns a skeleton.
+### The assignment record
 
-| Skeleton | Referenced by |
+> **Verified from source and from bytes.** ATK 1.3.1's `BuildRow.Read`, `DynamicProperty` and
+> `PropertyRegistry` give the layout; ATK's own XML export of the tables confirms it field by field.
+> Across `PLAYER_Template` and both `TEAMMATE_Template` copies, **3,966 of 3,966** `Skeleton` Handles
+> resolve to real skeletons.
+
+A `BuildTable` declares typed **columns** and fills them from **rows**:
+
+```
+BuildColumn component:  u32 (ATK writes 0x2CECF817)
+                        DynamicProperty: Skeleton, Type 0x1C0000 (Reference), ID 0   <- an empty typed column
+
+BuildRow component:     i32  Index        which column this component fills
+                        u32  DataType     0x24AECB7C == CRC32("Skeleton")   (0xEC6AC357 = GraphicObject, …)
+                        u32  Type         0x00120000 = Handle
+                        u32  Unk00        0
+                        u8   (ignored)    ATK discards it, writes 0
+                        u64  ClassID      the skeleton assigned
+```
+
+In ATK's XML it is:
+
+```xml
+<DynamicProperty Index="10">
+  <Value Name="DataType" Type="UInt32" HashName="Skeleton">615435132</Value>
+  <Value Name="Type" Type="UInt32">1179648</Value>
+  <Value Name="Unk00" Type="UInt32">0</Value>
+  <Handle>
+    <Value Name="Value" Type="UInt64" Path="DataPC\Player_Kilt_Addon\Player_Kilt_Addon.Skeleton">1889064665537</Value>
+  </Handle>
+</DynamicProperty>
+```
+
+**A skeleton assignment is a plain 64-bit ID in a fixed-shape record,** and `BuildTable` round-trips
+through ATK as XML, so it does not have to be done in hex. Export one table from inside its container
+with `python tools/atk_bridge.py <container.data> --xml out.xml --resource <TableName>`.
+
+> ⚠️ **The 2026-08-14 `u32 Slot` does not exist.** It was read from the four bytes *after* the
+> ClassID, which are the **next** component's `Index` — or, after a row's last component, the start
+> of whatever follows. That is where the large "slots" (1792, 2816, 3328, 4864) came from:
+> `PLAYER_SkelAddons`' `3328` is `00 0d 00 00`, the table's `u8 Shuffle` byte followed by the low
+> bytes of its `RowSelector`'s local ID.
+
+### Who assigns which rig
+
+| Skeleton | Assigned by (resource, Index) |
 | --- | --- |
-| `Regular_Male_Reflex_SklAdd` | `PLAYER_Template`, `TEAMMATE_Template`, and ~20 character builders |
-| `Player_Kilt_Addon` | `TEAMMATE_Template` |
-| `TP_HunterScarf_A_Skeleton` | `TEAMMATE_Template`, `MIS_Rosebud`, several NPCs |
-| **`Tsec_Trench_AddonSkeleton`** | **`TSec_MIS_Blake(184)`, `TSec_CIN_Blake(184)`, `MIS_Y2E4_Wassili_Kropotkine`** — character builders only, **never** a player template |
+| `Player_FakeGun_Addon`, `ENVInfluence_Addon`, `Player_Props_Addon`, `Regular_Male_Reflex_SklAdd`, `Player_Holster_NoSling_Addon` | **`PLAYER_SkelAddons`** (inside `TEAMMATE_Template.data`) — 1, 5, 2, 4, 3; shared by `PLAYER_Template` and `TEAMMATE_Template` |
+| `Player_Kilt_Addon` | **`TP_PANT_Kilt`** — Index 10, beside its `GraphicObject` at 11 |
+| `TP_HunterScarf_A_Skeleton` | eight mask/head tables: `TP_FullMask_Flycatcher`, `_Rosebud`, `_RaidSniper`, `_RaidMedic`, `TP_Mask_RaidIngineer`, `TP_FullMaskBodark_E`, `Head_Fyodor_Archinov_Icon`, `Head_Katya_Maksimov_Icon` |
+| **`Tsec_Trench_AddonSkeleton`** | **`Tsec_IanBlake_Trench_Mcloth_MISSION`** (inside `TSec_MIS_Blake(184)`) and `MIS_Y2E4_Wassili_Kropotkine_Trench` — both Index 4. Never by a player template |
+| `Delta_Holster_Addon` | `TP_PANT_Bodark_A`, `TP_VestLight_AliceChestRig` — Index 3 |
 
-### The reference record
-
-> **Verified.** Hand-aligned on four samples, then validated by extracting **every**
-> `Skeleton`-typed record from two EntityBuilders: **16 records, 16 IDs, 100 % resolving to real
-> skeletons** in the independent 2,469-skeleton sweep. Zero false positives.
-
-```
-u32  TypeHash     0x24AECB7C  == CRC32("Skeleton")   (0xEC6AC357 = GraphicObject, etc.)
-u16  0x0000
-u8   0x12                                            record tag
-6 x  0x00
-u64  ClassID      the resource being referenced
-u32  Slot         attachment slot index
-```
-
-**A skeleton assignment is a plain 64-bit ID at a fixed offset in a fixed-shape record.** That is
-the same shape as the community's documented hex item swaps
-([`buildtable-xml.md`](buildtable-xml.md)) — and it does not have to be done in hex:
-`EntityBuilder.SupportedGames` **includes `Game.GhostReconBreakpoint`** and its
-`FileActionType` is **`Xml`**, so ATK exports the whole builder to XML and re-imports it.
+**The rule that falls out: a garment's rig is assigned from the garment's own table.** The shared
+`PLAYER_SkelAddons` carries only player-wide rigs. *Inferred:* Index 3 is a holster column —
+vanilla assigns holster rigs at 3 from item tables, and the shared table's default holster is at 3.
 
 ### What a build sheet actually looks like
 
-Extracting all `Skeleton` records from two builders reads like a parts list — and shows exactly
-where the physics enters:
+`python tools/entity_skeletons.py <container.data> --install <GRB folder>` lists every assignment
+in a container with its holder, Index and physics:
 
-**`TSec_MIS_Blake(184)`**
+**`TSec_MIS_Blake(184)`** — 7 resources
 
-| Slot | Skeleton | Physics |
-| ---: | --- | ---: |
-| 4 | `Regular_Male_Body_Skl` | none — the plain rig |
-| 1 | `Regular_Male_Reflex_SklAdd` | **107,350 B** |
-| 4 | `Skeleton_IanBlake_Head` | none |
-| 2816 | `Player_Props_Addon` | none |
-| **5** | **`Tsec_Trench_AddonSkeleton`** | **43,494 B** — sits beside `Tsec_IanBlake_Trench_Mcloth_MISSION` |
+| Held by | Index | Skeleton | Physics |
+| --- | ---: | --- | ---: |
+| `TP_Blake_Skeleton` | 1 | `Regular_Male_Body_Skl` | none — the plain rig |
+| `TP_Blake_Skeleton` | 2 | `Regular_Male_Reflex_SklAdd` | **107,350 B** |
+| `TP_Blake_Skeleton` | 4 | `Player_Props_Addon` | none |
+| `TSec_CIN_Blake_Head` | 2 | `Skeleton_IanBlake_Head` | none |
+| **`Tsec_IanBlake_Trench_Mcloth_MISSION`** | **4** | **`Tsec_Trench_AddonSkeleton`** | **43,494 B** |
 
-**`PLAYER_Template`**
+**`PLAYER_Template`** — 44 resources; all 11 assignments come from costume tables inside it
 
-| Slot | Skeleton | Physics |
-| ---: | --- | ---: |
-| 4 | `Regular_Male_Body_Skl` | none |
-| 1 | `Regular_Male_Reflex_SklAdd` | **107,350 B** |
-| 12 | `BodyUp_Skeleton` | **10,443 B** |
-| 11 | `Watch_Skeleton` | **5,556 B** |
-| 1792 | `Tpri_Schultz_Beard_Addon` | **2,710 B** |
-| 3328 | `Tpri_Schultz_gloves_addon` | **1,166 B** |
-| 10 | `Hat_Skeleton` | none |
-| 5 / 3 | `Skeleton_Schultz_Head`, `TPri_CIN_Hawkins_Head` | none |
-| 4864 | `WeaponsAttachment_NoBackPack_Addon` | none |
+| Held by | Index | Skeleton | Physics |
+| --- | ---: | --- | ---: |
+| `TPri_Schultz_Skeleton` | 1 / 2 / 4 | `Regular_Male_Body_Skl` / `Regular_Male_Reflex_SklAdd` / `Player_Props_Addon` | none / **107,350 B** / none |
+| `TPri_Schultz_UpperBody` | 9 / 10 / 11 / 12 | `Hat_Skeleton` / `Watch_Skeleton` / `BodyUp_Skeleton` / `WeaponsAttachment_NoBackPack_Addon` | none / **5,556 B** / **10,443 B** / none |
+| `TPri_Schultz_Beard` | 2 | `Tpri_Schultz_Beard_Addon` | **2,710 B** |
+| `TPri_Schultz_LowerBody` | 5 | `Tpri_Schultz_gloves_addon` | **1,166 B** |
+| `TPri_Schultz_Head`, `TPri_CIN_Hawkins_Head_Costume` | 2 | `Skeleton_Schultz_Head`, `TPri_CIN_Hawkins_Head` | none |
 
 A character is a **plain base rig plus a stack of add-on rigs**, each carrying its own physics.
-Blake's coat is one entry in that stack.
+Blake's coat is one entry in that stack — and it enters through the **coat's** table.
 
 ### The full chain
 
 ```
-EntityBuilder  (PLAYER_Template / TEAMMATE_Template / a named character)
-   └── typed reference record  (Skeleton, <64-bit ClassID>, slot)
+item / character BuildTable  (TP_PANT_Kilt, Tsec_IanBlake_Trench_Mcloth_MISSION, PLAYER_SkelAddons, …)
+   └── BuildRow component  (Index, Skeleton Handle -> 64-bit ClassID)
           └── add-on Skeleton resource
                  └── inline Reflex3SkeletonConstraints   <- the physics lives HERE
 ```
 
-> ⚠️ **One caveat that shapes the plan.** `Tsec_Trench_AddonSkeleton` is referenced **only by
-> character builders (Blake, Kropotkine)** — never by `PLAYER_Template` or `TEAMMATE_Template`. The
-> flowing-coat rig is wired into specific NPCs, not into a wearable gear slot. The
-> player-wearable precedents are `Player_Kilt_Addon` and `TP_HunterScarf_A_Skeleton`, which **are**
-> in `TEAMMATE_Template`. So the goal-shaped experiment is: **add a skeleton record to the player
-> template pointing at a physics-carrying add-on rig**, using the kilt/scarf entries as the
-> template to copy.
+> **What this means for the plan.** `Tsec_Trench_AddonSkeleton` is assigned only by coat tables worn
+> by NPCs (Blake, Kropotkine), never by a player template — but it is assigned *from a coat's
+> table*, which is exactly the shape a player garment's table can copy. The goal-shaped experiment
+> is therefore: **add a `Skeleton` Handle row component to a wearable garment's own BuildTable,
+> pointing at a physics-carrying add-on rig**, with `TP_PANT_Kilt` and
+> `Tsec_IanBlake_Trench_Mcloth_MISSION` as patterns. Two installed mods (Bison Belt, Tactical Human
+> Set) already assign rigid holster rigs per item this way; see the 2026-09-16 research-log entry.
 
 ---
 
@@ -489,8 +512,8 @@ EntityBuilder  (PLAYER_Template / TEAMMATE_Template / a named character)
 | `2386539642` | **`Reflex3SkeletonConstraints`** | ✅ inline in every skeleton |
 | `3558325132` | `ReflexSystem` | field read for GRB, but never inline in the 7 sampled skeletons |
 | `2507411529` | `Bone` | ✅ |
-| `2299544533` | `LiteRagdoll` | ❌ **never** — and `SupportedGames` excludes GRB |
-| `2371068428` / `572675924` / `333476854` / `2408076648` | `LiteRagdollCapsule` / `Shape` / `CapsuleGroupFlags` / `ExternalCapsule` | ❌ never |
+| `2299544533` | `LiteRagdoll` | ✅ **nested inside containers** — `TP_WalkerCoat_Ragdoll` (3,573 B) in `TP_WalkerCoat_Cloth.data`, one each in `PLAYER_Template` and `TEAMMATE_Template` *(corrected 2026-09-16; the earlier "never" came from a forge-entry sweep, which cannot see nested resources)*. ATK's `SupportedGames` still excludes GRB, so ATK won't parse them |
+| `2371068428` / `572675924` / `333476854` / `2408076648` | `LiteRagdollCapsule` / `Shape` / `CapsuleGroupFlags` / `ExternalCapsule` | not checked since `LiteRagdoll` turned up — these live *inside* one |
 | `3371740159` / `547156082` / `119336528` | `SkeletonPoseGroup` / `SkeletonPose` / `SkeletonPoseBone` | ❌ not inline in sampled skeletons |
 | `4226984470`, `2137463166`, `2236439251`, `1849557783`, `3730792035`, `3946334986`, `868651492`, `575748634`, `3465920383`, `4030027666` | `ReflexBallJoint`, `ReflexFastPoseHull`, `ReflexPoseSet`, `ReflexPackedPoseBone`, `ReflexBoneInfo_BallJoint`, `ReflexBoneInfo_Connector`, `ReflexBoneTarget`, `ReflexMeasurement`, `ReflexConnector`, `ReflexConnectorElement` | ❌ never (the older Reflex, not Reflex3) |
 
@@ -529,6 +552,11 @@ Read-only; touches nothing in the install.
 ## What Reflex3 is *not*
 
 It is **not** a death ragdoll. `Reflex3Physics` is a driven-bone solver (swing/slide about a rest
-pose, with gravity and wind) — not a rigid-body ragdoll with joint limits and impulses. GRB ships
-**no `LiteRagdoll` resource at all**, and no death/hit-reaction animations exist as forge
-resources. See the 2026-08-14 research-log entry.
+pose, with gravity and wind) — not a rigid-body ragdoll with joint limits and impulses.
+
+> ⚠️ **Corrected 2026-09-16.** This section used to add that GRB ships no `LiteRagdoll` resource
+> and no death/hit-reaction animations. The first is wrong — `LiteRagdoll` resources exist, nested
+> inside containers (`TP_WalkerCoat_Ragdoll`, whose name matches the coat cloth's
+> `TP_WalkerCoat_Ragdoll_*` collider list above) — and the second rests on the same forge-entry
+> sweep, so it is unproven rather than disproven. A census of nested resources would settle both.
+> See the 2026-09-16 research-log entry.

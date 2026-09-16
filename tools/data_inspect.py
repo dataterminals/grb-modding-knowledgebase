@@ -7,7 +7,11 @@ container of one-or-more typed resources. This tool decodes the container format
 and prints, for each resource: its name, 64-bit ClassID, and its resource TYPE
 (e.g. Mesh, TextureMap, BuildTable, Cloth) - resolved from the type id.
 
-    python data_inspect.py  some.data  [more.data ...]
+    python data_inspect.py  some.data  [more.data ...]  [--all]
+
+Containers with more than 40 resources print a per-type count and the first 40;
+`--all` lists every one. Other tools import `walk()` from here, so the container
+format lives in exactly one place.
 
 Background: docs/02-forge-file-format.md (container + compression),
 docs/03-data-and-resources.md, reference/resource-type-ids.md.
@@ -22,10 +26,26 @@ HOW IT WORKS (verified from decompiled ATK v1.3.1, and against real files):
   compressed blocks this tool loads the game's `oo2core_7_win64.dll` (Windows).
   Point --oodle at it, or it auto-searches up from the .data path and common
   spots. If a block is raw, no DLL is needed.
-- Each resource record: uint32 TypeId, int32 len, len-prefixed Name, payload.
+- The decompressed files block is a flat stream of resources, each framed
+
+      uint32 TypeId | int32 len | int32 nameLen | name | FileHeader | payload
+
   TypeId == CRC32(typeName); we reverse it via the KNOWN_TYPES list below.
+  The FileHeader sits BETWEEN the name and the payload and NEITHER length counts
+  it: one 0x00 byte normally, or 12 * int32@+4 + 8 bytes when its first byte is
+  0x01. The `len` bytes of payload that follow begin with the resource's own
+  uint64 ClassID. Names can be empty (nameLen == 0).
+
+CORRECTED 2026-09-16: until then this tool read `len` bytes starting AT the
+FileHeader, one byte early. A container's first resource still read plausibly
+and every later one was garbage, so a multi-resource container looked like one
+resource plus a blob of noise. Measured with the fix, TEAMMATE_Template holds
+2,451 resources, not 2, and the gameplay DBContainer 61,426, not 1 (see
+meta/research-log.md). `walk()` now reports where it stopped - a complete walk
+ends exactly on the last byte of the block - so a partial read cannot pass as
+the whole container again.
 """
-import sys, os, struct, zlib, ctypes
+import sys, os, struct, zlib, ctypes, collections
 
 MAGIC = 1154322941026740787  # CompressedFileData magic (0x1004FA9957FBAA33)
 
@@ -35,7 +55,7 @@ KNOWN_TYPE_NAMES = [
     "Skeleton", "Bone", "LODSelector", "LODDescriptor", "FacialSolverData",
     "TextureMap", "CompiledMip", "CompiledTextureMap", "TextureSet", "Material",
     "BuildTable", "EntityBuilder", "EntityGroupBuilder", "LocalizationPackage",
-    "Animation", "Event",
+    "Animation", "Event", "Entity", "GraphicObject",
     # cloth / soft-body physics
     "Cloth", "SoftBody", "MotionSoftBody", "ClothLOD", "MotionClothLOD",
     "SoftBodyLOD", "MotionSoftBodyLOD", "ClothState", "MotionClothState",
@@ -43,6 +63,12 @@ KNOWN_TYPE_NAMES = [
     "ClothActionSettings", "SoftBodyConstraint", "SoftBodyVertexMapping",
 ]
 TYPE_BY_ID = {zlib.crc32(n.encode("ascii")): n for n in KNOWN_TYPE_NAMES}
+
+# One resource from a container's files block.
+#   offset  - where its record starts in the decompressed files block
+#   header  - the FileHeader bytes: b"\x00", or the 12*n+8 extended form
+#   payload - the `len` bytes after the header; starts with its own ClassID
+Resource = collections.namedtuple("Resource", "offset type_id name header payload")
 
 
 def find_oodle(start, override=None):
@@ -112,11 +138,62 @@ def read_cfd(b, off, oodle):
     return bytes(out), off, info
 
 
+def read_container(path, oodle):
+    """Decompress a .data. Returns (metadata block, files block)."""
+    b = open(path, "rb").read()
+    meta, off, _ = read_cfd(b, 0, oodle)
+    files, _, _ = read_cfd(b, off, oodle)
+    return meta, files
+
+
+def header_len(files, h):
+    """Length of the FileHeader that starts at `h`.
+
+    One byte, unless that byte is 0x01: then 12 * int32@+4 + 8 bytes. In the
+    ~72,000 resources checked on 2026-09-16 the long form occurs 17 times, all in
+    the gameplay DBContainer (`Animation` resources such as RamonPC_RTA_opening),
+    and ATK's own unpack writes it in front of the payload verbatim."""
+    if files[h] != 1:
+        return 1
+    count, = struct.unpack_from("<i", files, h + 4)
+    return 12 * count + 8
+
+
+def walk(files):
+    """Every resource in a decompressed files block, and where the walk stopped.
+
+    Returns (resources, end). A complete walk has end == len(files). Anything
+    else means a frame this reader does not understand, and the caller must say
+    so rather than present a partial list as the container."""
+    out, o = [], 0
+    while o + 12 <= len(files):
+        tid, length, slen = struct.unpack_from("<Iii", files, o)
+        h = o + 12 + slen
+        if slen < 0 or length < 0 or h >= len(files):
+            break
+        try:
+            end = h + header_len(files, h) + length
+        except struct.error:
+            break
+        if end > len(files) or end <= h:
+            break
+        hl = end - length - h
+        out.append(Resource(o, tid, files[o + 12:h].decode("latin-1", "replace"),
+                            files[h:h + hl], files[h + hl:end]))
+        o = end
+    return out, o
+
+
+def class_id(res):
+    """The resource's own 64-bit ClassID - the first 8 bytes of its payload."""
+    return struct.unpack_from("<Q", res.payload, 0)[0] if len(res.payload) >= 8 else None
+
+
 def type_name(tid):
     return TYPE_BY_ID.get(tid, f"#{tid}")
 
 
-def inspect(path, oodle):
+def inspect(path, oodle, show_all=False, limit=40):
     b = open(path, "rb").read()
     lines = ["=" * 70, f"FILE: {os.path.basename(path)}   ({len(b):,} bytes)"]
     try:
@@ -127,28 +204,24 @@ def inspect(path, oodle):
         return "\n".join(lines) + "\n"
     lines.append(f"  container: version={ia['version']} algorithm={ia['algo']} "
                  f"(3=Oodle Mermaid) metaBlocks={ia['blocks']} fileBlocks={ib['blocks']}")
-    o, n = 0, 0
-    res = []
-    while o < len(files) - 12:
-        try:
-            tid, = struct.unpack_from("<I", files, o); o += 4
-            length, = struct.unpack_from("<i", files, o); o += 4
-            slen, = struct.unpack_from("<i", files, o); o += 4
-            name = files[o:o + slen].decode("latin-1", "replace"); o += slen
-            payload = files[o:o + length]; o += length
-            if length <= 0 or slen < 0:
-                break
-            h0 = payload[0] if payload else 0
-            hlen = 1 if h0 != 1 else (12 * struct.unpack_from("<i", payload, 4)[0] + 8)
-            cid = struct.unpack_from("<Q", payload, hlen)[0]
-        except Exception:
-            break
-        res.append((name, tid, cid, length))
-        n += 1
-    lines.append(f"  typed resources: {n}")
-    for name, tid, cid, length in res:
-        lines.append(f"    - {name}")
-        lines.append(f"        type={type_name(tid)}  (id {tid})  ClassID={cid}  {length:,} B")
+    res, end = walk(files)
+    lines.append(f"  typed resources: {len(res):,}")
+    if end != len(files):
+        lines.append(f"  !! walk stopped at byte {end:,} of {len(files):,} - "
+                     f"this list is INCOMPLETE")
+    shown = res
+    if len(res) > limit and not show_all:
+        counts = collections.Counter(type_name(r.type_id) for r in res)
+        top = ", ".join(f"{k} x{v:,}" for k, v in counts.most_common(15))
+        more = len(counts) - 15
+        lines.append(f"  by type: {top}" + (f", ... {more} more types" if more > 0 else ""))
+        lines.append(f"  first {limit} of {len(res):,} (--all lists every one):")
+        shown = res[:limit]
+    for r in shown:
+        long_header = f"  (+{len(r.header)} B header)" if len(r.header) != 1 else ""
+        lines.append(f"    - {r.name or '<unnamed>'}")
+        lines.append(f"        type={type_name(r.type_id)}  (id {r.type_id})  "
+                     f"ClassID={class_id(r)}  {len(r.payload):,} B{long_header}")
     return "\n".join(lines) + "\n"
 
 
@@ -160,14 +233,15 @@ def main(argv):
     override = None
     if "--oodle" in argv:
         i = argv.index("--oodle"); override = argv[i + 1]; del argv[i:i + 2]
-    paths = argv[1:]
+    show_all = "--all" in argv
+    paths = [a for a in argv[1:] if a != "--all"]
     if not paths:
         print(__doc__); return
     oodle = Oodle(find_oodle(paths[0], override))
     if not oodle.ok:
         print("(note: no Oodle DLL loaded - only raw/uncompressed blocks will read)\n")
     for p in paths:
-        print(inspect(p, oodle))
+        print(inspect(p, oodle, show_all=show_all))
 
 
 if __name__ == "__main__":

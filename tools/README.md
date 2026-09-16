@@ -143,8 +143,21 @@ read the report. **“Save report…”** writes it to a file you can paste into
 ```
 python data_inspect.py  30091_-_WI_HDG_P12_Main.data
 python data_inspect.py  *.data                       # several at once
+python data_inspect.py  23_-_TEAMMATE_Template.data --all   # every resource, not the first 40
 python data_inspect.py  foo.data --oodle "D:\...\Ghost Recon Breakpoint\oo2core_7_win64.dll"
 ```
+
+**Containers are often bigger than their name.** `TP_WalkerCoat_Cloth.data` holds a Cloth, its
+SoftBodySettings *and* a LiteRagdoll; `TEAMMATE_Template.data` holds 2,451 resources. Above 40
+resources the report prints a count per type and the first 40; `--all` lists every one. The walk
+must end on the last byte of the container — if it doesn't, the report says
+**INCOMPLETE** rather than presenting a partial list.
+
+> ⚠️ **Fixed 2026-09-16.** Earlier versions read every resource after the first one byte early
+> (they missed the header byte between a resource's name and its payload), so any container with
+> more than one resource showed up as one resource plus garbage. Other tools now share this
+> walker (`data_inspect.walk()`), so the fix reaches all of them. See
+> [`../meta/research-log.md`](../meta/research-log.md).
 
 ### Oodle note (important)
 GRB `.data` payloads are Oodle-compressed (Mermaid, 32 KB blocks), so the tool needs
@@ -251,33 +264,43 @@ families' patch forges.
 
 ## 🧍 Entity Skeletons — what rigs does this character or item use?
 
-Reads a character's or item's **`EntityBuilder`** and prints its skeleton build
-sheet: every rig it pulls in, and which of those carry bone physics.
+Walks a `.data` container and prints its skeleton build sheet: every rig assigned in
+it, **which build table assigns it**, the column Index, and which rigs carry bone
+physics.
 
 ```
-python entity_skeletons.py 1536663434687_-_PLAYER_Template.data ^
+python entity_skeletons.py "28830_-_TSec_MIS_Blake(184).data" ^
     --install "D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint"
+python entity_skeletons.py 23_-_TEAMMATE_Template.data --install "…" --grep Kilt
 ```
 
 ```
- slot  skeleton                          bone physics   assigned near
-    1  Regular_Male_Reflex_SklAdd           107,350 B   TP_Blake_Skeleton
-    4  Regular_Male_Body_Skl                        -   TP_Blake_Skeleton
-    5  Tsec_Trench_AddonSkeleton             43,494 B   Tsec_IanBlake_Trench_Mcloth_MISSION
+ held by                                  index  skeleton                        bone physics
+ TP_Blake_Skeleton                            2  Regular_Male_Reflex_SklAdd         107,350 B
+ TP_Blake_Skeleton                            1  Regular_Male_Body_Skl                      -
+ TP_Blake_Skeleton                            4  Player_Props_Addon                         -
+ TSec_CIN_Blake_Head                          2  Skeleton_IanBlake_Head                     -
+ Tsec_IanBlake_Trench_Mcloth_MISSION          4  Tsec_Trench_AddonSkeleton           43,494 B
 ```
 
 A character is a plain base rig **plus a stack of add-on rigs**, and the ones with
-physics are the parts that move — hair, straps, a beard, a coat. Blake's trench
-coat is one line in that list.
+physics are the parts that move — hair, straps, a beard, a coat. Note *who* assigns
+Blake's trench coat rig: the **coat's own build table**. That is the rule — the kilt's
+rig comes from `TP_PANT_Kilt`, not from the player template.
 
-**Why it matters:** the assignment is a plain 64-bit ID sitting at a fixed offset
-in a fixed-shape record, so it's re-pointable — the same trick as the community's
-hex item swaps. And ATK exports `EntityBuilder` to XML for GRB, so you don't have
-to do it in hex. Record format and the evidence:
+**Why it matters:** an assignment is a `BuildTable` row component holding a plain
+64-bit ID, so it's re-pointable — the same trick as the community's hex item swaps.
+And ATK round-trips `BuildTable` as XML for GRB, so you don't have to do it in hex:
+`python atk_bridge.py <container.data> --xml out.xml --resource <TableName>`. Record
+format and the evidence:
 [`../reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
 
-Without `--install` it still lists the raw ClassIDs and slots — you just don't get
-names or physics sizes. **Read-only.**
+> ⚠️ **Rewritten 2026-09-16.** The old version printed a "slot" that was really the *next*
+> component's index, and credited each rig to the nearest name in the file instead of the
+> table that holds it. The IDs it printed were right.
+
+Without `--install` it still lists the holders, indexes and raw ClassIDs — you just
+don't get names or physics sizes. **Read-only.**
 
 ---
 
@@ -503,10 +526,16 @@ them without the application.
 
 ```
 python atk_bridge.py <file.data> --xml out.xml
+python atk_bridge.py 23_-_TEAMMATE_Template.data --xml out.xml --resource PLAYER_SkelAddons
 ```
 
+Without `--resource` it exports the container's first resource. With it, any resource inside
+the container — which matters, because the tables worth editing usually live inside someone
+else's container (`PLAYER_SkelAddons` and every garment table sit in `TEAMMATE_Template.data`).
+
 Verified 2026-09-09 on `PLAYER_Template` — 651 KB, 11,234 lines, both the base and the patch
-copy. Add types to `ATK_XML_TYPES` as you need them.
+copy — and 2026-09-16 on `PLAYER_SkelAddons` and `TP_PANT_Kilt` from inside
+`TEAMMATE_Template`. Add types to `ATK_XML_TYPES` as you need them.
 
 Two WPF gates sit on this path, and both are handled:
 
@@ -537,8 +566,9 @@ and your user folders, for anything named `*anvil*` holding `AnvilToolkit.dll`;
 (by `GRB.exe`) for `find_skeletons_for`. It used to hardcode `D:`, which meant it
 only ran on one of the two machines this repo is worked on. The container layer
 stays **ours** — `data_inspect.py`
-decompresses the `.data` and slices out the resource payload, and only the
-payload goes to ATK. That is what makes the two readers independent.
+decompresses and walks the `.data`, and only one resource's header + payload (the
+same bytes ATK's own unpack would write to a file) goes to ATK. That is what makes
+the two readers independent.
 
 Seven gates — four silent, three very loud. All seven are handled here and
 explained in the module docstring:
@@ -566,9 +596,11 @@ face-traversal order — so the one prepped vertex is wherever that put it. Meas
 the Walker coat's stayed at index 0, the selftest poncho's landed at index **67**.
 Writing self-corrects (`WriteToFile` re-preps index 0); only inspection is fooled.
 
-⚠️ **`mesh.Failed` is not a success signal** for GRB meshes in ATK 1.3.1 — the
+~~⚠️ **`mesh.Failed` is not a success signal** for GRB meshes in ATK 1.3.1 — the
 reader wants exactly one byte past the resource payload. The bridge pads one zero
-byte; the geometry is identical either way.
+byte; the geometry is identical either way.~~ **Resolved 2026-09-16:** that "extra
+byte" was our slicer cutting off the payload's last byte. Sliced correctly, ATK
+reads the mesh with `Failed = False` and no padding.
 
 ⚠️ **Read-only by policy, and not incidentally.** `ForgeFile.Serialize` and
 `Mesh.WriteToFile` sit in the same object graph, and ATK's backup defaults are

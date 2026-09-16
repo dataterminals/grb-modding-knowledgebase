@@ -61,17 +61,19 @@ HOW IT WORKS (five things that are each load-bearing):
     `AnvilGLTF.MeshFromGLTF` is one of them: left unset it runs its Black Flag
     branch over a GRB mesh and silently drops a colour channel. `arm()` sets it.
  5. The container layer is ours, not ATK's: `data_inspect.py` decompresses the
-    `.data` and slices out the resource payload, and only the payload is handed
-    to ATK. That is what makes the comparison independent - and it avoids
-    `DataFile` entirely.
+    `.data` and walks it, and only one resource's FileHeader + payload - the
+    bytes ATK's own unpack would write to a file - is handed to ATK. That is what
+    makes the comparison independent - and it avoids `DataFile` entirely.
 
-⚠️ `mesh.Failed` IS NOT A SUCCESS SIGNAL for GRB meshes in ATK 1.3.1. The reader
-wants exactly ONE byte more than the resource payload holds, so it always ends
-with "Unable to read beyond the end of the stream" and `Failed = True` even
-though every field parsed correctly. `read_mesh` appends one zero pad byte, after
-which `Failed` is False and the geometry is byte-identical either way. Whether
-that byte is an ATK over-read or a container subtlety is UNRESOLVED - see the
-research log. Do not "fix" it by trusting `Failed` blindly in either direction.
+`mesh.Failed` - RESOLVED 2026-09-16. This module used to warn that ATK "wants
+exactly ONE byte more than the resource payload holds" and padded every read with
+a zero byte. It was our slicer, not ATK: the old container walk started each
+payload one byte early (on the FileHeader) and so cut off the payload's last
+byte, which the pad then replaced. The Walker coat's last payload byte is 0x00,
+which is why the padded read was byte-identical. With the corrected walk the
+read ends exactly on the payload, `Failed` is False with no pad, and `pad`
+defaults to 0. `Read` still swallows other exceptions (gate 2), so check the
+geometry, not only the flag.
 """
 import os
 import sys
@@ -339,56 +341,51 @@ def hashed_string(value):
 
 
 def resources(path):
-    """Decompress a .data with THIS REPO's reader and yield its typed resources
-    as dicts: name, type_id, type_name, class_id, payload (bytes).
+    """Decompress a .data with THIS REPO's reader and list its typed resources
+    as dicts: name, type_id, type_name, class_id, header, payload (bytes).
 
-    Deliberately does not use ATK's DataFile - that one writes to disk."""
+    `header` is the FileHeader that sits between a resource's name and its
+    payload, counted by neither length; `payload` starts with the ClassID. Their
+    concatenation is exactly what ATK's own unpack writes to a file. Deliberately
+    does not use ATK's DataFile - that one writes to disk."""
     di = _data_inspect()
-    raw = open(path, "rb").read()
     oodle = di.Oodle(di.find_oodle(path))
-    _meta, off, _ = di.read_cfd(raw, 0, oodle)
-    files, _off, _ = di.read_cfd(raw, off, oodle)
-    out, o = [], 0
-    while o < len(files) - 12:
-        try:
-            tid, = struct.unpack_from("<I", files, o); o += 4
-            length, = struct.unpack_from("<i", files, o); o += 4
-            slen, = struct.unpack_from("<i", files, o); o += 4
-            name = files[o:o + slen].decode("latin-1", "replace"); o += slen
-            payload = files[o:o + length]; o += length
-            if length <= 0 or slen < 0:
-                break
-            h0 = payload[0] if payload else 0
-            hlen = 1 if h0 != 1 else (12 * struct.unpack_from("<i", payload, 4)[0] + 8)
-            cid, = struct.unpack_from("<Q", payload, hlen)
-        except Exception:
-            break
-        out.append({"name": name, "type_id": tid, "type_name": di.type_name(tid),
-                    "class_id": cid, "payload": payload, "header_len": hlen})
-    return out
+    _meta, files = di.read_container(path, oodle)
+    res, end = di.walk(files)
+    if end != len(files):
+        raise ValueError(f"{os.path.basename(path)}: container walk stopped at byte "
+                         f"{end:,} of {len(files):,} - refusing to pick from a partial list")
+    return [{"name": r.name, "type_id": r.type_id, "type_name": di.type_name(r.type_id),
+             "class_id": di.class_id(r), "header": r.header, "payload": r.payload,
+             "header_len": len(r.header)} for r in res]
 
 
-def read_typed(path, type_name, atk_type, index=0, pad=1, atk_dir=None):
+def read_typed(path, type_name, atk_type, index=0, pad=0, atk_dir=None, name=None):
     """Read one typed resource out of a .data using ATK's own reader.
 
     `type_name` selects the resource inside the container (as `data_inspect`
-    names it); `atk_type` is the full ATK type to construct. `pad` zero bytes are
-    appended - see the module docstring on the one-byte tail."""
+    names it), `name` narrows that to one resource by name - containers such as
+    TEAMMATE_Template hold thousands of BuildTables - and `index` picks among
+    what is left. `atk_type` is the full ATK type to construct. ATK is handed the
+    resource's FileHeader + payload, the same bytes its own unpack would write;
+    `pad` zero bytes are appended after them (see the module docstring)."""
     System, _asm = start(atk_dir)
     arm()
     from System.IO import MemoryStream, BinaryReader, StringWriter
     from System import Array, Byte
 
     res = resources(path)
-    hits = [r for r in res if r["type_name"] == type_name]
+    hits = [r for r in res if r["type_name"] == type_name
+            and (name is None or r["name"] == name)]
     if not hits:
         raise ResourceNotFound(
-            f"no {type_name} resource in {os.path.basename(path)} "
-            f"(found: {[r['type_name'] for r in res]})")
-    payload = hits[index]["payload"]
+            f"no {type_name} resource{' named ' + name if name else ''} in "
+            f"{os.path.basename(path)} (found {len(res):,} resources)")
+    hit = hits[index]
 
     grb = game()
-    br = BinaryReader(MemoryStream(Array[Byte](bytes(payload) + b"\x00" * pad)))
+    stream = bytes(hit["header"]) + bytes(hit["payload"]) + b"\x00" * pad
+    br = BinaryReader(MemoryStream(Array[Byte](stream)))
     System.Console.SetOut(StringWriter())   # ATK logs swallowed errors to stdout
     T("AnvilToolkit.FileTypes.AnvilNext.Containers.DataFile") \
         .GetMethod("ReadFileHeader").Invoke(None, [br, grb])
@@ -907,7 +904,8 @@ def _on_sta(fn):
     return box.get("value")
 
 
-def export_xml(data_path, type_name, atk_type, out_path=None, index=0, atk_dir=None):
+def export_xml(data_path, type_name, atk_type, out_path=None, index=0, atk_dir=None,
+               name=None):
     """Export one XML-backed resource to XML, the way ATK's GUI would.
 
     `EntityBuilder`, `Material`, `TextureSet`, `LODSelector` and friends declare
@@ -923,7 +921,8 @@ def export_xml(data_path, type_name, atk_type, out_path=None, index=0, atk_dir=N
     arm()
     prime_hashes()
     prime_filelist(atk_dir=atk_dir)
-    obj = read_typed(data_path, type_name, atk_type, index=index, atk_dir=atk_dir)
+    obj = read_typed(data_path, type_name, atk_type, index=index, atk_dir=atk_dir,
+                     name=name)
     from System.IO import StringWriter, Directory
     was = Directory.GetCurrentDirectory()
     Directory.SetCurrentDirectory(find_atk(atk_dir))   # ToXml re-checks the list
@@ -961,7 +960,7 @@ def summarize(path):
         n = sum(1 for i in range(4) if vb[k * stride + 28 + i] > 0)
         infl[n] = infl.get(n, 0) + 1
     print(f"  ClassID       {mesh.ID}")
-    print(f"  Failed        {mesh.Failed}   (see docstring - not a success signal)")
+    print(f"  Failed        {mesh.Failed}")
     print(f"  VertexFormat  {mesh.VertexFormat}")
     print(f"  VertexStride  {stride}")
     print(f"  Vertices      {mesh.Vertices.Count}")
@@ -1002,6 +1001,11 @@ def main(argv):
         k = args.index("--xml")
         xml_out = args[k + 1]
         del args[k:k + 2]
+    wanted = None                        # --resource NAME: pick one inside a container
+    if "--resource" in args:
+        k = args.index("--resource")
+        wanted = args[k + 1]
+        del args[k:k + 2]
     while "--skeleton" in args:
         k = args.index("--skeleton")
         skels.append(args[k + 1])
@@ -1027,16 +1031,19 @@ def main(argv):
         print(f"FILE: {os.path.basename(p)}")
         if xml_out:
             res = resources(p)
+            if wanted is not None:
+                res = [r for r in res if r["name"] == wanted]
             if not res:
-                print("  no typed resources")
+                print("  no typed resources" + (f" named {wanted!r}" if wanted else ""))
                 continue
             tn = res[0]["type_name"]
             atk_type = ATK_XML_TYPES.get(tn)
             if atk_type is None:
                 print(f"  no XML export mapping for {tn} - add it to ATK_XML_TYPES")
                 continue
-            xml = export_xml(p, tn, atk_type, xml_out)
-            print(f"  {tn} -> {xml_out} ({len(xml):,} chars, {xml.count(chr(10)) + 1:,} lines)")
+            xml = export_xml(p, tn, atk_type, xml_out, name=res[0]["name"])
+            print(f"  {res[0]['name']} ({tn}) -> {xml_out} "
+                  f"({len(xml):,} chars, {xml.count(chr(10)) + 1:,} lines)")
             continue
         if out:
             path, used = export_gltf(p, out, skels or None, verbose=True)

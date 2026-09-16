@@ -84,7 +84,7 @@ A crucial correction to a widespread assumption: the number before `_-_` in an u
 - Inside a **`.data`**, typed resources get a sequential counter `k` (`DataFile.cs`).
 - In **hand-assembled mod folders**, it's whatever label the modder typed.
 
-The **real 64-bit file ID is embedded in each resource** (its `ClassID`). ATK reads it from the bytes at repack (`DataFile.CreateForgeEntry` → `ReadClassID`); the leading number is used only to **sort** entries (`OrderBy(GetUntilOrEmptyInt("_-_"))`). Inspect the real ID with [`tools/data_inspect.py`](../tools/data_inspect.py).
+The **real 64-bit file ID is embedded in each resource** (its `ClassID`). ATK reads it from the bytes at repack (`DataFile.CreateForgeEntry` → `ReadClassID`); the leading number is used to **sort** entries (`OrderBy(GetUntilOrEmptyInt("_-_"))`) — and that sort decides which of two files with the same ID gets packed (see [below](#what-it-does-at-repack-atk-level--verified-2026-09-16)). Inspect the real ID with [`tools/data_inspect.py`](../tools/data_inspect.py).
 
 ## "Renumber your mod files to 1" — what it does and doesn't do
 
@@ -104,15 +104,42 @@ It also does exactly what it says for **housekeeping**: entries are sorted by th
 
 > **Verified:** ATK assigns its own numbers when you drag-and-drop into its Game Explorer, so an in-ATK import and a plain file-copy into `Extracted\` do not behave the same way. Community report: *"ATK kept renumbering them as I dropped them in"* (msg `1532445093724684360`).
 
+### What it does at repack (ATK level) — verified 2026-09-16
+
+**When two files in the unpacked folder carry the same `ClassID`, ATK packs the lower-numbered one
+and silently drops the other.** Both repack paths — `DataFile.Serialize` for the resources inside a
+`.data`, and `ForgeFile` for the entries of a forge — sort by the number before `_-_` and skip any
+file whose ID they have already written:
+
+```csharp
+list = list.OrderBy((string file) => file.GetUntilOrEmptyInt("_-_")).ToList();   // both paths
+if (dictionary2.ContainsKey(key)) { biendianBinaryReader2.Close(); continue; }      // DataFile.Serialize
+if (ReadIDs.TryGetValue(forgeEntry.ID, out value)) continue;                         // ForgeFile
+```
+
+> **Verified** in ATK 1.3.1's source, and measured on a real install: ATK's unpack folder for a
+> modded `TEAMMATE_Template` held 4,234 files but only 3,963 distinct `ClassID`s. **259 `ClassID`s had
+> more than one file, and in 259 of 259 the repacked container held the lowest-numbered one** (e.g.
+> `1_-_TP_BalaclavaC-Nomad` over `1228_-_TP_BalaclavaC-Nomad`). No warning is printed for the files
+> left out. A file with no parseable number sorts as `0`, i.e. first.
+
+So this is the case the practice actually guards against: you unpack, your folder already holds the
+vanilla `2984_-_TP_Hat_NomadCap`, and you drop in a mod's copy of the same resource under a
+**higher** number. The repack keeps vanilla and throws the mod away. Renumbering the mod's file to
+`1_-_` (or `0_-_`) is what makes the mod's copy the one that gets packed.
+
 ### What it does not do (engine level)
 
-**Renumbering does not change what your mod overrides in-game.** Override is keyed on the resource's **embedded 64-bit `ClassID`**, which ATK reads from the file's bytes at repack and ignores the filename number entirely (verified above; see also [`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)). A file carrying a vanilla resource's `ClassID` replaces that vanilla resource whether it is labelled `1_-_`, `34253_-_`, or anything else.
+**Renumbering does not change *which* resource your file overrides.** Override is keyed on the resource's **embedded 64-bit `ClassID`**, which ATK reads from the file's bytes at repack (verified above; see also [`06-game-load-and-reassembly.md`](06-game-load-and-reassembly.md)). A file carrying a vanilla resource's `ClassID` targets that vanilla resource whether it is labelled `1_-_`, `34253_-_`, or anything else — the number only decides whether it survives the repack when another file with the same ID is present.
 
-> **⚠️ Common overstatement.** Mods are sometimes shipped with release notes like *"Mod files have been renumbered to 1 to avoid replacing vanilla files"* (msg `1534303468192530723`). If those resources carry vanilla `ClassID`s, they still replace the vanilla entries. **Renaming protects the loose file on disk; only the embedded `ClassID` decides what the game replaces.** Check with [`tools/data_inspect.py`](../tools/data_inspect.py), not the filename.
+> **⚠️ Common overstatement.** Mods are sometimes shipped with release notes like *"Mod files have been renumbered to 1 to avoid replacing vanilla files"* (msg `1534303468192530723`). If those resources carry vanilla `ClassID`s, they still replace the vanilla entries — and the low number is precisely what makes them win over a vanilla copy in the same folder. **Renaming protects the loose file on disk and decides the repack; only the embedded `ClassID` decides what the game replaces.** Check with [`tools/data_inspect.py`](../tools/data_inspect.py), not the filename.
 
-### Unresolved: does it ever change in-game outcome?
+### ~~Unresolved~~ Answered 2026-09-16: does it ever change in-game outcome?
 
-Field reports do not fully agree, and no controlled test has been run:
+**Yes — through ATK's repack** (above), not through the engine. Both field cases below fit that
+mechanism exactly; neither was re-run in game. The original analysis is kept for provenance.
+
+Field reports do not fully agree, and no controlled test had been run:
 
 - *"One of my vests wouldn't show either — it only showed the UI until I renumbered the vest it replaces. After that I was able to use the modded vest."* (msg `1533008421249482883`)
 - *"all these mods work fine for me even without renumbering"*, and separately, people who *"had issues even when they did the renumbering"* (msgs `1533475170650685440`, `1533475558418157600`)
@@ -121,7 +148,9 @@ The disk-collision mechanism above explains the first report without any engine 
 
 A **second, independent field case** points the same way. A user's localization edits compiled and repacked correctly but never appeared in-game; the diagnosis was a competing entry already sitting in the patch forge — *"you still got the one that starts with 39 in patch01 which is overwriting your edited ones … look at the numbers"* — and the fix that worked was to consolidate the XMLs into a single container **renumbered to `1_-_`**. See [`12-localization-and-text.md`](12-localization-and-text.md). Note this fix bundles *consolidation* with *renumbering*, so it still doesn't isolate the variable — but it is the second report in which changing the leading number coincided with a change in in-game behaviour, and it is the strongest reason to take the practice seriously rather than treat it as pure superstition.
 
-> **Open question.** Reproduce the vest case: install a mod that fails to appear, confirm via `data_inspect.py` whether a filename collision occurred, then renumber and re-test. That distinguishes "renaming avoided a disk collision" from "ordering changed what the engine resolved." Until then, treat renumbering as **good hygiene with a proven disk-level rationale** and an **unproven engine-level one**.
+> ~~**Open question.** Reproduce the vest case: install a mod that fails to appear, confirm via `data_inspect.py` whether a filename collision occurred, then renumber and re-test. That distinguishes "renaming avoided a disk collision" from "ordering changed what the engine resolved." Until then, treat renumbering as **good hygiene with a proven disk-level rationale** and an **unproven engine-level one**.~~
+>
+> **Answered 2026-09-16.** There was a third layer between the disk and the engine: ATK's repack, where the number decides which same-ID file is packed. The localization case reads almost verbatim as that rule — *"the one that starts with 39 in patch01 … overwriting your edited ones"* is a lower-numbered vanilla file beating higher-numbered edits. Renumbering is **good hygiene with a proven disk-level rationale and a proven repack-level one**. Provenance: [`../meta/research-log.md`](../meta/research-log.md), 2026-09-16, *"The container walker was one byte off"*.
 
 ## The `77777` convention — a filename label, not a shared ID (resolved)
 
