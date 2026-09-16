@@ -253,8 +253,10 @@ What the report means:
 - **blob = 8 B** → header only → that skeleton has **no** bone physics.
 - **blob > 8 B** → real per-bone constraints. Bigger = more constrained bones.
 - Names ending `_Reflex` or `_Addon` are the physics layer for a character or a
-  garment — `Tsec_Trench_AddonSkeleton` (43,494 B) is a vanilla flowing coat done
-  entirely with bones.
+  garment. ⚠️ A big blob does not mean the garment moves by bones:
+  `Tsec_Trench_AddonSkeleton` (43,494 B) sits beside the trench coat's cloth, and the
+  coat mesh is not weighted to any bone it drives *(2026-09-16)*. A mesh moves with a
+  rig only if it is weighted to the rig's driven bones — `rebind_check.py` checks that.
 
 ⚠️ Skeletons are **forge-shadowed** like cloths — the same ID lives in
 `DataPC.forge` *and* a WorldMap `_Split` base. An override must go into **both**

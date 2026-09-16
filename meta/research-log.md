@@ -533,6 +533,11 @@ A full day of in-game testing produced two definitive results and two retraction
 - **Game-loadable compressed cloth `.data` spec** (the writer GRB needs): keep the 1st `CompressedFileData` (metadata) verbatim; rebuild the 2nd CFD as `u64 magic 1154322941026740787` + `CompressionInfo{i16 ver=3, u8 algo=3, u16, u16 blk=32768}` + `i32 blockCount` + `blockCount×(i32 uncomp, i32 comp)` + per block `[u32 checksum][comp bytes]`, where **checksum = `adler32(compressed_bytes, seed=0)`** (zlib's default seed is 1 — GRB seeds 0), each 32 KB chunk compressed with **Oodle Mermaid (codec 9)** via the game's `oo2core_7_win64.dll::OodleLZ_Compress`; store a block raw iff comp≥uncomp. Verified: a no-op compressed round-trip decompresses byte-identical through the game DLL, and single/edited compressed cloths **launch**. ⇒ **`tools/clothwrap.py` must be changed to compress — its current raw-block writer produces unloadable cloths.**
 - **Edit pipeline + the community workflow (corrected by the maintainer).** Modders extract a forge to `Extracted\<forge>\` **once**, then edit/add/remove there **incrementally over time and repack from it** — you do NOT re-unpack per edit (ATK skips the unpack if the folder exists, and only re-backs-up the forge on a *fresh* extract, i.e. after you delete the folder). So `Extracted\` is the **persistent source of truth**, not something you regenerate each session. **The pitfall we hit** wasn't "didn't re-extract" — it was a forge whose *live* copy had **DIVERGED** from its Extracted folder: `DataPC.forge`, which this user "doesn't normally touch," so its Extracted was the original first-unpack while the live forge had gained unlock+clothing mods **via another path**. Repacking that stale Extracted silently **reverted those mods** (re-locked items, broke buildtable↔resource links → crash-on-mouseover). **Rule:** before repacking a forge you haven't been maintaining in `Extracted`, **verify `Extracted`==live thoroughly** (all entry sizes + byte-compare the BuildTable/unlock records — a 16-sample check falsely passed the stale folder); if diverged, **re-extract that one forge once** to resync (ATK re-backs-up on the fresh extract), then edit incrementally. Once in sync: edit the cloth `.data` **compressed** in place → **ATK repack** → launch; mods preserved.
 - **Cloth↔garment identification:** every `Cloth` carries an internal **`Sim_<TargetMesh>_LOD<n>`** body name = the authoritative garment map (dumped for all 56). Two garments people assume are cloth are not: the **"Golem Cape / Field Medic" raid vest cape has NO `Cloth`/`SoftBody` resource** (there are **zero** `SoftBody`/`MotionSoftBody` entries in `DataPC.forge`) → skinned/bone secondary-motion; **ghillie strands are pinned** (`VertexMaxDistance`≈0 — move from motion, not gravity). Neither was a fair gravity subject; the Kilt (loose hem) was.
+  > ⚠️ **Corrected 2026-09-16 (evening): the Golem Cape is cloth.** Its item table,
+  > `TP_VestHeavy_RaidMedic`, assigns the Walker coat mesh and **`TP_WalkerCoat_Cloth`** under Raid
+  > Medic materials. No cloth is *named* for the cape because it borrows the Walker coat's — so it
+  > was a fair subject after all, provided `TP_WalkerCoat_Cloth` is the cloth edited. See *"What the
+  > rigs actually move"*.
 
 ### RETRACTED
 - ❌ Earlier-today's "**append-repoint forge editing is NOT launch-safe; ATK repack is the launch-safe way**" (the ⚠️ KEY FINDING in the earlier 2026-07-02 entry). Both methods behave identically: raw cloth → fails, compressed cloth → loads. The forge structure was never the issue.
@@ -790,7 +795,10 @@ was modified.**
   `TP_HunterScarf_A_Skeleton`: `05 6f e3 82 aa 1f b7 69 7d`).
 - **The corpus points straight at the project goal.** `Tsec_Trench_AddonSkeleton` carries
   **43,494 B** of bone constraints — **a flowing trench coat driven entirely by bones, on an
-  *addon* skeleton.** Also: `TP_HunterScarf_A_Skeleton` 9,991 B, hair rigs 10–12 KB, backpacks with
+  *addon* skeleton.**
+  > ⚠️ **Corrected 2026-09-16 (evening):** the trench coat's build-table row assigns a **cloth**
+  > beside this rig, and no LOD of either trench coat mesh is weighted to any bone the rig drives.
+  > See *"What the rigs actually move"*. Also: `TP_HunterScarf_A_Skeleton` 9,991 B, hair rigs 10–12 KB, backpacks with
   straps 48–62 KB, character `*_Reflex` layers 99–114 KB, and **`Player_Kilt_Addon` 394 B — the
   kilt has bone physics *as well as* its `.cloth`.**
 - **Skeletons are forge-shadowed exactly like cloths** — `Player_Kilt_Addon` (id
@@ -3353,3 +3361,163 @@ re-run in game.)* The same repack gives unnamed resources names: base DB 308 unn
 as landing "exactly on the end of the block" without that check being run. Every container carries
 its own check — the metadata block's count and per-resource sizes — and `walk()` now reports where
 it stopped.
+
+---
+
+## Entry — 2026-09-16 (evening) — What the rigs actually move: bones swing danglers, cloth moves the coats
+
+**Trigger:** preparing lane 2B step 2 (assign a physics rig from a garment's own build table). The
+plan leaned on `Tsec_Trench_AddonSkeleton` as *"a vanilla flowing trench coat driven entirely by
+bones"* (2026-08-14). Now that garment tables can be read and exported, that premise was checked
+directly — against the tables, the meshes' vertex weights, and the rigs' Reflex3 records. Read-only;
+tables exported to XML with `atk_bridge.py --resource` into the session scratchpad only.
+
+### VERIFIED — a garment row pairs the mesh, the cloth and the rig
+
+ATK's XML of the tables, row components by Index:
+
+| table | GraphicObject (mesh) | SoftBody (cloth) | Skeleton (rig) |
+| --- | --- | --- | --- |
+| `Tsec_IanBlake_Trench_Mcloth_MISSION` (Blake) | 1 `Tsec_IanBlake_Trench`, 7 `…TrenchBelt` | 5 `IanBlake_TrenchCoat_Cloth_MISSION`, 8 `…TrenchBelt_Cloth_MISSION` | 4 `Tsec_Trench_AddonSkeleton` |
+| `MIS_Y2E4_Wassili_Kropotkine_Trench` | 1 `TP_Top_Bodark_Trench` | 5 `TP_Top_Bodark_Trench_Cloth` | 4 `Tsec_Trench_AddonSkeleton` |
+| `TP_PANT_Kilt` | 1 `TP_Pants_Tactical_Kilt` (+ legs, holsters) | 8 `Cloth_0X193A6210EB9` | 10 `Player_Kilt_Addon` |
+| `TP_TACVEST_Walker_Coat_Cloth` (sub-table of `TP_VestMedium_Walker`) | 8 `TP_Tacvest_Walker_Coat` | 7 `TP_WalkerCoat_Cloth` | — (the vest row assigns `Vest_Generic_Addon`) |
+| `TP_VestHeavy_RaidMedic` ("Golem Cape \| Field Medic") | 1 `TP_Tacvest_Walker`, 5 `TP_Tacvest_Walker_Coat` | 10 `TP_WalkerCoat_Cloth` | 4 `Vest_Generic_Addon` / `Female_Vests_generic_Addon` |
+
+- **A cloth is attached by a `SoftBody`-typed Handle in the item's row,** beside the `GraphicObject`
+  Handle for the mesh it simulates. This answers parked lead #10 (*which property a BuildTable uses
+  to reference a cloth*), on a player item and on NPC coats.
+- **Both vanilla trench coats carry a cloth *and* the rig, in the same row.** So does the kilt.
+
+### VERIFIED — which bones the meshes are actually weighted to
+
+Every vertex's four `Joint4` indices/weights, read through ATK's mesh reader, against each rig's
+Reflex3 records (`reflex3.py`: record-head `BoneID`, and `ParentBoneID`):
+
+| mesh | rig | weight entries on Reflex3 **head** bones |
+| --- | --- | ---: |
+| `FTP_Hair_PonytailBforGoogles_LOD0` | `FTP_Casper_Hair_Skeleton` | **1,137** (2 bones) |
+| `TP_Backpack_wStraps_Hill_LOD0` / `TP_Backpack_Hill_LOD0` | `BP_Hill_MEDIUMVEST` | **1,885** / **2,552** |
+| `TP_Tacvest_Walker_LOD0` / `TP_Tacvest_Walker_Coat_LOD0` | `Vest_Generic_Addon` | 11,635 / 825 |
+| `TP_Pants_Tactical_Kilt_LOD0` and the other kilt-row meshes | `Player_Kilt_Addon` | **0** |
+| `Tsec_IanBlake_Trench_LOD0`…`LOD4`; `TP_Top_Bodark_Trench_LOD0` | `Tsec_Trench_AddonSkeleton` | **0**, on every LOD |
+
+- The trench rig has 118 bones; 48 head a Reflex3 record and 35 more are only parents. Blake's coat
+  LOD0 is weighted to 36 of the rig's bones — 24 of them parents, **none a record head**; LOD1 to
+  39 (25 parents, no head); LOD2–4 to 2–3.
+- Hair, backpacks and the vest rig confirm the decoder's reading: meshes there *are* weighted to
+  record-head bones, so "BoneID = the constrained bone" holds where it can be tested.
+
+### ⚠️ CORRECTIONS
+
+1. **`Tsec_Trench_AddonSkeleton` is not "a flowing coat driven entirely by bones"** (2026-08-14).
+   The coat row assigns a cloth next to it, and no LOD of either trench mesh carries any weight on
+   any bone the rig's Reflex3 records drive. *Inferred:* the coats' visible flow comes from the
+   cloth. What the trench rig's 48 constrained bones do is **open** — nothing examined here is
+   skinned to them.
+2. **The Golem Cape is cloth, not bone motion** (2026-07-02, later entry). `TP_VestHeavy_RaidMedic`
+   assigns the Walker coat mesh and **`TP_WalkerCoat_Cloth`**, re-materialed. The "no Cloth/SoftBody
+   resource → skinned/bone secondary motion" conclusion came from looking for a cloth named for the
+   cape and for `SoftBody`-typed forge entries; the item simply reuses the Walker coat's. The
+   earlier same-day observation — video shows it cloth-simulated — stands.
+3. **Parked lead #2's "vanilla does not demonstrate one cloth serving two items"** is out of date:
+   `TP_WalkerCoat_Cloth` is assigned by `TP_TACVEST_Walker_Coat_Cloth` *and* by
+   `TP_VestHeavy_RaidMedic`, both with the same mesh.
+4. **Bone hashes inside a cloth are not evidence that the cloth drives bones.** Each cloth resource
+   embeds `MeshBone` objects (class `0x9EF0E7A1` = CRC32("MeshBone")), a copy of its render mesh's
+   bone palette, stored after each LOD's simulation package: 36 in `TP_WalkerCoat_Cloth`, 88 in
+   `IanBlake_TrenchCoat_Cloth_MISSION`. That is why the trench cloth "references" every rig bone its
+   mesh is weighted to — a palette, not a driver. (A same-session hypothesis that the trench cloth
+   drives bones was withdrawn on this evidence before being written up.)
+5. **Index ↔ column is not always matched.** In the vanilla tables checked (`PLAYER_SkelAddons`,
+   both trench tables, the Walker coat sub-table, base `TP_LEGHOLSTER_Platform`) every row
+   component's Index matches a same-typed column declaration. The two installed holster mods do not:
+   `bisonbelt_mainfiles`' `TP_LEGHOLSTER_Platform` and `TP_TacticalHuman_Belt-Skeleton` put a
+   `Skeleton` Handle at Index 3, a column declared `BuildTable`, and drop the holster meshes. Whether
+   those rigs attach in game is unverified, so the earlier "a matching column is required" stays an
+   inference at best.
+
+### VERIFIED — no player item is one row away from the trench coat
+
+The trench meshes, cloths and rig are referenced only from NPC containers (`TSec_MIS_Blake(184)`,
+`TSec_CIN_Blake(184)`, `MIS_Y2E4_Wassili_Kropotkine`) — nothing in either `TEAMMATE_Template` copy
+or `PLAYER_Template`. The player "Vassili Kropotkine" costume preset
+(`CostumePreset_Conquest_Wassili_Kropotkine`) selects items **by BuildTag hash** — each slot record
+embeds a `BuildTag` object (local ID, `0xB332698E`, `u32 Tag`) — and its tags resolve to ordinary
+items (`tag_Top_Bodark_Boss_Icon`, `tag_VestMedium_Wassili_Kropotkine_Icon`), not the trench.
+
+### What this means for Sami's poncho
+- **Route B (bones):** vanilla uses Reflex3 to swing *danglers* — hair, straps, vest rigs. No vanilla
+  garment found here flows by bones alone; the flowing ones (trench coats, the kilt, the Golem cape)
+  are cloth. A poncho on a bone rig is still mechanically possible — meshes demonstrably follow
+  Reflex3-driven bones — but it would be a new, hand-weighted chain rig, not a copy of a vanilla
+  flowing garment.
+- **Route A (cloth):** reusing a cloth from a second item works in vanilla **when the mesh is the
+  same** (the Golem cape). A different mesh still needs the render↔sim rebind (`docs/11`).
+
+### NOT verified / open
+- What `Tsec_Trench_AddonSkeleton`'s 48 constrained bones drive.
+- Whether the engine honours a row component whose Index has no same-typed column.
+- `TP_HunterScarf_A_Skeleton` is assigned by `TP_FullMask_Flycatcher`, whose only mesh is the
+  helmet (no weight on the rig's head bones) — the scarf case is inconclusive.
+- Nothing was repacked or launched.
+
+---
+
+## Entry — 2026-09-16 (evening, second) — Which cheat config an NPC gets: the chain runs through the soldier config
+
+**Trigger:** lane 4's open question — `DBAICheatConfig` has no `_Wolves` or `_Rifleman` instance, so
+how does a soldier get one? The working hypothesis was a handle inside `DBNpcGeneralConfig`. Traced
+by a background agent over the base, pristine-2023 and live containers (all walks complete);
+the load-bearing claims were re-checked by hand. Read-only.
+
+### ⚠️ The hypothesis was wrong — `DBNpcGeneralConfig` holds no handles
+
+All 62 records (61 + `[TEST]`) are `ClassID | f8 f5 dd 0e 01 | six int32 @13…@33 | u8 @37`, and no
+u64 in them resolves to a record. `DBNpcGeneralConfig_Rifleman_Wolves` is
+`… 03 00 00 00 | 02 00 00 00 | 01 00 00 00 | 00 00 00 00 | 00 00 00 00 | 02 00 00 00 | 01`.
+*Inferred field meanings:* @13 alignment (3 = hostile), @17 faction (1 regular army, 2 Wolves, 3
+Homesteader, 4 Outcast, 5 Skell, 6 Bodark), @21 unit type, @25 tier (0/1/2 = MK1/2/3), @29 female.
+
+### VERIFIED — the real chain
+
+```
+GR_SpawnNpcDescriptor  (TGT_*)        handle near its end (len − 18)
+  └─ DBSoldierConfig / DBCivilianConfig  (SC_TGT_*; 240 × 463 B / 143 × 233 B)
+        @15  DBNpcGeneralConfig        @25  DBNpcHealth
+        @75  DBAICheatConfig           @155 DBSoldierSoundDetectionConfig
+        @165 DBSoldierVisualDetectionConfig   @355 DBAIRadioCallConfig
+```
+
+Slots are 10 bytes: `01 00` + handle, or `03 00` + zeros for none. Checked by hand on
+`SC_TGT_Rifleman_Wolves_Default`: general `Rifleman_Wolves`, health `Rifleman_Wolves`, cheat
+**`NoCheat`**, sound `Default`, visual `Wolves`, radio **`NoCall`**. Drones and turrets reach cheat
+configs through their own records (`DBDroidConfig` @65, `DBAutonomous*ElementConfig` @55).
+
+- **Only 119 of 639 descriptors get a cheat body other than `NoCheat`:** teammates 34, Miter 20,
+  civilians 60, faction warfare 4, and one Wolf — `TGT_MQ310_Walker` (`Rifleman_Wolves_Boss` +
+  `Walker`). Regular Wolves, Bodark and Sentinel troops are honest. (`BlackGate`, used by a few
+  Wolves, has a body identical to `NoCheat`.)
+- **There are two byte-identical `DBAICheatConfig_NoCheat` records.** Soldiers use
+  **`0x1BC67BF6BD2`** (320 soldier configs); `0x1BC67BF6B7F` serves 3 drones. Editing the shared one
+  would change 320 configs at once — repoint the @75 handle of the soldier configs you mean instead.
+
+### VERIFIED — Fear the Radio's four descriptors, resolved
+
+The `TGT_*_Marks*` files the mod ships (§5 of `docs/14` left the link unresolved) make
+**`TGT_Heavy_Marks1/2/3` and `TGT_Rusher_Marks1` byte-identical to vanilla `TGT_Caller` apart from
+their ClassIDs** — re-checked by hand; `TGT_Rusher_Marks2`, which the mod does not ship, is not.
+They now resolve to `SC_TGT_Caller_Default` → `Caller_MK1` + `NoCheat`. *Inferred:* Heavy MK1–3 and
+Rusher MK1 spawns become radio callers — and with `CallPMC` carrying Bodark's six-wave schedule,
+more of the regular army calls, and each call escalates harder. The mod's attribution rests on its
+file list. The cheat profile is untouched.
+
+### Also
+- `docs/14` §9 listed `_Suicide` among the 18 cheat configs sharing `_NoCheat`'s body; it differs at
+  byte 161 (the same section's flag-bank row says so). The count of 18 was right.
+- Tier (MK1/2/3) is an int in `DBNpcGeneralConfig` (@25, inferred), selected through the soldier
+  config. What the tier value scales is still open.
+- Vanilla quirk: `TGT_Heavy_Marks1` points at `SC_TGT_Heavy_Marks2`.
+
+Scripts and full tables (descriptor → soldier config → general/cheat, per container): session
+scratchpad `npc_cheat\`.

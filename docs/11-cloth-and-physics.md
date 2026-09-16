@@ -197,6 +197,24 @@ Every body is named **`Sim_<TargetMeshName>_LOD<n>`** (e.g. `Sim_TP_Tacvest_Walk
 - Cloth is **per-LOD**: a garment that simulates at multiple LODs needs a cloth body per mesh LOD, each bound to that LOD's geometry.
 - This is why a name-only BuildTable reference is insufficient (see below): the binding is per-mesh-per-LOD, baked into the body.
 
+### How an item attaches a cloth — the BuildTable reference, exactly (verified 2026-09-16)
+
+An item's build-table row assigns the cloth with a **`SoftBody`-typed Handle** pointing at the `.Cloth` resource, in the same row as the **`GraphicObject` Handle** for the mesh it simulates. From ATK's own XML export (`python tools/atk_bridge.py <container.data> --xml out.xml --resource <Table>`):
+
+| Table | Mesh (`GraphicObject`) | Cloth (`SoftBody`) |
+| --- | --- | --- |
+| `TP_TACVEST_Walker_Coat_Cloth` — a sub-table the Walker vest (`TP_VestMedium_Walker`) references | Index 8 `TP_Tacvest_Walker_Coat` | Index 7 `TP_WalkerCoat_Cloth` |
+| `TP_VestHeavy_RaidMedic` — the **"Golem Cape \| Field Medic"** | Index 5 `TP_Tacvest_Walker_Coat` | Index 10 `TP_WalkerCoat_Cloth` |
+| `TP_PANT_Kilt` | Index 1 `TP_Pants_Tactical_Kilt` | Index 8 `Cloth_0X193A6210EB9` |
+| `Tsec_IanBlake_Trench_Mcloth_MISSION` (Blake, NPC) | Index 1 `Tsec_IanBlake_Trench` | Index 5 `IanBlake_TrenchCoat_Cloth_MISSION` |
+
+Two things follow:
+
+- **Vanilla reuses one cloth from two items — with the same mesh.** The Golem cape *is* the Walker coat's mesh and cloth under Raid Medic materials. (An earlier note that the cape "has no `Cloth`/`SoftBody` resource" looked for a cloth named for it; there isn't one because it borrows the Walker coat's.)
+- **Pointing a `SoftBody` Handle at a cloth is exactly Sami's "reference the cloth file in the item's pointers" step** — and it works in vanilla only because the mesh in the same row is the one the cloth was baked for. The rest of this section is why a *different* mesh breaks.
+
+> ⚠️ **Bone hashes inside a cloth are not evidence that it drives bones.** Every cloth resource embeds `MeshBone` objects — class `0x9EF0E7A1` = CRC32("MeshBone") — a copy of its render mesh's bone palette, stored after each LOD's simulation package (36 in `TP_WalkerCoat_Cloth`, 88 in `IanBlake_TrenchCoat_Cloth_MISSION`).
+
 ### Why the BuildTable reference isn't enough
 
 **A `.cloth` is welded to one specific mesh's vertex layout.** A BuildTable reference just *names* which cloth to attach; the actual binding lives **inside the cloth data**, baked for the vanilla mesh's exact geometry:

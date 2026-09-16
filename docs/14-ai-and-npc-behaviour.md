@@ -221,8 +221,15 @@ Vanilla `CallPMC` has one entry — floats (20, 180), count −1 — pointing at
 > becomes so dangerous.
 >
 > **Not referenced:** the four `TGT_*_Marks*` spawn descriptors the mod also ships are **not**
-> what `CallPMC` points at — none of the six handles is theirs. They are a separate edit, most
-> likely to units those spawners field; that link is unresolved.
+> what `CallPMC` points at — none of the six handles is theirs. They are a separate edit.
+>
+> **Resolved (2026-09-16, evening) — they turn heavies and rushers into radio callers.** In the live
+> container `TGT_Heavy_Marks1/2/3` and `TGT_Rusher_Marks1` are **byte-identical to vanilla
+> `TGT_Caller`** apart from their ClassIDs (`TGT_Rusher_Marks2`, which the mod does not ship, is
+> not). A descriptor picks its unit through a soldier config (§10), so these four now resolve to
+> `SC_TGT_Caller_Default` → `Caller_MK1`. *Inferred:* Heavy MK1–3 and Rusher MK1 spawns become
+> callers — more of the regular army radios for help, and each call runs Bodark's six-wave
+> schedule. The attribution to Fear the Radio rests on the file list above.
 >
 > **Inferred:** the float pairs are delay-before-call and cooldown in seconds, and `count` is units
 > per wave with −1 meaning "the spawner's own default". On that reading vanilla PMCs make one
@@ -298,10 +305,12 @@ python tools/db_inspect.py "<install>/Extracted/DataPC.forge/5_-_DBContainerEntr
   first walk never reached them. Their naming matches the `[VE] AI_…` voice events found on
   2026-08-14, so dialogue plumbing is more likely than behaviour — *inferred from names only*.
 - **What are the seven bands** in `DBSoldierSoundDetectionConfig`? Alert states or sound classes.
-- **Which cheat config does a given NPC use?** `DBAICheatConfig` has no `_Wolves` or `_Rifleman`
-  instance, so the NPC → cheat-config mapping runs through handles in `DBNpcGeneralConfig`
-  (61 records × 38 B). Handles resolve by ClassID lookup (§5), so this is a lookup away rather
-  than a research problem — it just has not been run on `DBNpcGeneralConfig` yet.
+- ~~**Which cheat config does a given NPC use?**~~ **Answered 2026-09-16 — §10.** Not through
+  `DBNpcGeneralConfig`, which holds no handles at all: a spawn descriptor points at a soldier config,
+  and the soldier config holds the cheat config (@75) *beside* the general config (@15).
+- **What does the tier value scale?** MK1/2/3 is an int in `DBNpcGeneralConfig` (@25, *inferred*),
+  chosen through the soldier config (§10). `DBNpcHealth` is identical across tiers (§4), so the
+  scaling is applied somewhere that reads the int.
 
 *(The "full copy or delta?" and "do two AI mods conflict?" questions that stood here were
 answered on 2026-09-16 — see §8. "What does `DBAICheatConfig` grant?" was answered too — §9.)*
@@ -374,7 +383,8 @@ where you are* one byte?" is **no — it is a coordinated profile.**
 > **Verified.** Across all 44 records only **46 of 162 bytes ever vary**, and the 44 records
 > collapse to **22 distinct profiles** once the 8-byte ClassID is ignored. **18 of them share
 > one identical body** — `_NoCheat`, `_SC_TGT_Grenadier`, `_BlackGate`, the Goliath/Ogre arms,
-> the autonomous turrets and mortar, `_Suicide`, the Cherubims. That is the "honest" default.
+> the autonomous turrets and mortar, the Cherubims. That is the "honest" default. *(Corrected
+> 2026-09-16: `_Suicide` was listed here too, but it sets byte 161 — see the flag-bank row below.)*
 
 Layout, read off a `_NoCheat` vs `_Miter_Omniscience` hex diff:
 
@@ -422,10 +432,53 @@ Making a unit omniscient is not a byte flip, but it *is* a one-record change: **
 easy: paste the `_NoCheat` body over `_Walker` or a Behemoth to strip a scripted boss's
 advantage.
 
-What is still missing is §7's open question — `DBAICheatConfig` has no `_Wolves` or `_Rifleman`
-instance, so which config a regular soldier uses is decided by a handle in `DBNpcGeneralConfig`.
-That handle resolves by the §5 lookup; until someone runs it, you can only retarget the units
-that already have a named cheat record.
+~~What is still missing is §7's open question~~ — answered in §10: which cheat config a soldier
+uses is a handle at offset 75 of its **soldier config**, so "make the Wolves omniscient" means
+repointing that handle, not editing a cheat record.
+
+## 10. Worked example 3 — which cheat config an NPC actually gets
+
+> **Verified (2026-09-16).** Traced over the base, pristine-2023 and live containers, with the
+> load-bearing reads re-checked by hand. The first hypothesis — a handle in `DBNpcGeneralConfig` —
+> was **wrong**: those 38-byte records hold six int32 fields and no handles.
+
+```
+GR_SpawnNpcDescriptor  (TGT_*)                       handle near its end
+  └─ DBSoldierConfig / DBCivilianConfig  (SC_TGT_*)  240 × 463 B / 143 × 233 B
+        @15  DBNpcGeneralConfig          @25  DBNpcHealth
+        @75  DBAICheatConfig             @155 DBSoldierSoundDetectionConfig
+        @165 DBSoldierVisualDetectionConfig
+        @355 DBAIRadioCallConfig
+```
+
+Each slot is 10 bytes: `01 00` and a handle, or `03 00` and zeros for "none". For example,
+`SC_TGT_Rifleman_Wolves_Default` → general `Rifleman_Wolves`, health `Rifleman_Wolves`, cheat
+**`NoCheat`**, sound `Default`, visual `Wolves`, radio **`NoCall`** — Wolves riflemen neither cheat
+nor call for backup.
+
+| Who | Cheat config |
+| --- | --- |
+| Regular army, Wolves, Bodark rank-and-file (Rifleman/Rusher/Sniper/Heavy MK1–3, callers, officers) | `NoCheat` — a few Wolves use `BlackGate` (body identical to `NoCheat`), and 4 descriptors use `FactionWarfare` |
+| The one cheating Wolf | `TGT_MQ310_Walker` → `Rifleman_Wolves_Boss` → `Walker` |
+| Miter (soldier configs) | `Miter_Omniscience` ×16, `_Ambush` ×4, `_Blackgate` ×2, `NoCheat` ×1 |
+| Your AI teammates | `Teammate` |
+| Some civilians and allies | `NoPerception`, `Suicide`, `LE2_Low_Stim`, `Children` |
+
+Only **119 of 639** spawn descriptors get a cheat body other than `NoCheat`. Drones and turrets reach
+their cheat configs through their own records (`DBDroidConfig` @65, `DBAutonomous*ElementConfig` @55).
+
+> ⚠️ **There are two byte-identical `DBAICheatConfig_NoCheat` records.** Soldiers use
+> **`0x1BC67BF6BD2`** — 320 soldier configs point at it; `0x1BC67BF6B7F` serves three drones.
+> Pasting an omniscient body over the shared record would change all 320 at once.
+
+**So, to make one unit type omniscient:** repoint offset 75 of *its* soldier config
+(`SC_TGT_Rifleman_Wolves_Default`, …) at `DBAICheatConfig_Miter_Omniscience`'s ClassID, and ship that
+soldier config. One 8-byte change per unit type, no cheat record touched. *(Untested in game, like
+everything in this document.)*
+
+*Inferred field meanings of `DBNpcGeneralConfig`:* @13 alignment (3 = hostile), @17 faction
+(1 regular army, 2 Wolves, 3 Homesteader, 4 Outcast, 5 Skell, 6 Bodark), @21 unit type, @25 tier
+(0/1/2 = MK1/2/3), @29 female.
 
 ## See also
 

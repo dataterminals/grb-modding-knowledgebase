@@ -372,7 +372,7 @@ collision toggle.**
 | --- | ---: | --- |
 | `Skeleton_Female_172_Reflex`, `Regular_Male_Reflex_SklAdd`, `Eclipse_Reflex_SklAdd`, … | 99–114 KB | the character-wide physics layer |
 | `BP_TacTailor_RemOp_*`, `BP_wStraps_Hill_*`, `BP_Nomad_AMP24_*` | 48–62 KB | backpacks + swinging straps |
-| **`Tsec_Trench_AddonSkeleton`** | **43,494 B** | **a trench COAT driven by bone physics — the route-B exemplar** |
+| **`Tsec_Trench_AddonSkeleton`** | **43,494 B** | assigned beside the trench coat's **cloth**; the coat mesh is **not** weighted to its driven bones *(corrected 2026-09-16 — see below)* |
 | `Hair_R6_Ash_Skel`, `Tsec_Herzog_Hair_Skeleton`, `Tpri_Hair_Addon_Rosa` | 10–12 KB | hair jiggle |
 | **`TP_HunterScarf_A_Skeleton`** | **9,991 B** | a wearable scarf |
 | `TPri_CIN_Hawkins_Scarf` | 4,920 B | |
@@ -383,9 +383,25 @@ collision toggle.**
 
 Full table: regenerate with the sweep described below.
 
-> **`Tsec_Trench_AddonSkeleton` is the headline.** A flowing coat, on an **addon** skeleton,
-> physics carried entirely in bones. That is precisely the shape of the thing the project wants to
-> put on a new mesh — and unlike `.cloth`, bones are re-bindable by weight-painting.
+> ~~**`Tsec_Trench_AddonSkeleton` is the headline.** A flowing coat, on an **addon** skeleton,
+> physics carried entirely in bones.~~
+>
+> ⚠️ **Corrected 2026-09-16 (evening).** The trench coat's build-table row assigns a **cloth** next
+> to this rig, and no LOD of either trench coat mesh (Blake's, Kropotkine's) carries any vertex
+> weight on a bone the rig's Reflex3 records drive. What those 48 constrained bones move is open.
+> Where Reflex3 demonstrably moves geometry, meshes *are* weighted to the driven bones:
+>
+> | Mesh | Rig | Weight entries on driven bones |
+> | --- | --- | ---: |
+> | `FTP_Hair_PonytailBforGoogles_LOD0` | `FTP_Casper_Hair_Skeleton` | 1,137 |
+> | `TP_Backpack_wStraps_Hill_LOD0` | `BP_Hill_MEDIUMVEST` | 1,885 |
+> | `TP_Tacvest_Walker_LOD0` | `Vest_Generic_Addon` | 11,635 |
+> | kilt meshes / trench coat meshes (all LODs) | `Player_Kilt_Addon` / `Tsec_Trench_AddonSkeleton` | **0** |
+>
+> So bone physics swings danglers — hair, straps, vest pieces — and every flowing garment checked is
+> cloth. Bones are still re-bindable by weight-painting, which is why route B matters, but there is
+> no vanilla bone-only flowing garment to copy. Method and evidence: the 2026-09-16 (evening)
+> research-log entry.
 
 ---
 
@@ -484,7 +500,8 @@ in a container with its holder, Index and physics:
 | `TPri_Schultz_Head`, `TPri_CIN_Hawkins_Head_Costume` | 2 | `Skeleton_Schultz_Head`, `TPri_CIN_Hawkins_Head` | none |
 
 A character is a **plain base rig plus a stack of add-on rigs**, each carrying its own physics.
-Blake's coat is one entry in that stack — and it enters through the **coat's** table.
+Blake's coat rig is one entry in that stack — and it enters through the **coat's** table, beside the
+coat's cloth (which, not the rig, is what the coat mesh follows; see the correction above).
 
 ### The full chain
 
@@ -502,6 +519,11 @@ item / character BuildTable  (TP_PANT_Kilt, Tsec_IanBlake_Trench_Mcloth_MISSION,
 > pointing at a physics-carrying add-on rig**, with `TP_PANT_Kilt` and
 > `Tsec_IanBlake_Trench_Mcloth_MISSION` as patterns. Two installed mods (Bison Belt, Tactical Human
 > Set) already assign rigid holster rigs per item this way; see the 2026-09-16 research-log entry.
+>
+> ⚠️ **But choose the rig for what it moves** *(2026-09-16, evening)*. Those two patterns assign a
+> rig next to a **cloth**, and neither garment's mesh is weighted to the bones its rig drives. A
+> mesh follows a rig only through weights on the driven bones — true of hair, backpack straps and
+> vest rigs (table at the top of this section), not of the trench coat or the kilt.
 
 ---
 
