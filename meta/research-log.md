@@ -2803,3 +2803,291 @@ across sessions on one machine.
 `find_atk()`, `candidate_grb_installs()`, `default_search_dirs()`, the `--atk` flag, and a
 `__main__` that prints an `EnvironmentError` as a message instead of a stack trace.
 `ATK_DIR` and `DEFAULT_SEARCH` are gone; nothing outside the module referenced either.
+
+---
+
+## Entry — 2026-09-16 — Found GRB's gameplay/AI database: 50,098 records in one forge entry, and decoded what "Fear the Radio" does
+
+**Trigger:** Sylvia asked what else could be done to NPC behaviour, given two AI mods already
+installed (a forge-integrated Spartan port, and "Fear the Radio"). This knowledgebase had
+**nothing** on gameplay logic — 13 docs, all about art. It does now.
+
+### VERIFIED — the gameplay DB is one nested forge entry, and it was hiding in plain sight
+
+`DataPC.forge / 5_-_DBContainerEntry_0X104634F921.data` (13.9 MB, decompressing to ~57 MB)
+holds **50,098 named records**: 23,617 `DB*`-named across **1,008 types** over 825 type ids,
+plus 26,481 others (`TGT_*_Marks*` spawn descriptors, 198 `WaveSetting_Hunt_*`, 225
+`*_SpawnEntityDescriptor`, quest/dialogue). `DataPC_patch_01.forge` carries the same entry —
+that is the override target, and it is where the installed AI mods write.
+
+It stayed invisible because `data_inspect.py` correctly reports **one** typed resource here and
+stops: the records are nested one level deeper, in their own stream, framed as
+
+```
+[uint32 typeId][int32 payloadLen][int32 nameLen][name bytes][0x00][payload]
+```
+
+The `0x00` after the name is **not counted by `nameLen`**. Without it the walk desyncs on record
+0; with it, it consumes all 50,098 records and lands exactly on the end of the block. Record 0
+is the container's own header.
+
+`typeId` is the schema, the name is the instance. **76 type ids are shared by more than one name
+prefix** (`DBSimpleFightingBehaviour` / `DBDefensiveStrafeBehaviour` both `0x131086dd`), so the
+id gives layout and the name gives meaning.
+
+### VERIFIED — ATK has no schema for any of it
+
+`AnvilToolkit.dll` exposes 1,245 types; **zero** are `DB*`. Of the 350 classes declaring
+`WriteXml()`, none is a DB record. So the BuildTable XML round-trip
+(`reference/buildtable-xml.md`) **does not extend to gameplay records** — ATK unpacks and
+repacks the container fine, but the bodies are opaque to it. AI modding here is binary patching.
+
+### VERIFIED — why that is still tractable
+
+**775 of the 1,008 DB types have a single fixed record size**, so instances of one type are
+field-aligned and diff cleanly. And Ubisoft ships **null variants** (`_NoCall`, `_NoDetection`,
+`_NoConfidence`, `_NoGrenade`, `_NoRevive`, `_NoChase`, ...) — diffing a live config against its
+own "off" twin exposes the whole tunable surface.
+
+`DBSoldierSoundDetectionConfig_Default` vs `_NoDetection` (303 B each, 125 differing bytes,
+49 float-plausible fields) comes out as clean human-scale numbers in **runs of seven**:
+50/135/150, then 10 x8, 25 x7, 100 x7, then 10/15/15/15/15/25/50/150/75/25.
+*Inferred:* hearing radii in metres, banded by alert state or sound class. The shape is
+verified; the meaning of the seven is not.
+
+### VERIFIED — what "Fear the Radio" actually is (byte-level)
+
+The installed mod ships 5 records. Vanilla has three radio configs: `_NoCall` (20 B), `_CallPMC`
+(54 B, **one** call entry, floats 20/180), `_CallBodark` (224 B, **six** entries). The mod's
+`CallPMC` is 225 B — strip ATK's leading byte and it is 224 B, differing from vanilla
+`CallBodark` in **31 of 224 bytes**: one byte keeping CallPMC's own ClassID, plus **six** 64-bit
+handles, one per wave, all repointed. *(Corrected before publication — see the last entry of
+the day: a first draft said five handles, aimed at the `TGT_*_Marks*` descriptors the mod
+ships. Both were wrong.)*
+
+So the mod is **vanilla Bodark's escalation schedule transplanted onto the regular army**, aimed
+at harder spawners. Its float pairs are (15,45) (10,55) x4 (20,45) against vanilla's single
+(20,180). *Inferred:* delay and cooldown in seconds. The counts and values are verified; the
+units are not.
+
+That generalises into a technique worth naming: **find a record that already does what you want
+on somebody else, copy its body, preserve the target's ClassID, repoint the handles.** It is the
+gameplay-layer twin of the community's "move a mod to another slot" XML copy-paste — done in hex
+because ATK gives no XML here.
+
+### VERIFIED — two negative results that save wasted effort
+
+- **NPC tier scaling is NOT in `DBNpcHealth`.** `_Rifleman_MK1` vs `_Rifleman_MK3` differ by
+  **2 bytes**, both inside the ClassID. The MK1/2/3 health records are otherwise identical.
+  Tier is resolved elsewhere — the `TGT_*_Marks1/2/3` spawn descriptors are the obvious
+  candidate, and Fear the Radio ships edits to exactly those, but that is unverified.
+- **Some named variants are byte-identical.** `DBSoldierVisualDetectionConfig_Wolves` vs
+  `_Vantage` differ by **5 bytes**, all ClassID — the Wolves and the snipers share one sight
+  config. Where that type does differ for real (`_Fighter` vs `_Wolves`, 33 bytes) the
+  differences are **handles, not floats**: it is a bundle of references, so you retarget it
+  rather than tune it. `DBSoldierSoundDetectionConfig` is the opposite — raw numbers. Check
+  which kind a record is before planning an edit.
+
+### Corrected
+
+`examples/mod-catalog.md` listed **`UE Update`** as an *"engine/update package containing forge
+data"*. It is **"UE 2.0" = Unlock Everything** — 235 `DBUnlockableGroup` records. Fixed, and the
+gameplay/AI mods (`FearTheRadio`, `4HealthBarsAllClasses` -> `DBPlayerHealth`,
+`behemoth_42kcredits` -> `DBLootableCurrency`) are now their own catalogue section instead of
+being filed under "UI / quality-of-life".
+
+No mod folder named for **Spartan** exists in this install's `Extracted/GRBMods/`; whatever the
+forge-integrated Spartan port was installed as, it is under another name. Unresolved.
+
+### UNTESTED — the write path
+
+Everything above is **read-only**: nothing was repacked and nothing was launched. The write path
+is inferred from the shape of the installed mods. The first in-game test should be a single-field
+change to one fixed-size record so a failure is unambiguous. Repack rules are unchanged: inner
+`DBContainerEntry` first, then `DataPC_patch_01.forge`; keep edited `.data` compressed.
+
+### Open
+
+- Where MK1/2/3 tier scaling actually lives (`TGT_*_Marks*` is the lead).
+- What the seven bands in `DBSoldierSoundDetectionConfig` are.
+- What `DBAICheatConfig` grants — 44 records x 162 B, one named **`_Miter_Omniscience`**.
+  Diffing that against a mundane instance is the obvious next move.
+- **Is the patch `DBContainerEntry` a full copy or a delta?** Fear the Radio puts 5 records in
+  it. If the patch container must carry all 50,098, then two AI mods that both touch it will
+  clobber each other — which would explain a good deal of community conflict reports. This one
+  matters most: it decides whether AI mods can stack at all.
+
+### Tooling
+
+New: [`tools/db_inspect.py`](../tools/db_inspect.py) — walks the nested record stream (reusing
+`data_inspect.read_cfd`, so the container format and the Oodle search stay in one place),
+summarises types, extracts records by regex to a directory, and `--diff`s two same-size records
+into an offset map. Read-only on the game; only ever writes the `--out` directory named.
+New docs: [`docs/14-ai-and-npc-behaviour.md`](../docs/14-ai-and-npc-behaviour.md) and the
+217-type catalogue [`reference/ai-db-records.md`](../reference/ai-db-records.md) (2,674
+instances), generated by that tool.
+
+---
+
+## Entry — 2026-09-16 — The patch DBContainer is a FULL COPY; DB mods still stack; ATK's repack silently drops Oodle compression
+
+**Trigger:** the open question left by this morning's entry — whether the patch
+`DBContainerEntry` carries the whole database or only overrides. It decides whether two AI mods
+can coexist. Answered, plus two findings that were not being looked for.
+
+### VERIFIED — full copy, not a delta, and that is Ubisoft's own shape
+
+| Container | Records | Entry size | Blocks |
+| --- | ---: | ---: | --- |
+| base `DataPC.forge` | 50,098 | 13,908,748 B | all Oodle-compressed (0.24) |
+| **pristine** `DataPC_patch_01.forge` (`Backups/`, Sept 2023, pre-modding) | **50,121** | 13,911,655 B | all Oodle-compressed (0.27) |
+| **live modded** `DataPC_patch_01.forge` | **50,434** | 57,688,741 B | **all raw** (1.00) |
+
+Record-by-record, the live patch container reproduces **49,265 of the base's records
+byte-for-byte**, changes 160, adds 597, drops 264. The untouched 2023 Ubisoft container is the
+same shape. There is **no record-level override mechanism** — the whole entry wins by ID like
+any forge entry.
+
+The pristine copy matters: it rules out "a mod inflated it into a full copy". Ubisoft ships it
+this way.
+
+### VERIFIED — mods nevertheless stack, and the real conflict risk is a different one
+
+Both installed DB mods are live in that single container at once:
+
+- `DBAIRadioCallConfig_CallPMC` is **224 B** in the patch (vanilla 54 B) -> Fear the Radio.
+- `DBUnlockEverything (1..235)` records present -> UE 2.0.
+
+They coexist because each ATK repack rewrites the container **from its current on-disk state**,
+so records dropped into an already-modded container accumulate. Same model as the rest of GRB
+modding.
+
+So the risk is not "two AI mods clobber each other". It is: **a mod that ships a pre-built whole
+`DBContainerEntry_0X104634F921.data` instead of a folder of individual records replaces the
+entire database and silently wipes every other DB mod.** Both mods examined ship individual
+records. That is the pattern to insist on, and the thing to check before installing a third.
+
+### VERIFIED — ATK's repack drops the container from compressed to raw
+
+Pristine: 27 meta + 1,734 file blocks, all Oodle-Mermaid. Live: the same block counts, every
+one with `uncompressed == compressed`. The entry inflated 4.1x (13.9 MB -> 57.7 MB) and
+`DataPC_patch_01.forge` went 831 MB -> 1.63 GB. Nothing but ATK touched it.
+
+### This NARROWS the 2026-07-02 compression rule
+
+That entry concluded a `.data` with **raw/uncompressed** blocks makes GRB crash/hang at load,
+and `reference/mod-anatomy.md` §5 repeats it as a general rule. It was established on **cloth**.
+A 57.7 MB fully-raw DB container is sitting in an install that is played with these mods, so the
+rule is **not universal** — it holds for cloth and does not hold here.
+
+> *Verified:* the block flags and sizes, read out of the live forge index and the 2023 backup.
+> *Resting on the modder's report, not on a launch I observed:* that this install runs.
+> Where the boundary actually lies is unestablished and should not be guessed at. `mod-anatomy.md`
+> §5 and `docs/14` §8 now both carry the narrowing rather than the blanket claim.
+
+### Method note
+
+The 2023 `Backups/DataPC_patch_01.forge` was the load-bearing artifact — without a pristine
+copy, "full copy" and "a mod inflated it" are indistinguishable. Worth remembering that this
+install keeps ATK backups going back to first use.
+
+### Tooling
+
+`tools/db_inspect.py` gained `--oodle DLL`: the auto-search walks up from the `.data`'s own
+path, which fails the moment you extract an entry out of the forge to somewhere neutral —
+exactly what reading the pristine backup required.
+
+---
+
+## Entry — 2026-09-16 — `DBAICheatConfig` field-mapped: omniscience is a profile, not a flag
+
+**Trigger:** the open question from this morning — *"what does `DBAICheatConfig` actually grant,
+and is 'enemies always know where you are' one byte?"* Answer: **no, it is a coordinated
+profile** — six flags set, five cleared, three numbers raised.
+
+### VERIFIED — the shape
+
+44 records, all exactly **162 B**, so field-aligned, and the game ships a null variant
+(`_NoCheat`). Across all 44 only **46 of 162 bytes ever vary**, and ignoring the 8-byte ClassID
+the 44 collapse to **22 distinct profiles**. **18 share one identical body** — `_NoCheat`,
+`_SC_TGT_Grenadier`, `_BlackGate`, the Goliath/Ogre arms, the autonomous turrets and mortar,
+`_Suicide`, the Cherubims. That is the honest default.
+
+Two flag groups move in **opposite directions** between `_NoCheat` and `_Miter_Omniscience`:
+
+| | 13 | 18 | 19 | 35 | 36 | 37 | 51–55 | @14 | @20 | @28 |
+| --- | :-: | :-: | :-: | :-: | :-: | :-: | :-: | ---: | ---: | ---: |
+| `_NoCheat` (+17) | 0 | 0 | 0 | 0 | 0 | 0 | `1 1 1 1 1` | 2 | 0 | 100 |
+| `_Walker` | 1 | 0 | 0 | 0 | 0 | 0 | `1 1 1 1 1` | 2 | 0 | 75 |
+| `_Teammate` | 1 | 0 | 0 | 0 | 0 | 0 | `1 1 1 1 1` | 2 | 0 | 100 |
+| `_DC_TGT_Dragonfly_Ambush` | 1 | 1 | 0 | 0 | 0 | 0 | `1 1 1 1 1` | 5 | 30 | 800 |
+| `_FactionWarfare` | 1 | 0 | 0 | 0 | 0 | 0 | `1 0 0 0 0` | 2 | 0 | 100 |
+| `_Miter_Omniscience` | 1 | 1 | 1 | 1 | 1 | 1 | `0 0 0 0 0` | 10 | 22 | 250 |
+
+Invariant in all 44: bytes 8–12 (typeId echo + a constant) and **38–49** — the handle marker
+plus a 64-bit handle, i.e. every cheat config references the same target.
+
+### Inferred, but strongly patterned
+
+Group A (13/18/19/35/36/37) reads as **cheat grants**, off by default; group B (51–55) as
+**honesty gates** that omniscience clears. Byte 13 looks like a master "this unit cheats at all"
+switch — set on the Omniscience family, the scripted boss `_Walker`, the Behemoths, **and on
+`_Teammate`**, which fits: your AI squad has to spot things for you.
+
+`@28` behaves like a **distance in metres** and scales the way a cheat radius would: `_Walker`
+75, Goliath 80, turrets 120, `_RAID_BlackGates` 200, omniscient Miter 250, ambushing Dragonfly
+800, and **0** for plain `_DC_TGT_Ogre_base` / `_Dragonfly_base`. None of the floats' units are
+verified.
+
+### Two claims corrected during the pass
+
+A first draft of the layout table asserted bytes 59–161 are zero in every record and that
+38–50 is invariant. Both were wrong and are fixed in `docs/14` §9: **59–161 is zero in 40 of 44**
+— `_Children`, `_LE2_Low_Stim`, `_FactionWarfare` and `_Suicide` use a sparse further flag bank
+out there (62, 63, 73, 78, 81, 83, 88, 108, 115, 123, 129, 143, 148, 160, 161) — and the
+invariant handle region is **38–49**, not 38–50, because byte 50 is a group-B flag that
+`_FactionWarfare` clears. There is also a fourth float at offset **24**, used by exactly one
+record (`_Miter_Omniscient_InFight` = 10).
+
+### Practical
+
+Granting omniscience is a **one-record transplant**: copy `_Miter_Omniscience`'s 154-byte body
+onto a target cheat config, keeping the target's own 8-byte ClassID — the §5 technique. The
+reverse (paste `_NoCheat` over `_Walker` or a Behemoth) strips a scripted boss's advantage.
+
+**Still missing:** `DBAICheatConfig` has no `_Wolves` or `_Rifleman` instance, so which config a
+regular soldier uses is decided by a handle in `DBNpcGeneralConfig` (61 records x 38 B).
+Resolving it is what stands between this and "make the Wolves omniscient" — and as the next entry
+shows, handles resolve by a plain ClassID lookup, so that is a lookup nobody has run yet rather
+than an open research problem.
+
+---
+
+## Entry — 2026-09-16 — Handles resolve by ClassID lookup; Fear the Radio's real targets (a correction)
+
+**Caught before publication.** Earlier entries today said Fear the Radio repointed *five* handles
+at the `TGT_*_Marks*` descriptors it ships. That was an unchecked inference. Six distinct handles
+cannot map onto four records, and none matched their ClassIDs.
+
+### VERIFIED — how to resolve a handle
+
+A 64-bit handle inside a record is the **ClassID of its target**, and every record's payload
+begins with its own ClassID. Index `payload[0:8]` across base + patch (50,436 ClassIDs) and every
+handle becomes a name. All 13 radio-call handles resolved to exactly one record each.
+
+### VERIFIED — what the radio configs actually summon
+
+Wave entry: `f8 00 00 00 00` marker, 4 constant bytes, int32 count, two floats, `01 00`, then the
+handle at marker + 23. Vanilla `CallPMC`: one wave -> `WaveSetting_TGT_CallerBackup`. Vanilla
+`CallBodark`: six waves -> `WaveSetting_TGT_CallerBodark_Wave1..6`.
+
+Fear the Radio keeps Bodark's timings and counts **exactly** and repoints all six waves at:
+`WaveSpawner_TGT_Y1E3MM08_Ambush_FatBoy`, `PvEE_WaveSpawner_Basic`,
+`WaveSetting_Hunt_TGT_GQ250_AmbushMaoriFort`, `WaveSetting_Hunt_TGT_OnFootBackup_MQ190_3HNTR-RFLM`,
+`PvEE_WaveSpawner_Warfare_Wolf`, `WaveSpawner_WildHunt_VHC`. Bodark's schedule, aimed at the
+nastiest spawners the game already has. The shipped `TGT_*_Marks*` descriptors are a separate,
+still-unlinked edit.
+
+Corrected in place: `docs/14` §4/§5/§7/§9, `examples/mod-catalog.md`, and this day's earlier
+entries. Consequence: the `DBNpcGeneralConfig` -> cheat-config mapping is a lookup nobody has run
+yet, not an open research problem.

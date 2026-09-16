@@ -36,13 +36,26 @@ Folder naming in the corpus follows two patterns (see [`docs/08-naming-conventio
 `ducati_scrambler`, `MQ9_REAPER_AmarosReplacement`, `iDroid`, `LumiaPhonePathfinderReplacement`, `QBoombox_Jur3uk_M110Replacement`.
 
 ### UI / quality-of-life / fixes
-`4HealthBarsAllClasses`, `GRBNo-IntroFix`, `behemoth_42kcredits`, `daboss`, `ThankTheRadio`, `Sheva ui`.
+`GRBNo-IntroFix`, `daboss`, `Sheva ui`.
+
+### Gameplay / AI (the rare ones)
+
+Almost all of these work by patching records inside **one** forge entry — `DBContainerEntry_0X104634F921.data` in `DataPC_patch_01.forge` — not by shipping art. See [`../docs/14-ai-and-npc-behaviour.md`](../docs/14-ai-and-npc-behaviour.md).
+
+| Mod | Patches | What that means |
+| --- | --- | --- |
+| `FearTheRadio_DBContainer` (a.k.a. `ThankTheRadio`) | `DBAIRadioCallConfig_CallPMC` + 4 `GR_SpawnNpcDescriptor` (`TGT_Heavy_Marks1–3`, `TGT_Rusher_Marks1`) | Transplants vanilla **`CallBodark`**'s six-wave escalation schedule onto the regular army's one-wave `CallPMC`, with all six wave handles repointed at harder existing spawners — two mission ambushes, a quest hunter squad, two PvE-Elite wave spawners (one Wolves warfare) and a vehicle Wild Hunt. The shipped `TGT_*_Marks*` descriptors are a separate edit, not the radio call's targets. Byte-verified and handle-resolved 2026-09-16. |
+| `UE Update` / `UE 2.0` (Nexus 1564) | 235 `DBUnlockableGroup` records | **"Unlock Everything"** — an unlock/progression mod, *not* an engine or update package (this corrects an earlier entry in this file). |
+| `4HealthBarsAllClasses` | `DBPlayerHealth_Default` | One record, player health bars. |
+| `behemoth_42kcredits` / `1_-_DBLootableSet_Goliath_Exploded` | `DBLootableCurrency` | Behemoth credit payout. |
+
+`Guerilla Outcasts` and `Less stupid looking outcasts` also touch NPCs, but through an `EntityBuilder` + `BuildTable` container (`28377_-_OUT_RIFLEMAN.data`) — that is **appearance**, the cosmetic path, not behaviour.
 
 ### Faction / NPC overhauls
 `Guerilla Outcasts` / `Guerrilla Outcasts` / `Less stupid looking outcasts`, `LessEdgyWolves_*`, `Honey Badger Overhaul Redux`, `KOBLIN_Overhaul`, `OPMCH_Bodark_Overhaul_16`, `SC_Revamp_PMC_*` (a full PMC class set: bagman, breacher, commander, droneop, radioop, rifleman, rocketeer, sniper, support).
 
 ### Tooling / update packages
-`UE Update` (engine/update package containing forge data), `tac_anim`, `faith_resources`, `gorgon_nohead_*`.
+`tac_anim`, `faith_resources`, `gorgon_nohead_*`. *(`UE Update` was previously listed here as an "engine/update package" — it is an Unlock-Everything gameplay mod; see the Gameplay / AI section above.)*
 
 ## What the corpus tells us
 
