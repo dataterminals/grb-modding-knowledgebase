@@ -1,6 +1,12 @@
 # Reference — Resource-type IDs (the `Extension` field)
 
-Every typed resource inside a `.data` carries a 32-bit **type id** — the `Extension` field on a `ForgeEntry` (see [`docs/02-forge-file-format.md`](../docs/02-forge-file-format.md)) and the first `uint32` of each record in a `.data`'s file table (see [`docs/03-data-and-resources.md`](../docs/03-data-and-resources.md)). This file explains how that id is formed and lists the ids that matter for GRB modding.
+Every typed resource inside a `.data` carries a 32-bit **type id** — the first `uint32` of each record in a `.data`'s file table (see [`docs/03-data-and-resources.md`](../docs/03-data-and-resources.md)). For a container's **first** record only, the same id is also the `Extension` field on its `ForgeEntry` (see [`docs/02-forge-file-format.md`](../docs/02-forge-file-format.md)). This file explains how that id is formed and lists the ids that matter for GRB modding.
+
+> ⚠️ **An `Extension` names only a container's first resource** *(verified 2026-09-16, census of all
+> 415,024 containers)*. It matches the first record's type id in 415,024 of 415,024. But 89.5 % of
+> GRB's 3,935,343 resources are nested, and **1,785 of its 1,852 type ids never come first**, so they
+> never appear as any forge entry's `Extension`. A sweep of `Extension`s is not a type census; walk
+> the containers.
 
 > **Source:** decompiled ATK v1.3.1 — `ScimitarClassRegistry.ScimitarClasses` (the `uint → Type` map), `HashedData.GetHashedString`, `CRC32.ComputeCRC32`, `DataFile`. **Verified empirically** on 2026-06-30 by parsing real GRB `.data` files (Oodle-decompressed with the game's `oo2core_7_win64.dll`) and matching each resource's embedded id to the CRC32 of its type name. Method/type names are ATK's.
 
@@ -23,7 +29,7 @@ So the human name you see as a resource's extension (`.BuildTable`, `.Mesh`, `.C
 Inside a `.data`'s (decompressed) file table, each record is:
 
 ```
-uint32  TypeId          // = CRC32(typeName) = the ForgeEntry.Extension
+uint32  TypeId          // = CRC32(typeName); also the ForgeEntry.Extension, for the first record only
 int32   PayloadLength   // counts the payload only
 int32   NameLength      // 0 is legal: unnamed resources exist
 bytes   Name            // NameLength bytes, no terminator (ReadStringEnc32)
@@ -37,7 +43,11 @@ byte[]  Payload         // PayloadLength bytes
 ```
 
 The container's **metadata block** indexes the same records: `u16 count`, then per record
-`u64 ClassID | i32 recordSize | u16 0`, where `recordSize = 12 + NameLength + FileHeader + PayloadLength`.
+`u64 ClassID | i32 recordSize | u16 k | k × u16`, where `recordSize = 12 + NameLength + FileHeader + PayloadLength`.
+`k` is 0 almost everywhere; only world-map containers use 1–4, meaning unknown. A container
+that ATK wrote may also end its metadata block with ATK's own LZMA `MetaData` trailer, closed by
+`i32 size | u64 MetaData.EndMagic` (`2570475414025252254`). ATK reads only the `u16 count` of a GRB
+table.
 
 On unpack, ATK writes each record to `<index>_-_<Name>.<GetHashedString(TypeId)>`, containing
 **FileHeader + Payload** — so in an unpacked file the ClassID sits at bytes 1–8 (or at 8 + 12N after
@@ -49,6 +59,9 @@ a long header).
 > **Corrected:** until then this section placed the FileHeader *inside* `PayloadLength`, which is
 > true of other AnvilNext games (they add an extra `01` byte inside the payload) but not of GRB —
 > and a parser built on it reads every resource after the first one byte early.
+> **Census, the same night:** all 415,024 containers in the 27 forges of an install walk to their
+> last byte, and every metadata table agrees — 4,155 world-map tables only once the `k × u16`
+> extension is read.
 
 ## The ids that matter for GRB modding
 
@@ -73,16 +86,36 @@ never appear as a forge entry's `Extension`. Full write-up:
 
 | ID (dec) | ID (hex) | Type | In GRB? |
 | ---: | --- | --- | --- |
-| `2386539642` | `0x8E3FB47A` | **Reflex3SkeletonConstraints** | ✅ inline in **all 2,469** skeletons; 512 hold real data |
+| `2386539642` | `0x8E3FB47A` | **Reflex3SkeletonConstraints** | ✅ inline in **all 2,469** forge-entry skeletons, 512 with real data. Of the 285 skeletons that only occur nested, 4 more hold data and **60 carry none** *(census 2026-09-16)* |
 | `3558325132` | `0xD417BB8C` | ReflexSystem | field is read for GRB, never seen inline |
 | `3371740159` | `0xC8F8ABFF` | SkeletonPoseGroup | not inline in sampled skeletons |
 | `547156082` | `0x209CF072` | SkeletonPose | ” |
 | `119336528` | `0x071CEE50` | SkeletonPoseBone | ” |
-| `2299544533` | `0x891043D5` | LiteRagdoll | ❌ **never** — `SupportedGames` excludes GRB |
-| `2371068428` | `0x8D53A20C` | LiteRagdollCapsule | ❌ never |
-| `572675924` | `0x22225754` | LiteRagdollShape | ❌ never |
-| `333476854` | `0x13E073F6` | LiteRagdollCapsuleGroupFlags | ❌ never |
-| `2408076648` | `0x8F885568` | LiteRagdollExternalCapsule | ❌ never |
+
+### Ragdolls & collision capsules
+Standalone resources, but **always nested**: none of these is ever a container's first resource,
+so none appears as a forge entry's `Extension`. That is why the 2026-08-14 forge-entry sweep marked
+`LiteRagdoll` "never". Counted and decoded by the 2026-09-16 (night) census — layouts in
+[`meta/research-log.md`](../meta/research-log.md), summary in
+[`skeleton-reflex3-physics.md`](skeleton-reflex3-physics.md). Names marked *(dict)* are CRC32 matches
+in ATK's name dictionary, with no ATK class behind them.
+
+| ID (dec) | ID (hex) | Type | In GRB? |
+| ---: | --- | --- | --- |
+| `2299544533` | `0x891043D5` | **LiteRagdoll** | ✅ **637 nested, 88 distinct, all vanilla.** Bone-attached capsule sets: damage triggers on human entities, cloth colliders, animals, drones, raid bosses. ATK's `SupportedGames` excludes GRB |
+| `333476854` | `0x13E073F6` | LiteRagdollCapsuleGroupFlags | ✅ embedded in every GRB capsule (16 × bool) |
+| `2371068428` | `0x8D53A20C` | LiteRagdollCapsule | ❌ not used — GRB's capsules are the four classes below |
+| `572675924` | `0x22225754` | LiteRagdollShape | ❌ not used |
+| `2408076648` | `0x8F885568` | LiteRagdollExternalCapsule | ❌ not used |
+| `286154434` | `0x110E5EC2` | *(unnamed capsule class)* | ✅ one size float — *inferred* sphere |
+| `3736378044` | `0xDEB49ABC` | *(unnamed capsule class)* | ✅ two size floats — *inferred* capsule |
+| `3405269372` | `0xCAF8497C` | *(unnamed capsule class)* | ✅ three size floats — *inferred* box |
+| `716768756` | `0x2AB905F4` | *(unnamed capsule class)* | ✅ points at a `MeshShape` / `ConvexVerticesShape` / `BoxShape` / `CylinderShape` resource by ClassID |
+| `1273385935` | `0x4BE653CF` | **RagdollSkeleton** *(dict)* | ✅ one: `GR_MaleAverage`, referenced by 51 human `Entity` resources, `CHR_PLAYER_TGT` included |
+| `1401269008` | `0x5385AB10` | RagdollBoneData *(dict)* | ✅ ×19, inside `GR_MaleAverage` |
+| `854659681` | `0x32F11261` | RagdollConstraintData *(dict)* | ✅ ×18, inside `GR_MaleAverage` |
+| `4236257670` | `0xFC802986` | RagdollMotorParameters *(dict)* | ✅ ×4, inside `GR_MaleAverage` |
+| `2032007014` | `0x791DF766` | RagdollBoneDriveParameters *(dict)* | ✅ ×1, inside `GR_MaleAverage` |
 
 ### Textures & materials
 | ID (dec) | ID (hex) | Type |

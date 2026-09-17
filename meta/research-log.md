@@ -748,6 +748,10 @@ was modified.**
 > containers (`TP_WalkerCoat_Ragdoll` in `TP_WalkerCoat_Cloth.data`, one each in `PLAYER_Template`
 > and `TEAMMATE_Template`). Every absence argument below counts **forge entries**, which name only a
 > container's first resource. See the 2026-09-16 entry *"The container walker was one byte off"*.
+> **Re-answered 2026-09-16 (night)** by a census of nested resources: 637 `LiteRagdoll`s (88
+> distinct), a `RagdollSkeleton` (`GR_MaleAverage`) that the human entities share, and a nested
+> death and hit-reaction bank. See the entry *"The nested-resource census"*. What sends a death to
+> the ragdoll instead of a clip is still unlocated.
 - **GRB ships no ragdoll resource.** ATK registers `LiteRagdoll` (`2299544533`) plus
   `LiteRagdollCapsule` / `Shape` / `CapsuleGroupFlags` / `ExternalCapsule`, but
   `LiteRagdoll.SupportedGames` lists twelve Assassin's Creed titles and **excludes
@@ -767,6 +771,9 @@ was modified.**
   Every collider is prefixed **`TP_WalkerCoat_`** and the set is **upper-body only** — no spine,
   pelvis or legs. These are capsule colliders the *coat's cloth* collides against, named after the
   bones they follow. Ubisoft's naming, not a death-ragdoll rig.
+  *(⚠️ 2026-09-16 (night): the string is 550 chars and begins `TP_WalkerCoat_Ragdoll_Head_130111906;`.
+  The names are 13 of the 23 capsules of `TP_WalkerCoat_Ragdoll`, a whole-body `LiteRagdoll` the
+  cloth references. See the census entry, correction 9.)*
 
 **On skeletons — a whole system this KB had never seen:**
 - **Every GRB `Skeleton` carries an inline `Reflex3SkeletonConstraints` object** (hash
@@ -3332,13 +3339,14 @@ re-run in game.)* The same repack gives unnamed resources names: base DB 308 unn
 
 ### NOT verified / open
 - **Nothing written has been loaded in game.** Everything above is read-only.
-- A census of nested resources across all forges (`LiteRagdoll`, `Animation`) — the honest way to
-  re-answer the ragdoll question.
+- ~~A census of nested resources across all forges (`LiteRagdoll`, `Animation`) — the honest way to
+  re-answer the ragdoll question.~~ **Done 2026-09-16 (night)** — see the census entry.
 - 940 `[MVET] AI_*` and 617 `[VECN] AI_*` records past the old stop, unexamined. Named like the
   `[VE] AI_…` voice events of 2026-08-14, so plausibly dialogue plumbing rather than behaviour
   (inferred from names only).
-- What the 98 bytes after an ATK-repacked metadata index are (they begin `5d 00 00 40 00`,
-  LZMA-header-shaped).
+- ~~What the 98 bytes after an ATK-repacked metadata index are (they begin `5d 00 00 40 00`,
+  LZMA-header-shaped).~~ **Answered 2026-09-16 (night):** ATK's own LZMA `MetaData` trailer, ended by
+  `i32 size | u64 MetaData.EndMagic` — see the census entry.
 
 ### Tooling
 - [`tools/data_inspect.py`](../tools/data_inspect.py): `walk()` — both header forms, unnamed
@@ -3521,3 +3529,271 @@ file list. The cheat profile is untouched.
 
 Scripts and full tables (descriptor → soldier config → general/cheat, per container): session
 scratchpad `npc_cheat\`.
+
+---
+
+## Entry — 2026-09-16 (night) — The nested-resource census: 88 LiteRagdolls, a physics ragdoll the human entities share, and the death bank
+
+**Trigger:** this morning's walker fix reopened the community ragdoll question (2026-08-14) and named
+what would answer it: a census of *nested* resources. Every container in all 27 `.forge` files of
+the SylG5 install was walked with `data_inspect.read_cfd()` + `walk()`, each entry read straight out
+of its forge by offset (the `skeleton_reflex.py` method). The install's `Backups\` forges were
+walked the same way for provenance. **Read-only on the game**; all output went to the session
+scratchpad.
+
+### VERIFIED — the census
+
+| | |
+| --- | ---: |
+| forge entries | 415,078 |
+| — sidecars, not containers | 54: `GlobalMetaFile` ×27 (no `CompressedFileData` magic), `PrefetchingFileInfos` ×27 (the magic, then a layout `read_cfd()` does not parse) |
+| — **containers walked** | **415,024** (385,406 distinct IDs) |
+| **resources** | **3,935,343** (1,059,762 distinct ClassIDs) |
+| **walks that did not end on the files block's last byte** | **0** |
+| resource type ids | 1,852 — 31 named from ATK's classes, 1,482 by CRC32 against ATK's 276,087-name dictionary (`atk_hashes.py`), 339 unnamed |
+
+| forge family | base: containers / resources | `_patch_01`: containers / resources |
+| --- | ---: | ---: |
+| `DataPC` | 48,705 / 262,312 | 2,440 / 184,967 |
+| `DataPC_extra` | 15,432 / 19,905 | 304 / 4,623 |
+| `DataPC_Resources` | 123,569 / 340,722 | 2,894 / 18,453 |
+| `…WorldMap_MaungaNui_Split` | 67,336 / 1,997,478 | 1,402 / 366,493 |
+| `…WorldMap_OrphanCells_Split` | 107,479 / 189,903 | 2 / 5 |
+| `…WorldMap_Darkwood_Split` | 11,006 / 173,431 | 168 / 20,640 |
+| `…WorldMap_Golem_Split` | 9,298 / 147,434 | 145 / 26,542 |
+| `…WorldMap_Windy_Split` | 7,193 / 80,435 | 130 / 11,718 |
+| `…WorldMap_Bootstrap_Split` | 15,616 / 59,475 | 112 / 7,770 |
+| `…WorldMap_Egg_Split` | 1,481 / 19,730 | 33 / 2,912 |
+| seven shader / GhostRoom forges (`*_dx11`, `*_vulkan`, `GRN_GhostRoom*`) | 279 / 395 | — |
+
+- **Every metadata table agrees with its walk.** Row for row, ClassID and `recordSize` match, and
+  the table ends on its last byte (or on ATK's trailer, below): 410,869 containers under this
+  morning's frame, the other 4,155 under the refinement below.
+- **A forge entry's `Extension` is its container's first resource type in 415,024 of 415,024.**
+  (Names differ in 88,087 — 87,254 of them in world-map base forges, e.g. an entry named
+  `File_0x…` over an unnamed first resource.)
+- **89.5 % of all resources are nested,** not a container's first. **1,785 of the 1,852 type ids
+  never occur first**, so no sweep of forge entries can see them at all — 1,496,942 resources,
+  including `BoxShape`, `CollisionMaterial`, `TheaterData`, `FX`, `LiteRagdoll` and
+  `RagdollSkeleton`.
+- Containers hold a median of **1** resource and a mean of **9.5**. 229,460 hold one; 185,564 hold
+  more. By family the mean is 2.8 in the resources forges (median 3), 14.0 in the world-map forges,
+  and 7.0 elsewhere.
+- **The 2026-08-14 numbers fall straight out of this.** First-position `Animation`s number exactly
+  **1,564** (782 distinct): the "1,564 `Animation` entries" of that sweep. First-position
+  `LiteRagdoll`s number **0**.
+
+### VERIFIED — the metadata block, twice refined
+
+1. **A metadata row is variable-length:** `u64 ClassID | i32 recordSize | u16 k | k × u16`. This
+   morning's `… | u16 0` is the `k = 0` case. The 4,155 containers that failed the fixed-stride
+   check are all in world-map forges, with rows where `k` = 1 (125,223 rows), 2 (6,344), 3 (125)
+   or 4 (11). With `2k` bytes skipped, all 4,155 tables match their walks exactly. What the extra
+   values mean is open.
+2. **The "98 bytes after an ATK-repacked index" (open this morning) are ATK's own `MetaData`
+   trailer.** ATK's `DataFile` reads a GRB metadata block's `u16` count and nothing else of the
+   table, then checks the block's last 12 bytes for `i32 size | u64 MetaData.EndMagic`
+   (`2570475414025252254`) and LZMA-decompresses the `size − 12` bytes before them. On disk,
+   **218** containers end that way: 97, 98 or 114 B, the size field equal to the trailer's length,
+   the body starting `5d 00 00 40 00`. All 218 are in patch forges.
+3. **ATK also signs what it writes, after the files block.** **5,543** containers carry bytes after
+   their second `CompressedFileData`, and every one decodes to an ATK signature: 4,174 read "File
+   created using AnvilToolkit v1.2.6/v1.2.7 ‹date›" and 1,369 "Repacked using AnvilToolkit 1.2.8 …
+   1.3.0 rev16 on ‹date›", stored either LZMA-compressed or byte-shifted. **No trailing bytes of any
+   other kind exist**, so this is a per-container "written by ATK" marker.
+   - On this install, live base `DataPC.forge` holds **4,172** signed containers (3,994 named
+     `DBUnlockable…`). `Backups\DataPC.forge` has the same 48,705 containers and 262,312 resources,
+     and **none signed**. So "base" on SylG5 is not pristine. The ragdoll resources below are
+     byte-identical to their backup copies; the animations are present there by ClassID.
+
+### VERIFIED — `LiteRagdoll`: 637 nested resources, 88 distinct, all vanilla
+
+- **637** occurrences, **88** distinct ClassIDs, **0** in first position, 167–14,442 B: `DataPC` 326,
+  `DataPC_patch_01` 291, `WorldMap_Bootstrap_Split` 12 (+1 in its patch), `_Darkwood_Split` 5,
+  `_MaungaNui_Split` 2. All occurrences of one ClassID are byte-identical.
+- **Provenance:** all 88 have a byte-identical copy in the unsigned `Backups\` forges, which include
+  the Sept 2023 pristine `DataPC_patch_01`.
+- **Format, decoded from bytes.** ATK has no GRB reader (`LiteRagdoll.SupportedGames` excludes GRB),
+  and its `LiteRagdollCapsule` / `LiteRagdollShape` layouts do not fit:
+
+  ```
+  LiteRagdoll := u64 ClassID | u32 0x891043D5 | u8 1 | i32 count | capsule × count | u32 0
+  capsule     := u8 0 | u64 localID (0xF8000000 + 2i) | u32 classHash | i32 nameLen | name | u8 0
+                 | u32 boneHash | 64 B 4×4 matrix
+                 | u64 localID + 1 | u32 0x13E073F6 (LiteRagdollCapsuleGroupFlags) | 16 × bool
+                 | tail — 0x110E5EC2: 28 B · 0xDEB49ABC: 32 B · 0xCAF8497C: 40 B · 0x2AB905F4: 34 B
+  ```
+
+  All 637 payloads are consumed to the last byte (5,791 capsules). **`boneHash` = CRC32(name)**
+  wherever the name is a bone; 242 of the 958 distinct capsules are named `undefined` and carry the
+  hash alone (`LeftUpLeg`, `Hips`, `rfx_l_topwristctrl_1`, …). Class `0x2AB905F4` stores, at tail
+  +26, the ClassID of a separate collision shape resource in **464 of 464**: `MeshShape` ×428,
+  `ConvexVerticesShape` ×31, `BoxShape` ×4, `CylinderShape` ×1 (e.g. `DRN_UGV_Goliath_RT`).
+- *Inferred:* the other three classes are primitives. From tail +24, class `0x110E5EC2` has one
+  non-zero float in 10 of 10, `0xDEB49ABC` two in 433 of 439, `0xCAF8497C` three in 45 of 45. That
+  reads as sphere / capsule / box. The class names are unresolved.
+
+**Who references them** (the ClassID found inside the referencing payload; `DataPC.forge`):
+
+| family | distinct | capsules each | referenced by |
+| --- | ---: | ---: | --- |
+| `DamageTriggerRagdoll_*`: `default`, `Heavy`, `ArmoredBodark`, `RocketLauncher`, `WALKER`, `Miter`, `Miter_weakHuman`, `Miter_skeleton` | 8 | 20–28 | human `Entity`s. `_default` by `CHR_NPC_BASEENTITY`, `CHR_NPC-REGULARSKEL-SOLDIER_TARGET` (+ `_TALK…`), civilians, **`CHR_PLAYER_TGT`, `CHR_TEAMMATE_TGT`**. `_Heavy`, `_ArmoredBodark`, `_RocketLauncher`, `_WALKER`, `_Miter` by their archetype's entity (`…_TARGET_HEAVY`, `…_ARMOREDBODARK`, …); `_Heavy` also by the `BuildTable` **`PMC_HEAVY_RagDoll`**; the three `_Miter*` by Miter design tables |
+| garment colliders (`TP_WalkerCoat_Ragdoll`, `TGT_Hunter_Ragdoll`, `TSec_Blake_Coat*_Ragdoll*`, `TP_Top_Bodark_Trench_Ragdoll`, kilts, lab coats, dresses, …) | 19 | 2–23 | `Cloth` resources (`TGT_Hunter_Ragdoll` by six, e.g. `Cloth_HunterCoat`, `Cloth_Sniper_Top_Ghillie01`) |
+| animals (`LiteRagdoll_Albatross` … `_WildHog`) | 19 | 1–3 | their `AI_*` entities |
+| drones, robots, turrets (`Ogre_*`, `Goliath_*`, `Wasp`, `Drone_*`, …) | 26 | 1–37 | their `Entity` / `EntityGroup` resources |
+| raid-boss `*_ColContainer*` | 12 | 1–91 | boss entities |
+| on humans: `LiteRagdoll_CameraSensor` (`Spine1`, `Hips`), `LiteRagdoll_WhistlingBullet` (`Hips`) | 2 | 1–2 | human NPC entities (the camera one also by player and teammate) |
+| `PLAYER_Template` / `TEAMMATE_Template`: `…_0X1540F8CCAB7` (`Hips`), `…_0X146CEDA57E` (`Neck`) | 2 | 1 | `CHR_PLAYER_TGT` (both), `CHR_TEAMMATE_TGT` (`Neck`) |
+
+- **The damage-trigger sets cover the whole body.** `DamageTriggerRagdoll_default` has 20 capsules:
+  both legs, up-legs, feet, shoulders, arms, forearms and hands, plus `Spine`, `Spine1`, `Spine2`,
+  `Neck`, `Head` and `Reference`.
+- **The Walker coat's collider list is a view onto `TP_WalkerCoat_Ragdoll`.** `TP_WalkerCoat_Cloth`
+  references that ragdoll by ClassID. Its 13-entry list (`TP_WalkerCoat_Ragdoll_‹Bone›_‹CRC32›`)
+  names exactly the ragdoll's 13 upper-body capsules, multiplicities included (`Head` ×2,
+  `LeftShoulder` ×4). The ragdoll itself has 23 capsules; the 10 legs/hips/spine/`Holster_RightUpLeg`
+  ones are not listed. It shares its length (3,573 B) and bone list with `TGT_Hunter_Ragdoll`, though
+  245 bytes differ.
+- Not every cloth container carries one: 47 of the 107 containers holding a `Cloth` (counted per
+  forge copy) also hold a `LiteRagdoll`. Others reference one held elsewhere
+  (`Cloth_Sniper_Top_Ghillie01` → `TGT_Hunter_Ragdoll`), and some reference none of the 88
+  (`Cloth_ArcturusGhostGhillieHood`).
+
+### VERIFIED — a physics ragdoll: `RagdollSkeleton` `GR_MaleAverage`
+
+- **One distinct resource** of type `1273385935` = CRC32("RagdollSkeleton"): **`GR_MaleAverage`**,
+  6,070 B, nested at index 24 of the container named `MIS_Y2E4_Katya_Maksimov` in `DataPC.forge`
+  (index 26 in `DataPC_patch_01`'s copy). It is byte-identical in live, `Backups\DataPC.forge` and
+  the Sept 2023 pristine patch. ATK has no class for this type; the name is a dictionary match.
+- **It embeds 42 objects with gap-free local IDs `0xF8000000`–`0xF8000029`,** in this order:
+  **19** × `0x5385AB10` = CRC32("RagdollBoneData"), **18** × `0x32F11261` =
+  CRC32("RagdollConstraintData"), **4** × `0xFC802986` = CRC32("RagdollMotorParameters"), **1** ×
+  `0x791DF766` = CRC32("RagdollBoneDriveParameters"). The names are dictionary matches, four of four
+  on one theme.
+- **The `u32`s in it that resolve to names are 19 standard biped bones:** `Reference`, `Hips`,
+  `Spine`, `Spine1`, `Spine2`, `Neck`, `Head`, and left/right `Shoulder`, `Arm`, `ForeArm`, `UpLeg`,
+  `Leg`, `Foot`.
+- **The human character entities reference it:** 51 `Entity` resources under 25 names. They are
+  `CHR_NPC_BASEENTITY`; `CHR_NPC-REGULARSKEL-SOLDIER_TARGET` with its `_HEAVY`, `_ARMOREDBODARK`,
+  `_ROCKETLAUNCHER` and `_TALK…` variants; `CHR_NPC-SOLDIER_TARGET_WALKER`; `CHR_NPC_Miter`;
+  `CHR_NPC-CIV_*`; `CHR_CIN_NPC_*`; `CHR_Narration_Puppet`; and **`CHR_PLAYER_TGT` and
+  `CHR_TEAMMATE_TGT`**.
+- Same container: `Human_Ragdoll_Material` (`CollisionMaterial`, 97 B), which references
+  `Physics_Human_Ragdoll_Material` (`PhysicsCollisionMaterial`, 53 B). Both are byte-identical to
+  the backups.
+- *Inferred:* 19 bodies, 18 joints, motor and drive parameters is the shape of a **powered
+  rigid-body ragdoll** for the adult male rig, shared by the human entities. `GRB.exe` carries the
+  matching runtime vocabulary as literal strings: `hknpRagdoll`, `hkbPoweredRagdollControlsModifier`,
+  `Physic::LiteRagdollComponent::Update`, and `RagdollBoneProperty_ActivationBlendTime`,
+  `_ActivationDelayed`, `_StiffnessFactor` and `_…DriveMode`. Which data feeds them is not
+  established, and **no field of `GR_MaleAverage` has been decoded.**
+
+### VERIFIED — the death and hit-reaction bank exists, nested
+
+- `Animation`: **92,605** occurrences, **23,043** distinct. **22,261** distinct clips occur only
+  nested; the 782 first-position ones are 2026-08-14's ambient acting clips.
+- Matched by name pattern. Every one below is inside `MIS_Y2E4_Katya_Maksimov`:
+
+  | family | distinct | pattern |
+  | --- | ---: | --- |
+  | generic soldier deaths | **188** | `mil_gen_m_ale_ros_{std,crh}_V0_N_death_{regular,heavy,explosion,electric,swimming,pintle}_‹region›_{front,back,left,right}_NN`: regions `chest`, `head`, `ArmLeft`, `LegRight`, …, plus `_legacy` and spinning `vrille` variants |
+  | zonal hit reactions | **172** | `{pmc_rif, vip_miter, pmc_rus, mil_hg}_m_ale_ros_std_V0_N_hit_{regular,heavy}_‹region›_‹dir›` (62 / 50 / 31 / 29) |
+  | `MCH_` heavy hits | 36 | `MCH_{AR,HG}_{Std,Crh}_V0_Hit_Heavy_‹dir›` |
+  | downstate | 77 | `mca_ar_std_V0_downstate_gazdeath`, `TerM_V0_N_col_fm_Downstate_to_Death`, … |
+  | stumbles | 24 | `Mcm_PrnFU_NoAimStumble_V0_N_‹dir›_out_WallImpact`, … |
+  | get-up | **1** | `vip_miter_col_fm_V0_N_getup_01` |
+  | any `Animation` named `*ragdoll*` | **0** | — |
+
+  A broad keyword pass also matches animal, drone, boss and cinematic deaths: 449 distinct on death
+  words and 716 on hit/react/impact words. The full lists are in the scratchpad.
+- **Provenance:** all 449 death-word clips and the get-up are present, by ClassID, in
+  `Backups\DataPC.forge` and in the Sept 2023 pristine patch. The 28 hit-word clips absent from the
+  backups sit only in `WorldMap_MaungaNui_Split` and its patch, which have no backup copy.
+
+### VERIFIED — skeletons the 2026-08-14 Reflex3 corpus could not see
+
+- **9,649 `Skeleton` resources, 7,192 of them nested.** 1,613 distinct skeletons occur first in a
+  container, the population the 2026-08-14 sweep read by `Extension`. **285 more occur only nested.**
+- Of those 285, **4 carry Reflex3 data**: `Addon_collar_midas` 15,234 B, `DRN_CIV-Farmer-Crane`
+  7,138 B, `Addon_Accessories_Midas` 780 B, `Addon_hair_midas` 394 B. **221** hold the 8-byte
+  header only. In **60** the `Reflex3SkeletonConstraints` hash does not occur at all; they are mostly
+  `*_RTA` / `*RTAONLY` drone and boss rigs (`DRN_CERBERUS_*_RTA`, `DRN_BAAL_*_RTA`) in world cells
+  and cinematic configs. *Inferred:* a null pointer; not checked field by field.
+
+### ⚠️ CORRECTIONS
+
+1. **"GRB ships no `LiteRagdoll` resource" (2026-08-14).** It ships 637, 88 distinct, all vanilla.
+   This morning flagged the claim; this entry counts them.
+2. **"No combat animations exist as forge resources… all 1,564 `Animation` resources are ambient
+   NPC acting clips… the player/enemy locomotion-death-reaction bank is not in the forges"
+   (2026-08-14).** Wrong. 1,564 was the first-position count. Nested beneath it are 22,261 more
+   distinct clips, including 188 directional generic-soldier deaths, 172 zonal hit reactions and a
+   get-up.
+3. **"Ragdoll-on-death is not moddable with today's data surface… the resources aren't there"
+   (2026-08-14).** The resources are there: a `RagdollSkeleton` referenced by 25 human entity
+   types, player included; per-archetype damage-trigger `LiteRagdoll`s; ragdoll collision
+   materials; and a death bank. **What decides a canned death versus the ragdoll is still not
+   located.** So the answer moves from "absent" to "present and unmapped", not to "moddable".
+4. **Parked lead #6 (2026-08-14): "13 garment-owned capsule colliders … upper body only".** The
+   list is upper-body, but it names capsules of a 23-capsule whole-body `LiteRagdoll` that the cloth
+   references. It is still the coat's collision set, not a death rig.
+5. **This morning's metadata frame** `… | i32 recordSize | u16 0` is `… | u16 k | k × u16` (above).
+6. **"Nested resources are the normal case, about 2.5 per container"** (`next-session.md`, *Don't
+   repeat*). Install-wide the median is 1 and the mean 9.5; 45 % of containers hold more than one,
+   and 89.5 % of resources are nested. 2.8 is the resources-forge mean. The rule the line supports
+   stands; the line is corrected in place.
+7. **`skeleton-reflex3-physics.md`: the four `LiteRagdoll*` sub-classes "live inside one".** GRB
+   capsules use four other class hashes. Only `LiteRagdollCapsuleGroupFlags` occurs, embedded in
+   every capsule, and no resource is typed `LiteRagdollCapsule`, `Shape`, `CapsuleGroupFlags` or
+   `ExternalCapsule`.
+8. **"All 2,469 skeletons contain exactly one inline `Reflex3SkeletonConstraints` object"
+   (2026-08-14)** holds for those forge-entry skeletons, not for all of GRB's: 60 nested-only
+   skeletons carry none, and the physics corpus gains 4 (above).
+9. **The Walker coat collider list as transcribed on 2026-08-14** — "536-char", starting
+   `Ragdoll_Head_130111906;…` — is **550 chars and starts `TP_WalkerCoat_Ragdoll_Head_130111906;`**.
+   Re-extracted from `DataPC.forge`: 13 names whose lengths plus 12 separators sum to 550.
+
+### NOT verified / open
+
+- **What sends a death to the ragdoll instead of a clip.** Nothing is located. The next things to
+  read are `GR_MaleAverage`'s `RagdollMotorParameters` / `RagdollBoneDriveParameters` (against the
+  exe's `ActivationBlendTime` / `ActivationDelayed` vocabulary), the `PMC_HEAVY_RagDoll` table, and
+  the DB container.
+- The field layouts of `RagdollBoneData`, `RagdollConstraintData`, `RagdollMotorParameters` and
+  `RagdollBoneDriveParameters`.
+- In `LiteRagdoll`: the `u8 1`, the 16 group flags, the leading 24 tail bytes (mostly zero), and the
+  primitive class names.
+- The meaning of the world-map metadata rows' `k` values.
+- Whether damage-trigger capsules pick the region-named death and hit clips. Suggestive naming only.
+- Nothing was written, repacked or launched.
+
+### Docs updated
+
+- [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md): the
+  class-hash table, the nested-only skeletons note, the sweep recipe's blind spot, and the "not a
+  death ragdoll" callout.
+- [`reference/resource-type-ids.md`](../reference/resource-type-ids.md): a new *Ragdolls & collision
+  capsules* table replaces the `LiteRagdoll*` "never" rows; the Reflex3 row gains the nested-only
+  skeletons; the metadata row is now `u16 k | k × u16`; and "the `Extension`" is pinned to the first
+  record.
+- [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md): open question 4's collider note
+  goes from *inferred* to verified, with the transcription fixed (correction 9).
+- [`meta/next-session.md`](next-session.md): the ragdoll block, parked lead #6, and the *Don't
+  repeat* line (correction 6).
+
+### Tooling
+
+No repo tool changed. The census scripts live in the session scratchpad only:
+- `census.py`: forge index → entry bytes by offset → `read_cfd` ×2 → `walk()` → metadata
+  cross-check, CSV per chunk. With 4 worker processes, 78.9 GB took about four minutes on NVMe.
+- `analyze.py`, `verify_meta.py`, `ragdoll_decode.py`, `anim_keywords.py` and `provenance.py`.
+
+The method needs nothing beyond `tools/data_inspect.py` and the forge-index layout in
+`tools/forge_inspect.py`.
+
+### Method note
+
+**A cross-check that fails is a lead, not noise.** The metadata comparison failed on 4,155
+containers whose walks were complete. Following it rather than filtering it out gave the
+variable-length row. Following the leftover trailing bytes gave ATK's per-container signature,
+which turned "is this vanilla?" into a byte test.

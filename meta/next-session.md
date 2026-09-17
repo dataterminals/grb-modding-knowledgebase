@@ -742,22 +742,62 @@ payoff.
    table, `TP_VestHeavy_RaidMedic`, assigns the Walker coat mesh and **`TP_WalkerCoat_Cloth`** with
    Raid Medic materials; there was never a cloth named for the cape to find. Not a route-B exemplar.
 6. ~~**Ragdoll bone-collider list** in `TP_WalkerCoat_Cloth`'s editor data.~~ **CLOSED 2026-08-14.**
-   Decoded: a 536-char semicolon-separated list of **13 garment-owned capsule colliders**, every one
+   Decoded: a 550-char *(536 as first recorded; re-measured 2026-09-16)* semicolon-separated list of **13 garment-owned capsule colliders**, every one
    prefixed `TP_WalkerCoat_`, covering **upper body only** (Head, Neck, L/R Arm, ForeArm, Hand,
    LeftShoulder ×4 — no spine, pelvis or legs). It is the coat cloth's collision proxy set, named
    after the bones it follows. **Not** a death-ragdoll rig, and not a binding mechanism.
+   *(Refined by the 2026-09-16 census: the list names 13 of the 23 capsules of
+   `TP_WalkerCoat_Ragdoll`, a whole-body `LiteRagdoll` in the same container that the cloth references
+   by ClassID — the upper-body subset, `LeftShoulder` ×4 included. Still collision, still not a death
+   rig.)*
 
-**~~Do not re-chase~~ REOPENED 2026-09-16 — the community ragdoll question (2026-08-14):**
+**~~Do not re-chase~~ REOPENED 2026-09-16, RE-ANSWERED by the census that night — the community ragdoll question (2026-08-14):**
 
-> ⚠️ **The absence argument below does not hold.** GRB *does* ship `LiteRagdoll` resources, nested
-> inside containers: `TP_WalkerCoat_Ragdoll` in `TP_WalkerCoat_Cloth.data`, and one each in
-> `PLAYER_Template` and `TEAMMATE_Template`. All three legs of the original answer counted **forge
-> entries**, which name only a container's first resource, so none of them could see a nested
-> resource of any type — nested `Animation`s included (17 sit in the DB container alone).
-> **What would answer it:** a census of nested resources across all forges with
-> `data_inspect.walk()` — how many `LiteRagdoll`s there are, what holds them, and which `Animation`s
-> exist once nested ones count. Until that runs, the question is open. The original answer is kept
-> below for provenance.
+> ⚠️ **The absence argument below does not hold.** All three legs of the original answer counted
+> **forge entries**, which name only a container's first resource, so none of them could see a nested
+> resource of any type. The census confirms it exactly: first-position `LiteRagdoll`s number **0** and
+> first-position `Animation`s exactly **1,564** — the two numbers the answer rested on.
+>
+> **Re-answered 2026-09-16 (night): the resources are there; the switch is not found.** The census
+> walked all 415,024 containers in 27 forges: 3,935,343 resources, every walk ending on its last
+> byte. It found:
+>
+> - **`GR_MaleAverage`, a `RagdollSkeleton`:** 19 `RagdollBoneData`, 18 `RagdollConstraintData`, 4
+>   `RagdollMotorParameters` and 1 `RagdollBoneDriveParameters`, over the standard biped bones. It is
+>   referenced by 51 human `Entity` resources: `CHR_NPC_BASEENTITY`, the
+>   `CHR_NPC-REGULARSKEL-SOLDIER_TARGET` family, Walker, Miter, civilians, cinematic NPCs,
+>   **`CHR_PLAYER_TGT`**. *Inferred:* the powered physics ragdoll the human entities share.
+> - **88 distinct `LiteRagdoll`s** (637 nested copies). They are capsule sets, not jointed rigs:
+>   whole-body `DamageTriggerRagdoll_{default, Heavy, ArmoredBodark, RocketLauncher, WALKER, Miter…}`
+>   per archetype (20–28 capsules); garment cloth colliders; animals; drones; raid bosses.
+> - **A death and hit-reaction bank,** all inside the container named `MIS_Y2E4_Katya_Maksimov`:
+>   - 188 generic-soldier deaths, `mil_gen_m_ale_ros_{std,crh}_V0_N_death_{regular, heavy, explosion,
+>     electric, …}_‹region›_‹direction›`
+>   - 172 zonal `_hit_{regular,heavy}_` reactions
+>   - 77 downstate clips, 24 stumbles and one get-up
+>
+>   No `Animation` is named `*ragdoll*`.
+>
+> All of it is vanilla: byte-identical to, or present by ClassID in, the `Backups\` forges, which
+> include the Sept 2023 pristine patch.
+>
+> **The answer for Releptive, as it now stands:** GRB ships a physics-ragdoll definition that its
+> human entities share *and* a directional canned-death bank. What decides a clip versus the ragdoll
+> — and whether that decision is data at all — is **not located**, so "can normal deaths ragdoll
+> instantly?" is open, not "no". *(Inferred, unchanged since 2026-08-14: the hostage-guard drop
+> could be the ragdoll taking over when no clip fits. There is still no data either way.)*
+>
+> **Next, in order:**
+> 1. Decode `GR_MaleAverage`'s 4 `RagdollMotorParameters` and 1 `RagdollBoneDriveParameters` against
+>    the `RagdollBoneProperty_ActivationBlendTime` / `_ActivationDelayed` / `_StiffnessFactor` /
+>    `_…DriveMode` strings in `GRB.exe`.
+> 2. Export `PMC_HEAVY_RagDoll` — the only `BuildTable` named for a ragdoll; it points at
+>    `DamageTriggerRagdoll_Heavy` — with `atk_bridge.py --xml --resource`.
+> 3. Search the DB container for records that name ragdoll, death or hit behaviour.
+>
+> Detail and layouts: the 2026-09-16 (night) research-log entry.
+
+*Original answer (2026-08-14), superseded — kept for provenance:*
 
 Releptive asked in `#shit-talk` whether GRB deaths could ragdoll instantly the way hostage-guard
 kills do. **Answer: not with today's data surface, and the reason is absence, not difficulty.**
@@ -799,8 +839,11 @@ that is not a forge resource. Full detail in the 2026-08-14 research-log entry.
   container and name the resource that holds the bytes. "An `EntityBuilder` assigns skeletons" and
   "the precedents sit under `PLAYER_SkelAddons`" both came from that shortcut.
 - **Don't treat a forge-entry sweep as a resource census.** A forge entry is a container named after
-  its first resource. Nested resources are the normal case, about 2.5 per container, and a sweep of
-  entry names or extensions cannot see them. That is how "GRB ships no `LiteRagdoll`" got written.
+  its first resource. Nested resources are the normal case: 89.5 % of GRB's 3.9 M resources, and
+  1,785 of its 1,852 resource types never come first (census, 2026-09-16). A sweep of entry names or
+  extensions cannot see them. That is how "GRB ships no `LiteRagdoll`" and "no combat animations"
+  got written. *(Per container the median is 1 resource and the mean 9.5; the "about 2.5" once
+  quoted here does not hold install-wide.)*
 
 **On the cloth work:**
 

@@ -47,7 +47,8 @@ XML-exports this field for GRB.
 
 Empirically, **all 2,469 skeletons contain exactly one inline `Reflex3SkeletonConstraints`
 object** (hash `2386539642`) — `ObjectPtr` tag 0/4 means the object is embedded, which is why no
-forge entry is *typed* `Reflex3SkeletonConstraints`.
+forge entry is *typed* `Reflex3SkeletonConstraints`. *(Those 2,469 are forge-entry skeletons; 60 of
+the 285 that only occur nested carry none — see the census note below.)*
 
 ### 512 of 2,469 skeletons carry real constraint data
 
@@ -58,6 +59,21 @@ Immediately after the class hash comes an `int32` blob length
 | --- | --- | --- |
 | **8 bytes** | header only → **no bone physics** | 1,957 |
 | **> 8 bytes** | real per-bone constraints | **512** |
+
+> ⚠️ **The 2,469 were forge entries, not all skeletons** *(2026-09-16, census of nested resources)*.
+> The sweep picked skeletons by forge-entry `Extension`, which sees only a container's *first*
+> resource. Walking every container finds **9,649 `Skeleton` resources**, 7,192 of them nested.
+> **285 distinct skeletons never occur first**, so the sweep above could not see them:
+>
+> | Nested-only skeletons | Count |
+> | --- | ---: |
+> | Reflex3 blob > 8 B — `Addon_collar_midas` 15,234 B, `DRN_CIV-Farmer-Crane` 7,138 B, `Addon_Accessories_Midas` 780 B, `Addon_hair_midas` 394 B | **4** |
+> | header-only (8 B) | 221 |
+> | **no `Reflex3SkeletonConstraints` hash in the payload at all** — mostly `*_RTA` / `*RTAONLY` drone and boss rigs (`DRN_CERBERUS_*_RTA`, `DRN_BAAL_*_RTA`) in world cells and cinematic configs | **60** |
+>
+> So "every skeleton carries an inline Reflex3 object" holds for the 2,469, not for all GRB
+> skeletons. *Inferred:* the 60 hold a null pointer; this was not checked field by field. Method: the
+> 2026-09-16 (night) research-log entry.
 
 ### The GRB blob header — a new constant
 
@@ -531,11 +547,14 @@ item / character BuildTable  (TP_PANT_Kilt, Tsec_IanBlake_Trench_Mcloth_MISSION,
 
 | Hash (dec) | Class | Present in GRB? |
 | ---: | --- | --- |
-| `2386539642` | **`Reflex3SkeletonConstraints`** | ✅ inline in every skeleton |
+| `2386539642` | **`Reflex3SkeletonConstraints`** | ✅ inline in every forge-entry skeleton (all 2,469); absent from 60 of the 285 skeletons that only occur nested *(2026-09-16)* |
 | `3558325132` | `ReflexSystem` | field read for GRB, but never inline in the 7 sampled skeletons |
 | `2507411529` | `Bone` | ✅ |
-| `2299544533` | `LiteRagdoll` | ✅ **nested inside containers** — `TP_WalkerCoat_Ragdoll` (3,573 B) in `TP_WalkerCoat_Cloth.data`, one each in `PLAYER_Template` and `TEAMMATE_Template` *(corrected 2026-09-16; the earlier "never" came from a forge-entry sweep, which cannot see nested resources)*. ATK's `SupportedGames` still excludes GRB, so ATK won't parse them |
-| `2371068428` / `572675924` / `333476854` / `2408076648` | `LiteRagdollCapsule` / `Shape` / `CapsuleGroupFlags` / `ExternalCapsule` | not checked since `LiteRagdoll` turned up — these live *inside* one |
+| `2299544533` | `LiteRagdoll` | ✅ **637 nested resources, 88 distinct, all vanilla, never a container's first resource** — hence the old sweep's zero *(census 2026-09-16, night)*. A list of bone-attached capsules. Families: per-archetype `DamageTriggerRagdoll_*` on human entities; garment collider sets referenced by `Cloth` resources (e.g. `TP_WalkerCoat_Ragdoll`, 3,573 B, whose 13 upper-body capsules are the coat cloth's collider list); animals; drones and robots; raid-boss `*_ColContainer*`; a one-capsule set each for player and teammate. ATK's `SupportedGames` excludes GRB and its capsule layouts do not fit; the GRB layout is in the research-log entry |
+| `333476854` | `LiteRagdollCapsuleGroupFlags` | ✅ embedded in every GRB capsule (`u64 localID`, hash, 16 × bool); never a resource |
+| `2371068428` / `572675924` / `2408076648` | `LiteRagdollCapsule` / `LiteRagdollShape` / `LiteRagdollExternalCapsule` | ❌ **not used** — GRB capsules use four other classes, names unknown: `286154434` (`0x110E5EC2`), `3736378044` (`0xDEB49ABC`), `3405269372` (`0xCAF8497C`) — *inferred* sphere / capsule / box from 1 / 2 / 3 size floats — and `716768756` (`0x2AB905F4`), which points at a `MeshShape` / `ConvexVerticesShape` / `BoxShape` / `CylinderShape` resource by ClassID |
+| `1273385935` | `RagdollSkeleton` *(CRC32 match in ATK's name dictionary; no ATK class)* | ✅ one: **`GR_MaleAverage`**, 6,070 B, nested in `MIS_Y2E4_Katya_Maksimov`. Referenced by 51 human `Entity` resources (25 names), `CHR_PLAYER_TGT` and `CHR_TEAMMATE_TGT` included. Vanilla |
+| `1401269008` / `854659681` / `4236257670` / `2032007014` | `RagdollBoneData` / `RagdollConstraintData` / `RagdollMotorParameters` / `RagdollBoneDriveParameters` *(dictionary matches)* | ✅ embedded in `GR_MaleAverage`: 19 / 18 / 4 / 1, over 19 standard biped bones. Fields undecoded |
 | `3371740159` / `547156082` / `119336528` | `SkeletonPoseGroup` / `SkeletonPose` / `SkeletonPoseBone` | ❌ not inline in sampled skeletons |
 | `4226984470`, `2137463166`, `2236439251`, `1849557783`, `3730792035`, `3946334986`, `868651492`, `575748634`, `3465920383`, `4030027666` | `ReflexBallJoint`, `ReflexFastPoseHull`, `ReflexPoseSet`, `ReflexPackedPoseBone`, `ReflexBoneInfo_BallJoint`, `ReflexBoneInfo_Connector`, `ReflexBoneTarget`, `ReflexMeasurement`, `ReflexConnector`, `ReflexConnectorElement` | ❌ never (the older Reflex, not Reflex3) |
 
@@ -553,6 +572,11 @@ Read-only; touches nothing in the install.
    (needs the install's `oo2core_7_win64.dll`).
 4. `find` the little-endian `uint32` `2386539642`; the `int32` at `+4` is the blob length; the blob
    starts at `+8`.
+
+> ⚠️ **Step 1 finds only skeletons that come first in their container** *(2026-09-16)*. To include the
+> 285 distinct skeletons that only occur nested, read **every** entry, `walk()` its files block, and
+> keep the resources with `type_id == 615435132`. Then search each resource's payload, not the whole
+> files block.
 
 ---
 
@@ -576,9 +600,23 @@ Read-only; touches nothing in the install.
 It is **not** a death ragdoll. `Reflex3Physics` is a driven-bone solver (swing/slide about a rest
 pose, with gravity and wind) — not a rigid-body ragdoll with joint limits and impulses.
 
-> ⚠️ **Corrected 2026-09-16.** This section used to add that GRB ships no `LiteRagdoll` resource
-> and no death/hit-reaction animations. The first is wrong — `LiteRagdoll` resources exist, nested
-> inside containers (`TP_WalkerCoat_Ragdoll`, whose name matches the coat cloth's
-> `TP_WalkerCoat_Ragdoll_*` collider list above) — and the second rests on the same forge-entry
-> sweep, so it is unproven rather than disproven. A census of nested resources would settle both.
-> See the 2026-09-16 research-log entry.
+> ⚠️ **Corrected 2026-09-16, and settled by a census of nested resources the same night.** This
+> section used to add that GRB ships no `LiteRagdoll` resource and no death/hit-reaction animations.
+> **Both are wrong.** Every container in every forge was walked:
+>
+> - **637 `LiteRagdoll`s, 88 distinct, all vanilla.** They are bone-attached capsule sets, and their
+>   format holds no joints (*inferred:* collision and hit volumes). Per-archetype `DamageTriggerRagdoll_*` sets (20–28 capsules
+>   over the whole body) hang off the human `Entity`s. The Walker coat cloth's
+>   `TP_WalkerCoat_Ragdoll_*` collider list above names 13 of the 23 capsules of
+>   `TP_WalkerCoat_Ragdoll`, which the cloth references by ClassID.
+> - **A rigid-body ragdoll candidate, separate from Reflex3:** the `RagdollSkeleton`
+>   **`GR_MaleAverage`** — 19 `RagdollBoneData`, 18 `RagdollConstraintData`, 4
+>   `RagdollMotorParameters` and 1 `RagdollBoneDriveParameters` over the standard biped bones. The
+>   human `Entity`s reference it, `CHR_PLAYER_TGT` included. *Inferred:* a powered ragdoll. Its
+>   fields are undecoded.
+> - **A nested death and hit-reaction bank:** 188 directional generic-soldier deaths
+>   (`mil_gen_m_ale_ros_std_V0_N_death_regular_chest_front_01`, …), 172 zonal hit reactions and one
+>   get-up clip.
+>
+> **What decides between a canned death and the ragdoll is not located.** See the 2026-09-16
+> (night) research-log entry.
