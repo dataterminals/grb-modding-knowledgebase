@@ -3797,3 +3797,119 @@ The method needs nothing beyond `tools/data_inspect.py` and the forge-index layo
 containers whose walks were complete. Following it rather than filtering it out gave the
 variable-length row. Following the leftover trailing bytes gave ATK's per-container signature,
 which turned "is this vanilla?" into a byte test.
+
+## Entry — 2026-09-20 — The Reflex3 physics record is fully decoded, the blob's grammar is read, and vanilla chain recipes are extracted
+
+**Trigger:** lane 2B needs a poncho rig *authored*, not copied (2026-09-16: no vanilla garment
+flows on bones alone), and authoring needs the whole physics record. The 2026-08-14 decode had left
+`param[0..3]`, `param[5..8]`, every non-physics type and the record boundaries as guesses. Corpus:
+every Reflex3 blob in the SylG5 install — 512 skeleton entries carry one, 204 distinct — pulled by
+forge index and Oodle-decompressed into the session scratchpad; ATK 1.3.1 decompiled with
+`ilspycmd -p`; the `GRB.exe` string table. **Read-only on the game.**
+
+### VERIFIED — the record grammar, from a self-delimiting parse of all 204 blobs
+- **The August acid test was vacuous.** "The walk consumes 204 of 205 blobs exactly" was true by
+  construction: record ends came from scanning for the next record head, so the last record always
+  ran to the end of the blob. Nothing about the boundaries in between had been checked.
+- **A bone in a record is 264 bytes, not 72:** `u32 BoneID | u32 ParentBoneID | 4 × matrix`, and a
+  record carries one such BoneInfo per constrained bone **and per target**. The physics record's
+  constrained bone has five matrices.
+- **Type 9's "extra constant `0x01`" is a count** — 1 in 790 records, 5 in 476, 12 in 114, 4 and 2
+  in the rest: the number of constrained BoneInfos that follow. The trench coat's two type-9 records
+  each orient twelve bones under `Spine2` and the shoulders.
+- **Bones are also referenced by name.** A BoneID of `0xFFFFFFFF` is followed by a length-prefixed
+  string — `Spine2`, `LeftShoulder`, `LeftForeArm`, `T_BackPack`, `T_SpineTrenchCoat`,
+  `L_LeftArmNoRoll` — with the parent hash still present (`LeftForeArm`'s parent is `LeftArm`, CRC32
+  confirmed). Pose names are strings too: `Default`, `left`, `back`, `right`, `down`, `up`, `Pose_6`,
+  inside type-9 records.
+- **Two record types were hiding in the old "tails": 11 (218 records) and 8 (1).** Type 11 has a
+  count byte like type 9; every one of its BoneIDs resolves to a bone of its skeleton.
+- **Self-delimiting grammars, checked by landing on the next record's type byte:** type 21 (1,353 of
+  1,362; the other nine land on a type-8/11 record), type 6 (470 of 472), type 19 (115 of 115), type
+  5 (167 of 174), type 24 (15 of 19). Types 7, 9, 11, 20 and 23 are still located by scanning. **All
+  204 blobs now read to their last byte** — 4,505 records, BoneID resolving for 4,081 of 4,088
+  against each skeleton's declared bones.
+- **Hinge (type 6):** `BoneInfo | u8 n | n × { BoneInfo target ; f32 weight } | u8 u8 | unit quat |
+  u8 | u32`. Weights are percentages (50 + 50, 30 + 70, 100).
+- **Type 23** is a 69-byte marker — `u32 2` (or 3) and an identity matrix — that sits before type-9
+  records; four weapon rigs open with one. The 84 "type-23 records" of August that carried a bone
+  hash and a tail were bytes inside other records.
+- **Type 24** is what the scarf (five records) and the NVG straps use instead of the swing record:
+  one target, one limited angle pair, three `±π` pairs, a quaternion and a matrix; 677 bytes.
+
+### VERIFIED — the physics record (type 21), all 1,362
+```
+u8 21 | u32 BoneID | u32 ParentBoneID | 5 × matrix
+| 5 × { u8 gate ; if 1: f32 min, f32 max }     slide X, Y, Z (metres) ; swing 1, swing 2 (radians)
+| f32 × 9                                       [p0 … p8]
+| [matrix]                                      5 records only; unannounced
+```
+- The "three flag bytes" of August are the first three gates. The light-machine-gun rigs have them
+  set: slide limits of ±0.5 mm and 2.5 mm, spring 20, damping 0.95/0.98. Slot patterns: two swings
+  1,272; one swing 68; slide X+Y 15; slide X+Y+Z plus one swing 5.
+- **Matrices:** `m0 = m1 =` the bone's local bind transform from the skeleton's own `Bone` record
+  (1,314 of 1,362; the rest a rotation away); `m3 = m4` always, `= m0` in 1,194, a pure rotation
+  from it in 146, **scaled** in 7; **`m2` = the parent bone's transform in character space** —
+  `W · G_body(attach) · G_addon(parent)` with `W` a 90° turn about the vertical axis and a lift of
+  0.964 m, exact to 2 cm for every record of the kilt, Casper hair, Rosa hair, the trench coat and
+  the Hill backpack against `Regular_Male_Body_Skl`; the Herzog and Layla rigs fit the same `W` with
+  lifts of 0.758 and 0.845 m.
+- **`p4` = 9.8 (1,352), `p5` = 1.0 (1,352), `p6` = 1.0 (1,348), `p7` = `p8` = 0.** `p6` is 0 on
+  seven knife and rifle rigs and one backpack.
+- **Parameter presets, by rig:** hair strands `(0.4→0.1, 0, 0, 0.6)`; every backpack body
+  `(5.0, 0 or 25, 0 or 1, 1.0)`; zipper pulls, straps, kilt, trench panels `(0.2, 0, 0, 0)`; ponytail
+  `(0.2, 0, 0, 0.8)`; slide records `(0.8, 20, 0.95, 0.95 or 0)`.
+- **A GRB `Bone` record** is `u8 | u64 local ID | u32 hash 2507411529 | u32 Name | ObjectPtr Parent |
+  ObjectPtr Mirror | Vector4 GlobalPosition | Quat GlobalRotation | Vector4 LocalPosition | Quat
+  LocalRotation | u8 | u8 | i32 | …` (ATK `Bone.Read`, GRB branch); a null pointer is the single byte
+  `03`, a link is `02` + `u64`. Add-on skeletons put their attach bone (`Hips`, `Head`, `Spine2`) at
+  the origin as their root.
+
+### INFERRED — parameter names
+| # | name | why |
+| ---: | --- | --- |
+| 0 | mass | 5.0 on every whole backpack, 0.2 on zipper pulls and hair, 0.4 → 0.1 down a strand, 0.8 on gun parts. A damping term does not take the value 5 on the heaviest object in the set |
+| 1 | spring constant | 20 on every slide record, 25 on backpacks (spring-returned), 100 twice; ATK's `SpringConstant` |
+| 2 | slide damping | 0.95 / 0.98 only with slide on; ATK's `DampingConstant` |
+| 3 | unresolved | 0 default, 0.6 hair, 0.8 ponytail, 1.0 backpacks, 0.95/0.98 with slide — swing damping or centre of mass both fit |
+| 5, 6 | gravity factor, wind factor | 1.0 defaults; wind 0 on knives |
+
+`GRB.exe` carries `gravityFactor`, `springConstant`, `centerOfMass` and `blendWeight` as strings, but
+they sit in Havok's reflection tables, not next to the `Reflex3_*_Constraint` names — the exe did
+not settle the order. The thirteen Reflex3 class names it does carry include four ATK lacks:
+`RotationExpression`, `Double_BallJoint`, `Measurement`, `Engine`.
+
+### ⚠️ CORRECTIONS
+1. "Type 9 carries one extra constant `0x01`" (2026-08-14, fourth) — a count.
+2. "`tail := u8×3 flags | gated pairs | f32×9`" (2026-08-14, third) — five gated slots, no flag bytes.
+3. "The walk consumes 204 of 205 blobs exactly" — vacuous, see above.
+4. "`param[0]` … damping-shaped" — mass-shaped; the hair strand's `0.4 → 0.1` is the same gradient
+   read as mass.
+5. "The record head is `BoneID | ParentBoneID | InitTransform`" — the head is a full four-matrix
+   BoneInfo, and targets carry one each; `InitTransform` is the first of the four.
+6. `reflex3.py`'s 2026-08-14 physics decoder mis-read the 20 slide records (it skipped three bytes,
+   then hit a gate value it did not expect) — fixed.
+
+### NOT verified / open
+- `p3`, `p7`, `p8`. What feeds the wind factor.
+- Whether the runtime reads `m2` and `m3/m4` or recomputes them from the skeleton.
+- The type-9 body beyond its shape: the 87-byte entries (three bytes, four vec4, five floats) and the
+  pose blocks. Types 20 and 8. The 22-byte and 131-byte trailers of types 5 and 24.
+- Nothing was written, repacked or launched.
+
+### Docs and tools
+- [`tools/reflex3.py`](../tools/reflex3.py) rewritten: self-delimiting parse for types 21, 6, 5, 19,
+  24, scan for the rest; the five-slot physics layout with inferred names; by-name bones; chain
+  marker and character-space height in the table; `--raw` lists every record with its targets.
+  `rebind_check.py` keeps working unchanged.
+- [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md): grammar,
+  physics record and sample output rewritten.
+- New: [`reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md) — the hair,
+  ponytail, kilt, backpack, trench and slide recipes, and an inferred poncho recipe.
+- [`meta/next-session.md`](next-session.md), [`tools/README.md`](../tools/README.md) updated.
+
+### Method note
+**A parse that cannot fail is not a test.** The scan-based walk always consumed every byte; the
+question it seemed to answer was never asked. Making each record delimit itself from its own fields
+and checking that it lands on a type byte turned the same corpus into a real test — and found the
+count byte, the four-matrix bone info, two record types and 218 hidden records within an hour.

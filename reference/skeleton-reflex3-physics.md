@@ -96,46 +96,71 @@ Immediately after the class hash comes an `int32` blob length
 
 ### Blob body — decoded
 
-*Cracked 2026-08-14. Read it with [`tools/reflex3.py`](../tools/reflex3.py).*
+*Cracked 2026-08-14; **rewritten 2026-09-20** after a self-delimiting parse of all 204 distinct
+blobs in the install. Read it with [`tools/reflex3.py`](../tools/reflex3.py).*
 
 ```
-blob   := u32 magic 0x12341234 | u32 version 3012000 | record*
+blob     := u32 magic 0x12341234 | u32 version 3012000 | record*
 
-record := u8  type
-          [u8 0x01]                   type 9 only — one extra byte
-          u32 BoneID                  CRC32 of the driven bone's name
-          u32 ParentBoneID            CRC32 of its parent's name
-          M(type) × 64-byte matrix    4×4 row-major affine: orthonormal 3×3,
-                                      translation in column 3, bottom row (0,0,0,1).
-                                      The first is Reflex3BoneInfo.InitTransform.
-          tail                        type-specific
+record   := u8 type | head | body
+
+head     := BoneInfo                       types 5 6 7 8 19 20 21 24
+          | u8 count | BoneInfo            types 9 11   — count = constrained bones, 1…12
+          | u32 v | 64-byte matrix         type 23      — v is 2 or 3; a 69-byte marker
+
+BoneInfo := u32 BoneID                     CRC32 of the bone's name, or 0xFFFFFFFF
+            u32 ParentBoneID               CRC32 of its parent's name (0xFFFFFFFF = none)
+            [u8 len | name]                only when BoneID is 0xFFFFFFFF: the bone is named
+            4 × 64-byte matrix             5 for the physics record (type 21)
 ```
 
-That head is exactly ATK's `Reflex3BoneInfo`:
-`{ uint BoneID; uint ParentBoneID; Matrix4x4 InitTransform }`.
+Every matrix is a 4×4 row-major affine — orthonormal 3×3, translation in column 3, bottom row
+`(0,0,0,1)` — except that the swing rest frame of seven physics records carries a scale.
 
-`H` and `M` are **constant per type**. Every blob's *first* record is unambiguous (it starts at
-byte 8), giving 205 independent samples — and the vote was **unanimous for every type**:
+**What changed since August.** The 2026-08-14 model was `u8 type | 8 header bytes | M matrices |
+tail`, with type 9 carrying "one extra constant `0x01`", and its acid test — "the walk consumes 204
+of 205 blobs exactly" — was vacuous: the walk found the next record by scanning, so the last record
+always ran to the end of the blob whatever the boundaries in between were. Parsing each record from
+its own fields instead gives:
 
-| type | H | M | ATK's `Reflex3ConstraintTypeRegistry` | first-records |
-| ---: | ---: | ---: | --- | ---: |
-| 5 | 9 | 4 | — | 11 |
-| 6 | 9 | 4 | **HingeVector** | 3 |
-| 7 | 9 | 4 | **LookAt** | 4 |
-| 9 | 10 | 4 | **Orientation** | 133 |
-| 19 | 9 | 4 | — | 2 |
-| 20 | 9 | 4 | — | 6 |
-| **21** | **9** | **5** | — → **the physics record** | 38 |
-| 23 | 5 | 1 | — | 4 |
-| 24 | 9 | 4 | — | 4 |
+| | 2026-08-14 | 2026-09-20 |
+| --- | --- | --- |
+| type-9 second byte | constant `0x01` | a **count**: 1 (790 records), 5 (476), 12 (114), 4, 2 — the number of constrained bones that follow, each with its own BoneInfo |
+| a bone in a record | `BoneID \| ParentBoneID \| 1 matrix` | `BoneID \| ParentBoneID \| [name] \| 4 matrices` — 264 bytes |
+| bones in a record | one | the constrained bone(s) **plus the targets**, each a full BoneInfo |
+| record types | 5 6 7 9 19 20 21 23 24 | **also 8 and 11** — hidden inside what the scan called "tails": 218 type-11 records, one type 8 |
+| strings | none | **bone names and pose names as plain text**: `Spine2`, `LeftShoulder`, `T_BackPack`, `T_SpineTrenchCoat`, `L_LeftArmNoRoll`; `Default`, `left`, `back`, `right`, `down`, `up` |
+| boundaries | scan heuristic | physics, hinge and types 5, 19, 24 delimit themselves; the rest are scanned |
 
-> **Why this is convincing:** three of the nine type bytes — 6, 7 and 9 — land exactly on
-> `HingeVector`, `LookAt` and `Orientation` in ATK's registry. That the byte is the constraint
-> **type** is not a guess. The other six are types GRB uses that ATK never modelled — the same
-> species of blind spot as the 22 unmodeled MotionCloth sections.
+**By-name bones.** A `BoneID` of `0xFFFFFFFF` followed by a length-prefixed string is a bone the
+add-on rig does not own — a body bone, referenced by name and resolved at runtime. `ParentBoneID`
+still carries a hash: `LeftForeArm`'s is `LeftArm`, `LeftShoulder`'s and `T_BackPack`'s are
+`Spine2` (all CRC32-confirmed). This is how a hair or backpack rig says where on the body it hangs.
 
-**Acid test:** walking every blob with this model consumes **204 of 205 exactly**, landing on the
-final byte with nothing left over.
+**Result of the parse:** all **204 blobs read to their last byte** — 4,505 records — and each
+record's `BoneID` resolves to a bone its own skeleton declares in 4,081 of 4,088: 100 % for every
+type but 5 (168 of 174) and one hinge. Scanning is now confined to types 7, 8, 9, 11, 20 and 23,
+and it is exact for whatever follows a self-delimiting record.
+
+| type | records | delimits itself | what it is |
+| ---: | ---: | --- | --- |
+| **21** | **1,362** | yes: 1,353 land on the next type byte, the other nine on a type-8 or type-11 record | **the physics record** — [below](#the-physics-record-type-21--field-by-field) |
+| 6 | 472 | yes, 470 | **hinge**: `u8 n \| n × { BoneInfo target ; f32 weight }` then `u8 u8 \| unit quaternion \| u8 \| u32`. Weights are percentages: 50 + 50, 30 + 70, 100 |
+| 9 | 1,413 | scanned | **pose-driven orientation** (`Reflex3_RotationExpression`-shaped): `count` constrained bones, two target bones, `i32 k \| vec4 \| k × 87-byte entries`, then **named poses** (`Default`, `left`, `back`, `right`, `down`, `up`, `Pose_6`), each a vec4, a name and two matrices |
+| 23 | 379 real | scanned | a 69-byte **marker**: `u32 2` (or 3) and an identity matrix, almost always right before a type-9 record; four weapon rigs open with one |
+| 11 | 218 | scanned | `Position` in ATK's registry; a count byte like type 9 and six matrices on the constrained bone |
+| 19 | 115 | yes | attachment-like: `u8 n \| n × { BoneInfo ; f32 weight (0.5) ; matrix }` then a matrix, `u8`, `u32`. Follows the physics record on every backpack |
+| 7 | 266 | scanned | `LookAt`: one target, then an up-node BoneInfo, axes and a quaternion, as in ATK's Mirage class |
+| 5 | 174 | yes, 167 | two weighted targets (50 + 50) and a 22-byte trailer; the character rigs |
+| 24 | 19 | yes, 15 | a **ball-joint physics** record — the **scarf** (five) and the **NVG straps** use it instead of type 21: one target, one limited angle pair, three unlimited `±π` pairs, a quaternion, a matrix; 677 bytes |
+| 20 | 48 | scanned | a bone pair and vectors; unread |
+| 8 | 1 | — | `BodyUp_Skeleton` only; head like type 6 |
+
+> **Verified:** the grammar above, the counts, and every field named in the physics and hinge rows.
+> **Inferred:** what types 9, 19, 24 and 11 *do* — their shapes are read; the names are ATK's
+> registry (`9` Orientation, `11` Position) or the exe's list. `GRB.exe` carries thirteen
+> `Reflex3_*_Constraint` names, four of which ATK does not model: `RotationExpression`,
+> `Double_BallJoint`, `Measurement`, `Engine`.
 
 ### Bone names are `CRC32(exact-case name)` — and the record head is two of them
 
@@ -252,7 +277,7 @@ bones (coat panels, hair strands) are still bare numbers, and no source found so
 `Tsec_Herzog_Hair_Skeleton`, first four records — each record's parent **is the previous record's
 bone**, i.e. a hair strand:
 
-| # | bone | ← parent | swing limits | damping |
+| # | bone | ← parent | swing limits | mass\* |
 | ---: | ---: | ---: | --- | ---: |
 | 0 | 877775753 | 2908265011 | ±10° / 0…+25° | 0.4 |
 | 1 | 1129773855 | **877775753** | ±15° / −1…+30° | 0.3 |
@@ -260,61 +285,102 @@ bone**, i.e. a hair strand:
 | 3 | 79239470 | **3711069884** | ±25° / −5…+40° | 0.1 |
 | 4 | 3135163498 | 601333200 | ±10° / 0…+25° | 0.4 ← a new strand begins |
 
-The limits **widen** down the chain while damping **falls** — stiff at the root, floppy at the tip.
+The limits **widen** down the chain while mass **falls** (0.4 → 0.1; the 2026-08-14 entry read this
+field as damping) — stiff and heavy at the root, light and loose at the tip.
 That is how an animator authors hair, and it is strong evidence the decode is reading real fields
 rather than coincidental bytes.
 
 ### The physics record (type 21) — field by field
 
-> **Verified** against **all 1,354 type-21 records in the game.**
+> **Verified** against **all 1,362 type-21 records in the game** (2026-09-20). With this layout
+> 1,353 records end exactly on the next record's type byte; the other nine end on a type-8 or
+> type-11 record. The 2026-08-14 "three flag bytes then gated pairs" was the same bytes misread:
+> the three "flags" are the first three of five gates.
 
 ```
-tail := u8 × 3                          flags
-        { u8 gate ; if gate==1: f32 lo, f32 hi }*   angular limits, RADIANS
-        f32 × 9                         parameter block
+head := u8 21 | u32 BoneID | u32 ParentBoneID | 5 × matrix
+             m0 = m1 = the bone's LOCAL bind transform, from the skeleton's own Bone record
+                       (1,314 of 1,362; the rest differ from it by a rotation only)
+             m2      = the PARENT bone's transform in character space — see below
+             m3 = m4 = the swing rest frame: == m0 in 1,194, a pure rotation away from it in 146,
+                       and scaled in 7
+
+body := 5 × { u8 gate ; if gate == 1: f32 min, f32 max }
+             slots 1–3: slide X, Y, Z — translation limits in METRES (|v| ≤ 0.0025 in vanilla)
+             slots 4–5: swing axis 1, swing axis 2 — angular limits in RADIANS
+        f32 × 9
+        [64-byte matrix]   in 5 of 1,362 (four knife/rifle rigs, one hair rig); nothing in the
+                           record announces it — a reader has to test for it
 ```
 
-| Evidence | Result |
-| --- | --- |
-| `param[4]` | **9.8 in 1,344 / 1,354 records (99.3 %)** — this is `Reflex3Physics.Gravity`, whose ATK default is `9.8f` |
-| `param[5]`, `param[6]` | `1.0` in 1,344 / 1,338 |
-| `param[7]`, `param[8]` | `0.0` in 1,353 / 1,349 |
-| `param[0]` | `0.2` in 1,096 (then 5.0, 0.8, 0.5, 0.4) — damping-shaped |
-| `param[1]` | `0.0` in 1,231, else 25.0 / 20.0 / 100.0 — stiffness-shaped |
-| `param[2]` | `0.0` in 1,306, else 1.0 / **0.95** / **0.98** — classic damping coefficients |
-| gate count | **2 pairs in 1,262 records**, 1 pair in 72, 0 in 20 |
-| limit values | exactly `−1.5708` (−π/2), `3.1416` (π), `−0.4363` (−25°), `0.6109` (35°); range `[−π, +π]`; **median \|limit\| = 15.00°** |
+| slot pattern | records | what |
+| --- | ---: | --- |
+| `- - - S S` | 1,272 | two swing axes — hair, straps, garments |
+| `- - - - S` | 68 | one swing axis — the trench coat's ten, among others |
+| `X Y - - -` | 15 | slide only — light-machine-gun parts |
+| `X Y Z S -` | 5 | slide and one swing |
 
-The limits are **unmistakably radians** — the constants are π and π/2 to four decimals, and the
-median is a round 15°. 44 % of pairs are symmetric (`lo == −hi`).
+| # | value in vanilla | name | evidence |
+| ---: | --- | --- | --- |
+| 0 | `0.2` (1,118); `0.4 → 0.3 → 0.2 → 0.1` down a hair strand; **`5.0` on every backpack body** (47); `0.8` on gun parts | **mass** *(inferred)* | a whole backpack is 5, a zipper pull 0.2, a hair tip 0.1 — the shape of a mass, not of a damping term |
+| 1 | `0` (1,239); **`25`** on backpacks (100); **`20`** on every slide record; `100` twice | **spring constant** *(inferred)* | ATK's `SpringConstant`; every record with slide on has 20 |
+| 2 | `0` (1,314); `0.95` / `0.98` exactly when slide is on; `1.0` on 27 backpack records | **slide damping** *(inferred)* | ATK's `DampingConstant`; only non-zero with slide or spring |
+| 3 | `0` (900); `1.0` (342, backpacks); `0.6` (54, hair strands); `0.8` ponytail; `0.95` / `0.98` with slide | *unresolved* | swing damping or centre of mass — both fit the distribution |
+| 4 | **`9.8`** (1,352) | **gravity** | ATK's `Gravity` default `9.8f` |
+| 5 | `1.0` (1,352) | gravity factor *(inferred)* | ATK's `GravityFactor` |
+| 6 | `1.0` (1,348); **`0` on seven knife and rifle rigs** and one backpack | wind factor *(inferred)* | wind switched off on small hard items |
+| 7, 8 | `0` | — | `1.0` once and five times; unknown |
 
-> **Still inferred:** the meanings of `param[0..3]` and `param[5..8]` are shape-guesses from their
-> value distributions, not confirmed — though `param[0]`/`param[3]` behave like damping in the hair
-> chain above. Tails for types other than 21 and 23 are large and variable and remain undecoded;
-> their record boundaries come from the forward-scan heuristic, which yields exact total consumption
-> but is not independently verified per boundary. Type 23's header is only 5 bytes, so it holds one
-> `uint32`, not a bone/parent pair.
+The limits are radians: `−1.5708`, `3.1416` and `−0.4363` (−25°) occur verbatim, the median swing
+limit is a round 20°, and slide limits never exceed 2.5 mm. 44 % of swing pairs are symmetric;
+hair and the trench coat use one-sided pairs (`0 … +25°`, `−20° … 0`) as the only thing keeping a
+bone out of the body — **no physics record carries a collision shape.**
+
+**The character-space matrix is derivable.** `m2` is the parent bone's bind transform in a frame
+with the ground at the origin and the character turned 90° from the body rig's axes:
+
+```
+m2 = W · G_body(attach bone) · G_addon(parent bone)
+
+W  = [ 0  1  0  0 ]      a 90° turn about the vertical axis
+     [-1  0  0  0 ]
+     [ 0  0  1  h ]      h = 0.964 m for the regular male body — kilt, Casper hair, Rosa hair,
+     [ 0  0  0  1 ]          the trench coat, the Hill backpack: every record, within 2 cm
+```
+
+`G_body` is the attach bone's global transform in `Regular_Male_Body_Skl` (`Hips` at the origin,
+`Head` at z 0.708) and `G_addon` the parent's global transform in the add-on skeleton, relative to
+its own root. Two hair rigs (Herzog, Layla) fit the same `W` with `h` 0.758 and 0.845 — compiled
+against a different character. So an authored rig can compute `m2`; whether the runtime *reads* it
+or recomputes it from the skeleton is untested.
 
 ### What it reads like
 
 ```
 $ python reflex3.py Player_Kilt_Addon.data
-  1 constraint record(s); 394/394 bytes accounted for
-  by type: 21=1 (Physics (swing/gravity))
-       #  swing limits (degrees)              gravity  damping/stiffness
-       0  [  -15.0,   +15.0]  [   -5.0,    +5.0]    9.800  0.2, 0, 0, 0
+  1 constraint record(s); 1 delimited exactly, 0 located by scan
+  by type: 21=1 (Physics (swing/slide/gravity))
+      #        bone  <- parent  swing 1     swing 2     slide  mass* spring* damp*   p3  grav  height
+      0*   b99cb525   92941bb9  [-15,+15]   [-5,+5]     -        0.2       0     0    0   9.8    0.96
 
-$ python reflex3.py Tsec_Trench_AddonSkeleton.data
-  48 constraint record(s); 43,494/43,494 bytes accounted for
-  by type: 6=36 (HingeVector), 9=2 (Orientation), 21=10 (Physics (swing/gravity))
-       0  [  -20.0,    +0.0]                    9.800  0.2, 0, 0, 0
-       3  [   +0.0,   +20.0]                    9.800  0.2, 0, 0, 0
+$ python reflex3.py Tsec_Herzog_Hair_Skeleton.data --raw
+  28 constraint record(s); 28 delimited exactly, 0 located by scan
+      0*   3451cb89   ad589a33  [-10,+10]   [+0,+25]    -        0.4       0     0  0.6   9.8    1.62
+      1*+  4356fb1f   3451cb89  [-15,+15]   [-1,+30]    -        0.3       0     0  0.6   9.8    1.58
+      2*+  dd326ebc   4356fb1f  [-20,+20]   [-3,+35]    -        0.2       0     0  0.6   9.8    1.54
+      3*+  04b9192e   dd326ebc  [-25,+25]   [-5,+40]    -        0.1       0     0  0.6   9.8    1.49
+
+$ python reflex3.py Tsec_Trench_AddonSkeleton.data --raw
+  48 constraint record(s); 46 delimited exactly, 2 located by scan
+  by type: 6=36 (HingeVector), 9=2 (Orientation (pose-driven)), 21=10 (Physics (swing/slide/gravity))
+  body bones referenced by name: T_SpineTrenchCoat
 ```
 
-The kilt is one bone swinging ±15° and ±5°. The coat is **36 hinges plus 10 swinging bones**,
-half limited −20°→0° and half 0°→+20° — panels hinging fore and aft.
-
----
+The kilt is one bone at hip height swinging ±15° and ±5°. A hair strand is four links (`+` = the
+parent is the previous record's bone): limits widening by 5° a link, mass falling from 0.4 to 0.1,
+the fore-aft swing one-sided at the root. The `height` column is `m2`'s vertical translation — hair
+at 1.5–1.6 m, kilt at 0.96, backpacks at 1.3–1.4 — which is what identified that matrix. The
+recipes, rig by rig: [`reflex3-chain-templates.md`](reflex3-chain-templates.md).
 
 ## The constraint types (from ATK source — fully typed)
 
@@ -581,6 +647,12 @@ Read-only; touches nothing in the install.
 ---
 
 ## Open questions
+
+> **2026-09-20:** the physics record is fully laid out — five limit slots, nine parameters, five
+> matrices with the third derivable — the hinge grammar is read, and the blob's record set is
+> 5 6 7 8 9 11 19 20 21 23 24. Still open: the meaning of `p3` and of parameters 7–8; what the
+> pose-driven type-9 body's 87-byte entries encode; whether the runtime reads or recomputes the
+> baked matrices; whether a generated blob loads at all.
 
 1. ~~**Finish the blob decode.**~~ **Done 2026-08-14** — see "Blob body — decoded" above. What
    remains inside it: the 8-byte header remainder (bone hash?), the meanings of `param[0..3]` /

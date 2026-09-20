@@ -153,6 +153,20 @@ the same day.
 > references are dropped (`Tsec_Madera_Coat_LOD0`: 12,502 → 12,498). A vertex-count check alone
 > will flag that as a loss; it isn't one.
 
+> **🧩 New (2026-09-20): the Reflex3 physics record is fully decoded, and a rig has a recipe.**
+> A self-delimiting parse of all 204 distinct blobs replaced the August scan, whose "204 of 205
+> exact" test was vacuous. The physics record is `BoneInfo (5 matrices) | 5 gated limit slots
+> (slide X/Y/Z in metres, two swing axes in radians) | 9 floats`; the floats read as mass\*,
+> spring\*, slide damping\*, `p3`, gravity 9.8, gravity factor\*, wind factor\*, 0, 0 (\* inferred).
+> The matrices are the bone's local bind (twice), the **parent's character-space frame** — a 90°
+> turn plus 0.964 m over the male body rig, exact for five rigs — and the swing rest frame (twice).
+> Bones can be referenced **by name string** (`Spine2`, `T_BackPack`); type 9's second byte is a
+> count; types 8 and 11 were hiding in the old tails; the scarf and NVG straps use a different
+> physics type (24). Hair strand, ponytail, kilt, backpack and trench recipes are tabulated in
+> [`reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md) with an inferred
+> poncho recipe. Still open: `p3`, the type-9 body, whether the runtime reads the baked matrices.
+> **Nothing was written or launched.**
+
 > **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
 >
 > **What now works.** Export a real GRB garment to GLB, move weights in Blender, check the
@@ -452,12 +466,19 @@ shape a player garment would copy.
    - First end-to-end test of route 2B, and the first edit of ours that would be confirmed in game.
 3. ~~**Finish the constraint-blob decode.**~~ **DONE 2026-08-14.** The blob is readable —
    [`tools/reflex3.py`](../tools/reflex3.py) prints the driven bone, its parent, swing limits in
-   degrees, gravity and damping; the walk accounts for every byte in 204 of 205 skeletons.
+   degrees, mass, spring, damping and gravity. **2026-09-20:** every one of the 204 distinct blobs
+   now reads to its last byte with a self-delimiting parse (the August "204 of 205" test was
+   vacuous — the scan always consumed everything).
    ~~confirm the 8-byte header is a bone-name hash~~ **also DONE** — it is
    `u32 BoneID | u32 ParentBoneID`, both **CRC32 of the exact-case bone name**, resolving against
-   each skeleton's real bone list at **≈99.7 %** vs a 0.000 % null control. What's left inside the
-   blob: the tails of type 9 (Orientation, 1,402 records) and type 6 (HingeVector, 472 — 36 of them
-   in the trench coat), and the meanings of `param[0..3]` / `param[5..8]`.
+   each skeleton's real bone list at **≈99.7 %** vs a 0.000 % null control. ~~What's left inside the
+   blob: the tails of type 9 and type 6, and the meanings of `param[0..3]` / `param[5..8]`.~~
+   **DONE 2026-09-20.** The physics record is five gated limit slots (slide X/Y/Z in metres, two
+   swing axes in radians) plus nine parameters — mass\*, spring\*, slide damping\*, `p3`, gravity
+   9.8, gravity factor\*, wind factor\*, 0, 0 (\* inferred) — and its five matrices are identified,
+   the third derivable from the body rig. The hinge grammar is read; types 8 and 11 were found
+   hiding in the old "tails"; bones can be named by string. Still open: `p3` and the pose-driven
+   type-9 body. Vanilla chain recipes: [`reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md).
    - ~~**Cheap win available:** extract ATK's `hashes.hl` name table.~~ **DONE 2026-08-14** —
      [`tools/atk_hashes.py`](../tools/atk_hashes.py) pulls 276,087 names out of a local ATK install
      (Fast-LZMA2 text, one name per line), and `reflex3.py --names` uses it. ⚠️ It only covers ATK's
@@ -479,7 +500,10 @@ shape a player garment would copy.
        dictionary). A modder's original Blender/FBX rig, or an animation resource storing track
        names as strings, are the better bets.
 4. Then: a new mesh weight-painted to a physics-carrying rig. That step **is** the project goal,
-   reached without touching `.cloth` at all.
+   reached without touching `.cloth` at all. **The rig itself now has a recipe** (2026-09-20,
+   inferred, untested): six four-link strands under `Spine2` with the hair strand's limits and
+   mass taper, a generated blob carried into the skeleton through ATK's XML round trip (the blob
+   is Base64 there) — [`reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md).
 
 **The pipeline, as of 2026-09-09:**
 

@@ -316,39 +316,44 @@ python reflex3.py 1889064665537_-_Player_Kilt_Addon.data
 ```
 
 ```
-  1 constraint record(s); 394/394 bytes accounted for
-  by type: 21=1 (Physics (swing/gravity))
+  1 constraint record(s); 1 delimited exactly, 0 located by scan
+  by type: 21=1 (Physics (swing/slide/gravity))
   skeleton declares 4 bone(s); 1/1 constraint BoneIDs resolve to one of them
-       #  bone (CRC32)   <- parent  swing limits (degrees)      gravity  damping
-       0*  3114054949  2459179961  [ -15.0, +15.0] [ -5.0, +5.0]  9.800  0.2
+      #        bone  <- parent  swing 1     swing 2     slide  mass* spring* damp*   p3  grav  height
+      0*   b99cb525   92941bb9  [-15,+15]   [-5,+5]     -        0.2       0     0    0   9.8    0.96
 ```
 
-The kilt is one bone that swings ±15° one way and ±5° the other, under normal
-gravity. The Bodark trench coat is **36 hinges plus 10 swinging bones**, half
-limited −20°→0° and half 0°→+20° — panels hinging fore and aft.
-
-Bone IDs are **CRC32 of the bone's name**, so a rig's structure comes out too.
-Hair reads as a chain — each record's parent is the previous record's bone, with
-limits widening and damping falling toward the tip:
+The kilt is one bone at hip height that swings ±15° one way and ±5° the other,
+under normal gravity. Hair reads as a chain — `+` marks a record whose parent is
+the previous record's bone — with limits widening and mass falling toward the tip:
 
 ```
-  0*   877775753  2908265011  [ -10.0, +10.0] [ +0.0, +25.0]  9.800  0.4
-  1*  1129773855   877775753  [ -15.0, +15.0] [ -1.0, +30.0]  9.800  0.3
-  2*  3711069884  1129773855  [ -20.0, +20.0] [ -3.0, +35.0]  9.800  0.2
-  3*    79239470  3711069884  [ -25.0, +25.0] [ -5.0, +40.0]  9.800  0.1
+  0*   3451cb89   ad589a33  [-10,+10]   [+0,+25]    -        0.4       0     0  0.6   9.8    1.62
+  1*+  4356fb1f   3451cb89  [-15,+15]   [-1,+30]    -        0.3       0     0  0.6   9.8    1.58
+  2*+  dd326ebc   4356fb1f  [-20,+20]   [-3,+35]    -        0.2       0     0  0.6   9.8    1.54
+  3*+  04b9192e   dd326ebc  [-25,+25]   [-5,+40]    -        0.1       0     0  0.6   9.8    1.49
 ```
 
-Stiff at the root, floppy at the tip — exactly how an animator authors hair.
+Stiff and heavy at the root, light and loose at the tip — and the fore-aft swing
+is one-sided, which is what keeps hair out of the head: no physics record carries
+a collision shape. `height` is where the bone's parent sits on the character
+(hair ≈ 1.6 m, kilt 0.96 m). Columns marked `*` are inferred names.
 
-Add `--raw` for every record including the non-physics constraint types.
+Add `--raw` for every record — hinges, pose-driven orientation records, and the
+body bones a rig attaches to by name (`body bones referenced by name:
+T_SpineTrenchCoat`) — and `--names ..\reference\grb-bone-names.tsv` (or the
+`atk_hashes.py` dictionary) to see names instead of hashes.
 
 **ATK cannot do this.** Its Reflex3 parser checks Mirage's magic numbers and is
 gated behind `Version != Game.Mirage`, so for Breakpoint it keeps the whole thing
 as an opaque Base64 lump. Format, and the evidence behind it:
-[`../reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
+[`../reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md);
+the vanilla chain recipes:
+[`../reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md).
 
-⚠️ Reading is solid — the record walk accounts for every byte in 204 of 205
-skeletons. **Writing is not implemented**, and any skeleton edit inherits the
+⚠️ Reading is solid — every one of the install's 204 distinct blobs reads to its
+last byte, and the physics, hinge and three other record types delimit themselves
+(2026-09-20). **Writing is not implemented**, and any skeleton edit inherits the
 forge-shadow and hang-on-load hazards documented for cloth. **Read-only.**
 
 ---
