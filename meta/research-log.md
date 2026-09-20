@@ -4009,3 +4009,67 @@ one vanilla rig the install already overrides, nothing else.
 **Look for the experiment someone else already ran.** Two hundred mods are two hundred load tests
 with the result on file. Hashing them against the pristine copies took three minutes and moved the
 wall further than eleven weeks of planning our own first write.
+
+## Entry — 2026-09-20 (third) — The Reflex3 writer: byte-exact round trip, edits, generation from a spec, and a verified splice
+
+**Trigger:** the morning decode gave the physics record's full layout and the afternoon diff showed
+the install already loads everything an authored rig needs except a blob the game did not compile.
+The missing piece was a writer. **Read-only on the game**: every output went to the session
+scratchpad and was read back before it was kept.
+
+### VERIFIED
+- **Round trip.** [`tools/reflex3_write.py`](../tools/reflex3_write.py) parses a blob with
+  `reflex3.parse_blob`, rebuilds physics records from their fields and carries every other record
+  through verbatim. `--selftest` over the install: **204 distinct blobs, 204 byte-exact.**
+- **Splice.** The new blob replaces the length-prefixed one inside the Skeleton resource; the
+  resource frame's length and the metadata row's `recordSize` are fixed up; both
+  `CompressedFileData` blocks are rebuilt with the game's `oo2core_7_win64.dll` (32 KB Mermaid
+  chunks, adler32 seeded 0 — the recipe `clothwrap.py` proved on cloth containers); the result is
+  read back and compared before it is written. A no-op edit of `Player_Kilt_Addon` reproduces the
+  original metadata and files blocks exactly (the container shrinks from 584 to 558 B only because
+  the vanilla one carries trailing bytes). A real edit (`--set-swing … 1 -40 40 --set-mass … 0.5`)
+  reads back changed and nothing else.
+- **Generation.** `--generate spec.json --body <body rig .data>` builds a physics-only blob: `m0 =
+  m1 = m3 = m4 =` the bone's local bind transform from its `Bone` record, `m2 = W · G_body(root) ·
+  G_addon(parent)`. Regenerating five vanilla rigs from their own decoded fields and diffing
+  against the real blobs:
+
+  | rig | records | ids, slots, params | max \|Δm0\| | max \|Δm2\| | max \|Δm3\| |
+  | --- | ---: | --- | ---: | ---: | ---: |
+  | `Player_Kilt_Addon` | 1 | identical | 0.0000 | 0.0000 | 0.0000 |
+  | `FTP_Casper_Hair_Skeleton` | 8 | identical | 0.0000 | 0.0000 | 0.0000 |
+  | `Tter_ponytail_layla` (h 0.845) | 4 | identical | 0.0000 | 0.0025 | 0.0000 |
+  | `Tsec_Herzog_Hair_Skeleton` (h 0.758) | 28 | identical | 0.0000 | 0.0006 | 0.3413 |
+  | `Tpri_Hair_Addon_Rosa` | 28 | identical | 0.0000 | 0.0870 | 0.3413 |
+
+  The kilt and Casper come back **to the float** — the matrix rules are complete for a rig whose
+  swing rest frame is its bind pose and whose character frame is the plain male `W`. Herzog's and
+  Rosa's `m3` residual is the authored rest-frame rotation the morning entry counted (146 records);
+  Rosa's `m2` residual is that rig's 5° yaw in `W`. Both are inputs the spec does not carry yet.
+- **The first-test artifact.** From the *Sling Positions* mod's own
+  `45229_-_BP_wStraps_Hill_MEDIUMVEST.data` (50,587 B blob, 22 records, a container with ATK's
+  trailer): `--set-swing 9650dc43 1 -30 30 --set-swing 9650dc43 2 -10 30` changes only the pack-body
+  record (mass 5, vanilla ±2° / −1…+2°); the other 21 records are byte-identical; the container
+  re-reads with the new blob. It sits in the session scratchpad; the command regenerates it.
+
+### INFERRED
+- That a swaying pack after repack means the runtime accepts a blob it did not compile. The
+  alternative outcomes (a hang, or a rigid pack) would say it rejects or ignores one.
+
+### NOT verified / open
+- Nothing generated or edited has been loaded in game. The splice has been checked against this
+  repo's readers and ATK's container layout, not against ATK's own unpack.
+- The spec cannot yet express an authored swing rest frame (`m3` ≠ bind) or a per-rig `W` twist.
+- Nothing was written into the install, repacked or launched.
+
+### Docs and tools
+- New: [`tools/reflex3_write.py`](../tools/reflex3_write.py); README section.
+- Updated: [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md)
+  (open questions), [`reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md)
+  (the write path), [`meta/next-session.md`](next-session.md) (the first write test, the pipeline
+  diagram).
+
+### Method note
+**Regenerate what exists before generating what does not.** The generator was trusted only after it
+rebuilt five vanilla rigs from their own decoded fields; two came back to the float, and the three
+that did not named exactly the two inputs the spec is still missing.

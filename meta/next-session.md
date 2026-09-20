@@ -180,6 +180,14 @@ the same day.
 > ATK's trailer, so unsigned no longer means vanilla.
 > [`reference/install-edit-classes.md`](../reference/install-edit-classes.md).
 
+> **🧷 New (2026-09-20, third): the writer exists.** `tools/reflex3_write.py` re-emits every one of
+> the install's 204 blobs byte-exact, edits swing/slide limits and the nine parameters by bone,
+> generates a physics-only blob from a JSON spec (regenerating the kilt and Casper hair from their
+> own fields reproduces every matrix to the float), and splices the result into the skeleton's
+> `.data` with both container blocks rebuilt and verified. The game is never touched. The first
+> write test — one swing limit in the Hill backpack rig the install already overrides — is one
+> command in lane 2B step 2 below.
+
 > **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
 >
 > **What now works.** Export a real GRB garment to GLB, move weights in Blender, check the
@@ -469,6 +477,18 @@ shape a player garment would copy.
      with two bones moved and their 19–62 KB Reflex3 blobs intact. Modified skeletons carrying
      physics blobs load. The one untested step is a blob the game did not compile —
      [`reference/install-edit-classes.md`](../reference/install-edit-classes.md).
+   - **⭐ The first write test, ready to run (2026-09-20, third).** One swing limit in one rig the
+     install already overrides, nothing else:
+     ```
+     python tools\reflex3_write.py "<install>\Extracted\GRBMods\Sling Positions - 1 - Front Sling - 2 - Side Sling-803-1-1-1718027730\Alternate Holsters - 1FrontSling 2SideSling\Resources\45229_-_BP_wStraps_Hill_MEDIUMVEST.data" --set-swing 9650dc43 1 -30 30 --set-swing 9650dc43 2 -10 30 --out 1_-_BP_wStraps_Hill_MEDIUMVEST.data
+     ```
+     The pack body of the Hill backpack (mass 5, normally ±2°) gets ±30°. Drop the file as
+     `1_-_…` into `Extracted\DataPC_Resources_patch_01.forge\`, **back up the live Resources
+     patch forge** (36.9 GB, holds every texture mod), repack in ATK, launch, wear the Hill
+     backpack with straps and sprint. **If the pack sways: a blob the game did not compile loads,
+     and the poncho rig is a generate away.** If it hangs or the pack is rigid, the runtime
+     rejects or ignores non-compiled blobs and route B needs ATK's Mirage-style source records
+     instead. Either answer moves the wall.
    - **Then add one row component to a wearable garment's table**, pointing a `Skeleton` Handle at a
      physics-carrying rig and copying `TP_PANT_Kilt` (Index 10) or
      `Tsec_IanBlake_Trench_Mcloth_MISSION` (Index 4). Vanilla tables declare a same-typed column
@@ -534,6 +554,10 @@ shape a player garment would copy.
    ATK export  ──►  Blender transfer  ──►  rebind_check  ──►  ATK import  ──►  repack
    AUTOMATED        AUTOMATED             AUTOMATED          CHECKED          manual
    (09-01)          (08-31)               (09-01)            (09-09)          by policy
+
+   rig physics:  reflex3.py (read)  ──►  reflex3_write.py (edit / generate / splice)  ──►  repack
+                 EXACT, all 204          BYTE-EXACT round trip, verified splice          manual
+                 (09-20)                 (09-20)                                         by policy
 ```
 
 Everything up to the write runs headlessly on real garment data, and the import end now **tells you

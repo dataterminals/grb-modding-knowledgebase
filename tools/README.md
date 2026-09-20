@@ -358,6 +358,59 @@ forge-shadow and hang-on-load hazards documented for cloth. **Read-only.**
 
 ---
 
+## 🧷 Reflex3 Writer — edit, generate and splice bone physics (never into the game)
+
+`reflex3.py` reads a rig's bone physics. This one **writes** it — into a scratch
+copy of the skeleton's `.data`, which you then place into an unpacked forge folder
+and repack yourself.
+
+```
+python reflex3_write.py --selftest "D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint"
+  204 distinct blobs; 204 round-trip byte-exact; 0 do not
+```
+
+That is the writer's acid test: every Reflex3 blob in the install, parsed and
+re-emitted, comes back byte for byte. Physics records are rebuilt from their
+fields; every other record type is carried through verbatim.
+
+**Edit** a rig — swing limits in degrees, slide limits in metres, the nine
+parameters by index (0 is mass):
+
+```
+python reflex3_write.py 45229_-_BP_wStraps_Hill_MEDIUMVEST.data --set-swing 9650dc43 1 -30 30 --set-swing 9650dc43 2 -10 30 --out 1_-_BP_wStraps_Hill_MEDIUMVEST.data
+  blob 50,587 B -> 50,587 B; 2 physics record(s) edited; changed
+  wrote 1_-_BP_wStraps_Hill_MEDIUMVEST.data (... B container); re-read and verified.
+```
+
+**Generate** a whole physics blob from a JSON spec of records (bone, parent, the
+two swing ranges, mass and the rest), taking each bone's transforms from the
+skeleton the rig will live in and the character-space frame from a body rig:
+
+```
+python reflex3_write.py --example-spec > poncho.json          # the hair-strand pattern
+python reflex3_write.py MyPoncho_Addon.data --generate poncho.json --body Regular_Male_Body_Skl.data --out 1_-_MyPoncho_Addon.data
+```
+
+Regenerating the kilt and the Casper hair rig from their own decoded fields
+reproduces every matrix to the float; the Herzog and Layla hair rigs come back
+within 3 mm on the character-space frame (they were compiled against a
+different character, `--h` sets the lift).
+
+**Splice** happens with `--out`: the new blob goes into the Skeleton resource,
+the resource and metadata lengths are fixed up, both container blocks are
+rebuilt with the game's own Oodle DLL, and the result is read back and compared
+before it is kept. A no-op edit reproduces the original container's content
+exactly.
+
+⚠️ **The game is never touched.** Putting the file into a forge is the manual
+step: number it *below* the copy you are replacing (`1_-_...`) in the unpacked
+forge folder, back the forge up, repack with ATK. What the install has already
+proven about such files, and what it has not:
+[`../reference/install-edit-classes.md`](../reference/install-edit-classes.md).
+The recipes: [`../reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md).
+
+---
+
 ## 🔤 ATK Hash Dictionary — turn bone numbers into bone names
 
 Anvil names things by **CRC32 of the name**, so a skeleton stores `LeftForeArm`

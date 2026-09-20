@@ -659,6 +659,12 @@ Read-only; touches nothing in the install.
 > ([`install-edit-classes.md`](install-edit-classes.md)). One of them, `WI_ASR_AK47` from *AKM_KYPK*,
 > moves the very bone its physics record drives by 3 cm while the blob's baked matrices stay
 > vanilla, and the game runs. What is untested is a blob the game did not compile.
+>
+> **Writer (2026-09-20, third):** [`tools/reflex3_write.py`](../tools/reflex3_write.py) re-emits all
+> 204 blobs byte-exact, edits physics fields, generates physics-only blobs from a spec, and splices
+> them into a skeleton container that re-reads identically. Regenerating the kilt and the Casper
+> hair rig from their own decoded fields reproduces every matrix to the float — the matrix rules
+> above are complete for those rigs. Nothing generated has been loaded in game.
 
 1. ~~**Finish the blob decode.**~~ **Done 2026-08-14** — see "Blob body — decoded" above. What
    remains inside it: the 8-byte header remainder (bone hash?), the meanings of `param[0..3]` /

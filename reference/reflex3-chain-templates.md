@@ -147,6 +147,9 @@ fields have a worked example.
 
 **What this does not give you.** Collision: the limits are the only thing keeping a panel out of
 the body, so start conservative. Wind: the wind factor exists but nothing shows what feeds it. The
-meaning of `p3`. And the write path: ATK round-trips the blob as Base64 inside its skeleton XML, so
-a generated blob can be carried into a skeleton through the existing `--xml` route — but no modified
-skeleton has ever been confirmed to load (lane 2B, [`../meta/next-session.md`](../meta/next-session.md)).
+meaning of `p3`. The write path exists: [`tools/reflex3_write.py`](../tools/reflex3_write.py)
+builds the blob from a spec (`--example-spec` prints the strand above as JSON), splices it into the
+skeleton's `.data`, and reads it back; regenerating the kilt and the Casper hair from their own
+fields reproduces every matrix to the float. What is left is the in-game test, and the install has
+already loaded every step of it except the blob itself
+([`install-edit-classes.md`](install-edit-classes.md)).
