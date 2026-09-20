@@ -550,7 +550,7 @@ with `python tools/atk_bridge.py <container.data> --xml out.xml --resource <Tabl
 | `Player_Kilt_Addon` | **`TP_PANT_Kilt`** — Index 10, beside its `GraphicObject` at 11 |
 | `TP_HunterScarf_A_Skeleton` | eight mask/head tables: `TP_FullMask_Flycatcher`, `_Rosebud`, `_RaidSniper`, `_RaidMedic`, `TP_Mask_RaidIngineer`, `TP_FullMaskBodark_E`, `Head_Fyodor_Archinov_Icon`, `Head_Katya_Maksimov_Icon` |
 | **`Tsec_Trench_AddonSkeleton`** | **`Tsec_IanBlake_Trench_Mcloth_MISSION`** (inside `TSec_MIS_Blake(184)`) and `MIS_Y2E4_Wassili_Kropotkine_Trench` — both Index 4. Never by a player template |
-| `Delta_Holster_Addon` | `TP_PANT_Bodark_A`, `TP_VestLight_AliceChestRig` — Index 3 |
+| `Delta_Holster_Addon` | `TP_PANT_Bodark_A`, `TP_VestLight_AliceChestRig` — Index 3. ⚠️ **Not vanilla** (found 2026-09-20): this rig exists only in the live `DataPC_Resources_patch_01.forge`, under the mod-minted ID `888830102028888`, shipped by the *Eva Modern Outfit* mod — a copy of `Player_Holster_NoSling_Addon` with its holster bone re-parented from `RightUpLeg` to `Hips`. The two tables that assign it are that mod's, not the game's |
 
 **The rule that falls out: a garment's rig is assigned from the garment's own table.** The shared
 `PLAYER_SkelAddons` carries only player-wide rigs. *Inferred:* Index 3 is a holster column —
@@ -653,6 +653,12 @@ Read-only; touches nothing in the install.
 > 5 6 7 8 9 11 19 20 21 23 24. Still open: the meaning of `p3` and of parameters 7–8; what the
 > pose-driven type-9 body's 87-byte entries encode; whether the runtime reads or recomputes the
 > baked matrices; whether a generated blob loads at all.
+>
+> **2026-09-20 (second):** modified skeletons carrying *unchanged* blobs are proven to load by the
+> install's own mods — 124 backpack rigs overridden by vanilla ID with moved bones
+> ([`install-edit-classes.md`](install-edit-classes.md)). One of them, `WI_ASR_AK47` from *AKM_KYPK*,
+> moves the very bone its physics record drives by 3 cm while the blob's baked matrices stay
+> vanilla, and the game runs. What is untested is a blob the game did not compile.
 
 1. ~~**Finish the blob decode.**~~ **Done 2026-08-14** — see "Blob body — decoded" above. What
    remains inside it: the 8-byte header remainder (bone hash?), the meanings of `param[0..3]` /

@@ -3913,3 +3913,99 @@ not settle the order. The thirteen Reflex3 class names it does carry include fou
 question it seemed to answer was never asked. Making each record delimit itself from its own fields
 and checking that it lands on a type byte turned the same corpus into a real test — and found the
 count byte, the four-matrix bone info, two record types and 218 hidden records within an hour.
+
+## Entry — 2026-09-20 (second) — The install is a proof-of-load corpus: modified skeletons with physics blobs already run
+
+**Trigger:** the wall — no edit of ours has ever been confirmed to load — and the morning's
+observation that this install boots with about two hundred community mods repacked into its forges.
+Every one of them is an edit the game has accepted. A content-hash diff of the live forges against the
+pristine copies the install keeps says which resource types; a bone-by-bone comparison says what the
+skeleton mods actually changed. **Read-only on the game.**
+
+### VERIFIED — the diff (live vs pristine, by sha1 of every resource)
+- **Pristine copies and method:** `Backups\DataPC.forge` (Oct 2025, unsigned; the same size as ATK's
+  own `_backupdatafiles` copy), `Backups\DataPC_patch_01.forge` (**Sept 2023**), the Oct 2025 `extra`
+  and `Bootstrap` patch backups, and both `DataPC_Resources_patch_01` backups (Sept 2023 in `Backups\`,
+  Oct 2025 in ATK's `_backupdatafiles`) unioned. Every entry read by index offset, Oodle-decompressed,
+  walked with `data_inspect.walk`, `sha1(header + payload)` per resource — 42 GB in three minutes with
+  four workers. The 23.6 GB base `DataPC_Resources.forge` was not hashed (byte-for-byte the same size
+  as its backup).
+- **Install-wide, 37 resource types are found added or modified**: textures (5,446 added), materials
+  (2,374 / 10), texture sets (2,089), build tables (1,819 / 239), `DBUnlockable` (1,734 modified —
+  the *UE Update* mod in base `DataPC.forge`), meshes (1,205 / 5), **skeletons (278 added to the
+  patch forges)**, animations (38 / 22), entity builders (32 / 7), and **twenty `DB*` / `GR_*` record
+  types modified in place** — radio call, sound detection, sensor shapes, spawn descriptors, player
+  health, bullet, explosion, lootables, unlockables. Never touched by any mod: `Cloth` (added),
+  `SoftBody`, `MotionCloth`, `LiteRagdoll`, `RagdollSkeleton`. Full table:
+  [`reference/install-edit-classes.md`](../reference/install-edit-classes.md).
+- **Eleven modified `Cloth` resources sit in the live base `DataPC.forge`:** the ghillie set from the
+  2026-07-01 test, never restored (`Backups\DataPC.forge.pre-clothtest-20260701` holds the originals).
+  The game has booted and run with them for eleven weeks. They are shadowed by WorldMap copies, so
+  whether the modified copy is read is unknown; that a lone modified cloth in `DataPC.forge` does not
+  hang the game is now an observation, not a hope.
+- **Skeletons, bone by bone** — 277 in the patch forges match no backup copy; against the vanilla
+  skeleton of the same name (indexed from the base forges):
+  - **124 backpack rigs, vanilla IDs, two bones moved, Reflex3 blob (19–62 KB) byte-identical to
+    vanilla** — the *Sling Positions* mod (enabled), overriding base `DataPC_Resources` entries by ID
+    from the Resources patch. The moved bones are `48674e6d` and `776266e1` under `86395627`, shifted
+    about half a metre: the sling attach points.
+  - 37 vanilla-ID weapon rigs with re-positioned parts and no physics; 62 new-ID copies with moved
+    bones (weapons, and the three holster rigs); 50 new weapon parts with no namesake; 3 re-serialised
+    copies with identical bones and blob.
+  - **`WI_ASR_AK47` from *AKM_KYPK*: twelve bones moved 2–3 cm, including `f46825bf`, the bone its
+    one physics record drives — with the blob, and so that bone's baked local matrices, unchanged.**
+    The game runs with a physics record whose matrices disagree with the skeleton by 3 cm. It does not
+    crash; whether the sling sits 3 cm off is a look in game away.
+  - **The three holster mods** (*Acosta – The Bison Belt*, *Tactical Human Set*, *Eva Modern Outfit*)
+    each ship `Player_Holster_NoSling_Addon` (1,560 B, 12 bones, header-only blob) under a new ID —
+    `999930102020999`, `8538993526999`, `888830102028888` — with the holster bone `a33f821d`
+    re-parented from `RightUpLeg` to `Hips` and moved to the belt. Their build tables assign it at
+    Index 3.
+- **Zero installed mods change a Reflex3 blob.** 125 carry one unchanged through an edited skeleton.
+- **The GRB Mod Manager writes containers without ATK's trailer.** In `DataPC_patch_01`, 2,140 of
+  the 2,349 changed resources sit in unsigned containers (`TEAMMATE_Template`,
+  `DBContainerEntry_0X104634F921`, `MIS_Y2E4_Katya_Maksimov`, the weapon build tables); in the
+  Resources patch, 1,804 of 11,652. The manager keeps per-file originals under `_GRBbackups\originals\`
+  — 113 entries of `DataPC_patch_01`, 106 of them build tables inside `TEAMMATE_Template`.
+
+### INFERRED
+- "The game loads it" here means: the mod is enabled in the manager, the game boots, and the user
+  plays with it. The visible effect of any single rig — the sling on the front, the holster on the
+  belt — was not looked at for this entry.
+- `Delta_Holster_Addon` is *Eva Modern Outfit*'s rig, not vanilla: it exists only in the live
+  Resources patch under `888830102028888`, so the two tables that assign it are the mod's.
+
+### ⚠️ CORRECTIONS
+1. The 2026-09-16 rig-assignment table lists `Delta_Holster_Addon` beside vanilla rigs; it is mod
+   content. Corrected in `reference/skeleton-reflex3-physics.md`.
+2. "Both … are rigid rigs, so they prove the assignment path but not bone physics" (2026-09-16 /
+   next-session): each holster mod also ships an *edited* skeleton, and *Sling Positions* ships 124
+   edited skeletons with physics blobs. The precedent is wider than the assignment path.
+3. The 2026-09-16 census's ATK trailer is a "written by ATK" marker only. An unsigned container can
+   be modded; most of this install's mods went in through the mod manager.
+
+### What this does to the wall
+Of the steps an authored rig needs — a rewritten skeleton resource, bones added or moved, a Reflex3
+blob carried inside it, a table assignment, an override by ID, a repack — the install has already
+loaded every one except the last: **a blob the game did not compile.** That is the only thing the
+generator's first test has to prove, and the cheapest version isolates it: one changed swing limit in
+one vanilla rig the install already overrides, nothing else.
+
+### NOT verified / open
+- Any visible in-game effect. The `RoadEvents_MainIsland_RegionLayout` modification in the Bootstrap
+  patch (source unknown). Whether all 524 "modified" resources of `DataPC_patch_01` are mods, given a
+  2023 pristine copy. The base `DataPC_Resources.forge`.
+- Nothing was written, repacked or launched.
+
+### Docs
+- New: [`reference/install-edit-classes.md`](../reference/install-edit-classes.md).
+- Corrected: [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md)
+  (the Delta row; open questions). Updated: [`meta/next-session.md`](next-session.md) (lanes 2A, 2B,
+  4; don't-repeat), the README lookup list.
+- Scratch only: `moddiff.py` (the hashing walk), `moddiff_analyze.py`, `moddiff_followup.py`,
+  `modskel_vs_vanilla.py`. The method needs nothing beyond `tools/data_inspect.py` and the forge index.
+
+### Method note
+**Look for the experiment someone else already ran.** Two hundred mods are two hundred load tests
+with the result on file. Hashing them against the pristine copies took three minutes and moved the
+wall further than eleven weeks of planning our own first write.

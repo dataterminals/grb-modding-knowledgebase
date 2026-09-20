@@ -167,6 +167,19 @@ the same day.
 > poncho recipe. Still open: `p3`, the type-9 body, whether the runtime reads the baked matrices.
 > **Nothing was written or launched.**
 
+> **🧱 New (2026-09-20, second): the wall is one step wide.** A content-hash diff of the live forges
+> against the install's pristine copies shows what the game already loads from other people's mods:
+> 37 resource types added or modified — among them **124 backpack rigs overridden by vanilla ID with
+> two bones moved and their 19–62 KB Reflex3 blobs intact** (*Sling Positions*), 65 weapon and
+> holster rigs as edited copies under new IDs, the three holster rigs with the holster bone
+> re-parented to `Hips`, twenty AI-database record types modified in place, and this repo's own
+> eleven July test cloths still live in base `DataPC.forge` with the game booting on them. **Zero
+> mods change a Reflex3 blob.** So for lane 2B everything is proven by proxy except one thing: a blob
+> the game did not compile. The generator's first test should change one swing limit in one rig the
+> install already overrides, and nothing else. Also: the GRB Mod Manager writes containers *without*
+> ATK's trailer, so unsigned no longer means vanilla.
+> [`reference/install-edit-classes.md`](../reference/install-edit-classes.md).
+
 > **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
 >
 > **What now works.** Export a real GRB garment to GLB, move weights in Blender, check the
@@ -334,6 +347,11 @@ has never been validly tested.
 
 **Do:** repack **both** patch forges → launch → watch the kilt.
 
+> ℹ️ **2026-09-20:** the eleven ghillie cloths modified on 2026-07-01 are *still live* in base
+> `DataPC.forge` on SylG5 (`Backups\DataPC.forge.pre-clothtest-20260701` holds the originals), and
+> the game has booted and run with them for eleven weeks. A lone modified cloth in `DataPC.forge`
+> does not hang the game; whether that copy is ever read is the shadow question, unchanged.
+
 - **Loads + hem lifts** → a modified cloth CAN take effect → **route (A) is alive**; go do it.
 - **Loads + no change** → mechanism works, gravity genuinely inert → try MaxDistance next
   (stable), else lean to (B).
@@ -445,7 +463,12 @@ shape a player garment would copy.
      `Player_Holster_NoSling_Addon` out of `PLAYER_SkelAddons` and into `TP_LEGHOLSTER_Platform`
      (Index 3); `GRBMods\Tactical Human Set` assigns it from `TP_TacticalHuman_Belt-Skeleton`. Both
      byte-match the live container, and both are rigid rigs, so they prove the assignment path
-     but not bone physics.
+     but not bone physics. **Diffed 2026-09-20 (second): they prove more.** Each ships an *edited*
+     skeleton — `Player_Holster_NoSling_Addon` with the holster bone re-parented from `RightUpLeg`
+     to `Hips` — under a new ID, and *Sling Positions* overrides **124 vanilla backpack rigs by ID**
+     with two bones moved and their 19–62 KB Reflex3 blobs intact. Modified skeletons carrying
+     physics blobs load. The one untested step is a blob the game did not compile —
+     [`reference/install-edit-classes.md`](../reference/install-edit-classes.md).
    - **Then add one row component to a wearable garment's table**, pointing a `Skeleton` Handle at a
      physics-carrying rig and copying `TP_PANT_Kilt` (Index 10) or
      `Tsec_IanBlake_Trench_Mcloth_MISSION` (Index 4). Vanilla tables declare a same-typed column
@@ -687,6 +710,10 @@ changed. It is a second track in its own right, not a detour from lane 2.
   `DBContainerEntry…data` wipes every other DB mod.
 - ⚠️ The morning's "50,098 records" was a prefix — the walker stopped at the first unnamed record.
   Every per-type count in `docs/14` held up in the full walk; the container totals did not.
+- **2026-09-20:** twenty `DB*` / `GR_*` record types are already modified in place by installed mods
+  and the game runs — radio call, sound detection, sensor shapes, spawn descriptors, player health
+  among them. The one-handle repoint sits squarely inside precedent
+  ([`reference/install-edit-classes.md`](../reference/install-edit-classes.md)).
 
 **Do next, in order:**
 1. ~~**Map NPCs to cheat configs.**~~ **DONE 2026-09-16 (evening)** — and the lead was wrong:
@@ -868,6 +895,9 @@ that is not a forge resource. Full detail in the 2026-08-14 research-log entry.
   extensions cannot see them. That is how "GRB ships no `LiteRagdoll`" and "no combat animations"
   got written. *(Per container the median is 1 resource and the mean 9.5; the "about 2.5" once
   quoted here does not hold install-wide.)*
+- **Don't read an unsigned container as vanilla.** ATK's trailer marks what ATK wrote; the GRB Mod
+  Manager writes containers without it, and most of this install's mods went in that way. In
+  `DataPC_patch_01`, 2,140 of the 2,349 mod-changed resources sit in unsigned containers (2026-09-20).
 
 **On the cloth work:**
 
