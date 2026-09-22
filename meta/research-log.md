@@ -4566,3 +4566,95 @@ scratchpad and was read back before it was kept.
 **Regenerate what exists before generating what does not.** The generator was trusted only after it
 rebuilt five vanilla rigs from their own decoded fields; two came back to the float, and the three
 that did not named exactly the two inputs the spec is still missing.
+
+---
+
+## Entry — 2026-09-22 — Two parallel lines merged: the rig census holds on the self-delimiting parser
+
+**Trigger:** the three entries dated 2026-09-17/18 were written on SylDesk and the three dated
+2026-09-20 on SylG5. Both lines started from the 2026-09-16 (night) state and neither saw the other.
+Merging them put `rig_census.py`, written against the August `reflex3.py`, on top of the 2026-09-20
+parser rewrite. Every census figure it carries was measured again before the merge was kept.
+Read-only: the SylDesk install, with scratch copies of both tool trees.
+
+### VERIFIED — the census headline does not depend on the parser
+
+| | August scan (as run 2026-09-17) | 2026-09-20 parser |
+| --- | ---: | ---: |
+| physics-carrying rigs assigned | 148 | 148 |
+| drive a mesh / none in their own rows / no mesh to check | 117 / 22 / 9 | 117 / 22 / 9 |
+| rig ↔ mesh pairs | 694 | 694 |
+| rigs whose blob parsed only partially | 0 | 0 |
+
+Eleven rigs' own figures moved, each one because of where a record starts and ends:
+
+- **The August scan invented two records.** In `BP_Nomad_AMP24_*` it read a target BoneInfo inside
+  a type-19 record as a type-5 record head, and that bone is an anchor. Those packs carry **17,113**
+  weight entries on driven bones, not 29,686, and 12,573 on parents. Inside a physics record of
+  `Hair_R6_Ash_Skel` it found a "record" whose bone, `0x17000000`, is not in the skeleton. That rig has
+  **9** driven bones, not 10, and its weights are unchanged.
+- **The type-11 and type-8 records the scan hid in its tails now count.** `Regular_Male_Reflex_SklAdd`
+  has **93** driven bones, not 72. `BP_DroneCarrier_MEDIUMVEST` and `_NPCVEST` have 13, carrying 5,055
+  weight entries (was 11 and 2,302). `Watch_Skeleton` has 5 (was 3), and `BodyUp_Skeleton` has 3,
+  carrying 641 (was 2 and 420).
+
+`reflex3_write.py --selftest` on this install gives **204 distinct blobs, 204 byte-exact**. That matches
+the SylG5 count, so the writer's acid test holds on both installs.
+
+### Checked in scratch — counting every constrained bone changes no verdict
+
+Types 9 and 11 carry a count and constrain up to twelve bones per record (2026-09-20). The census
+counts only each record's head. *Inferred layout:* the other `count − 1` bones follow the head as
+four-matrix BoneInfos. Reading them that way (2,944 read, 1 failed) raises the driven count of
+**115 of the 148** rigs: 103 backpack rigs gain exactly 27, and `Vest_Generic_Addon` goes from 9 to 16.
+No verdict moves, and the census is still 148 / 117 / 22 / 9. None of the 148 rigs names a
+record-head bone by string.
+
+### ⚠️ CORRECTIONS
+
+1. **2026-09-17 (second):** `…Nomad_AMP24` carries 17,113 weight entries on driven bones, not 29,686,
+   and 12,573 on parents. `Regular_Male_Reflex_SklAdd` has 93 driven bones, not 72.
+   `Hair_R6_Ash_Skel` has 9, not 10; that one is also fixed in
+   [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md).
+2. **2026-09-17 (second), open questions:** `Tsec_Trench_AddonSkeleton` is **not** one of the 22
+   rigs that drive none of the meshes in their own rows. It is not in the census at all: it is
+   assigned only from NPC mission tables (see the 2026-09-16 assignment table), outside
+   `TEAMMATE_Template` and `PLAYER_Template`.
+
+### What the two lines say to each other
+
+- **The poncho recipe (2026-09-20) was drafted without the donor shortlist (2026-09-17).**
+  `Addon_body_samFisher` is the closest vanilla precedent for a garment body on bones: 22 constrained
+  bones painted into a torso garment, with 0 weight on parents. `reflex3.py` can now read all of it.
+  Compare the inferred recipe against its records before generating one from nothing.
+- **The wall moved between them.** The 2026-09-17 entry still says no modified skeleton has been
+  confirmed to load. 2026-09-20 (second) found 124 edited skeletons with untouched physics blobs
+  already loading. What is still unproven is a blob the game did not compile.
+- **Lane 2B has two write paths.** A table edit goes through the XML round trip, byte-exact on
+  BuildTables (2026-09-17). A skeleton edit goes through the writer's splice (2026-09-20). Neither
+  has been loaded in game.
+
+### NOT verified / open
+
+- The trench rig's other 22 constrained bones, in two type-9 records of count 12, have not been
+  checked against the trench meshes. The 2026-09-16 **0** covers its 48 record heads only.
+- Whether a pose-driven orientation bone (type 9) or a position-constrained bone (type 11) moves a
+  mesh in the census's sense. The census counts every record head.
+- Nothing was written, repacked or launched.
+
+### Docs and tools
+
+- [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md): a note on the
+  re-run, the `Hair_R6_Ash_Skel` row, and which rigs the trench row covers.
+- [`tools/rig_census.py`](../tools/rig_census.py) and its [README](../tools/README.md) section: a new
+  limit saying that only record heads are counted. Behaviour is unchanged.
+- [`meta/next-session.md`](next-session.md): the 2026-09-17/18 callouts moved into date order, plus a
+  reconciliation callout.
+- Scratch only: `parser_diff.py` (both parsers on one blob) and `census_ext.py` (a census that counts
+  every constrained bone).
+
+### Method note
+
+**A merge is a measurement.** Two sessions that never saw each other's work each left numbers the
+other side's code could re-derive. One census re-run on the other session's parser took a minute.
+It separated the figures that belong to the game from the ones that belonged to the August scan.

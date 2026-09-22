@@ -240,6 +240,21 @@ the same day.
 > write test — one swing limit in the Hill backpack rig the install already overrides — is one
 > command in lane 2B step 2 below.
 
+> **🔀 Reconciled (2026-09-22): the five callouts above come from two parallel lines.** SylDesk
+> wrote the 2026-09-17 and 2026-09-18 ones, and SylG5 the three dated 2026-09-20. Both started from
+> the 2026-09-16 state, and neither saw the other. Where they meet:
+>
+> - **The census holds on the new parser.** Re-run on the 2026-09-20 `reflex3.py`, it still finds
+>   148 rigs, split 117 / 22 / 9, over 694 pairs. Eleven rigs' own counts moved, because the August
+>   scan had invented two records and hidden the type-8/11 ones. See the 2026-09-22 research-log
+>   entry.
+> - **Compare the poncho recipe against `Addon_body_samFisher` before generating one from nothing.**
+>   It is the census's vanilla garment body on bones (22 constrained bones, 0 weight on parents), and
+>   the 2026-09-20 recipe was drafted without it.
+> - **The 2026-09-17 "nothing was loaded" is superseded** by 2026-09-20 (second): edited skeletons
+>   carrying physics blobs already load. What remains is a blob the game did not compile, and the
+>   first write test in lane 2B step 2 isolates exactly that.
+
 > **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
 >
 > **What now works.** Export a real GRB garment to GLB, move weights in Blender, check the

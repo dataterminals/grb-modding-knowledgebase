@@ -54,6 +54,10 @@ LIMITS, stated rather than hidden:
     through ATK's `PackedJoints`, and the row says so.
   * Only rigs that are ASSIGNED by a table in the containers given are counted.
     A physics rig nothing assigns cannot appear.
+  * Record heads only. Types 9 and 11 carry a count and constrain up to twelve
+    bones per record (the 2026-09-20 grammar); this counts each record's head.
+    Counting every one raised 115 of 148 rigs' driven counts and changed no
+    verdict (checked 2026-09-22).
 """
 import sys, os, re, glob, struct, zlib, collections, time
 

@@ -564,6 +564,11 @@ vanilla assigns holster rigs at 3 from item tables, and the shared table's defau
 > physics-carrying rigs are assigned; **117 drive a mesh**, 22 drive none of the meshes in their own
 > rows, and 9 have no mesh reachable from the row (*which is not evidence either way*). 694 rig↔mesh
 > pairs; 0 partial Reflex3 parses.
+>
+> **Re-run 2026-09-22 on the 2026-09-20 self-delimiting parser: the same 148 / 117 / 22 / 9 and the
+> same 694 pairs.** Per-rig driven-bone counts moved where the August scan had invented records inside
+> other records or hidden type-8/11 records in its tails; in the tables below only `Hair_R6_Ash_Skel`
+> changes (10 → 9). Detail in the 2026-09-22 research-log entry.
 
 **Assignment is not motion.** A build-table row only makes a rig *available*; whether anything moves
 is decided by **weight painting**. Vanilla itself ships rows where the rig is assigned and the mesh
@@ -582,6 +587,12 @@ carries no weight on a single bone it drives:
 Weight on a record's **parent** does not count: that is the chain's anchor, and a mesh hanging off it
 stays put.
 
+The trench row is the 2026-09-16 hand check, not the census: `Tsec_Trench_AddonSkeleton` is assigned
+only from NPC mission tables (`Tsec_IanBlake_Trench_Mcloth_MISSION`,
+`MIS_Y2E4_Wassili_Kropotkine_Trench`), outside the two containers the census reads. Its **0** covers the
+rig's 48 record-head bones. The 2026-09-20 grammar shows that its two type-9 records constrain 22 more
+bones, and those 22 have not been checked against the trench meshes.
+
 **The rigs worth copying,** highest measured weight on driven bones per rig:
 
 | rig | physics | driven bones | proven on | weights on driven |
@@ -593,7 +604,7 @@ stays put.
 | **`Addon_body_samFisher`** | 21,381 B | **22** | `Tpri_Top_SamFisher_LOD0` — a **torso garment** | 5,105, **0 on parents** |
 | `ShoulderPads_Addon` | 7,387 B | 4 | `TP_Shoulder_OutcastC_B_LOD0` and 46 more | 3,627 |
 | `BP_Fixit_AllHazardsPrime_*` | 55,851 B | 33 | `TP_Backpack_Fixit_LOD0` | 30,213 |
-| `Hair_R6_Ash_Skel` | 12,113 B | 10 | `FTP_Hair_R6_Ash_LOD0` | 15,555 |
+| `Hair_R6_Ash_Skel` | 12,113 B | 9 | `FTP_Hair_R6_Ash_LOD0` | 15,555 |
 
 > **`Addon_body_samFisher` is the closest vanilla has to a soft outer garment on bones** — 22
 > constrained bones painted into a torso mesh with nothing merely anchored. It is **not** a flowing

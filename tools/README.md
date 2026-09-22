@@ -812,6 +812,10 @@ That third bucket exists deliberately. Collapsing "we found nothing to check" in
   64-bit values that are `Mesh` containers — which finds all five kilt LODs.
 - Only rigs *assigned by a table in the containers given* can appear. A physics rig
   nothing assigns is invisible to this.
+- **Record heads only.** Types 9 and 11 carry a count and constrain up to twelve
+  bones per record (the 2026-09-20 grammar), but the census counts each record's
+  head bone. Counting all of them raises the driven count of 115 of the 148 rigs
+  and, checked on 2026-09-22, changes no verdict.
 - **It reads files, not the game.** "This mesh is weighted to bones this rig drives"
   is a much stronger statement than the trench-coat premise it replaced, and still
   not the same as having watched it move.
