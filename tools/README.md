@@ -731,3 +731,88 @@ warnings when no donor is given, because the tool genuinely cannot tell the diff
 ⚠️ **It checks files, not the game.** It cannot tell you whether a modified
 skeleton loads at all — that is still the open both-patch-forge question in
 [`../meta/next-session.md`](../meta/next-session.md).
+
+---
+
+## 🎪 `rig_census.py` — which bone-physics rigs actually **move** a mesh?
+
+`rebind_check.py` above answers *"will my new mesh move on this rig?"*. This one
+answers the question that comes **before** it: *"which rig should I even be
+copying?"*
+
+It matters because a rig can carry 62 KB of Reflex3 constraints and move nothing
+visible. `Tsec_Trench_AddonSkeleton` is 43 KB of bone physics assigned right next
+to a flowing trench coat — and **no LOD of that coat carries any weight on any
+bone the rig drives**. The coat flows because of its *cloth*. A plan built on
+"copy the trench coat's rig" is built on a rig that, as far as that coat is
+concerned, does nothing.
+
+```
+python rig_census.py --install "H:/SteamLibrary/steamapps/common/Ghost Recon Breakpoint"
+python rig_census.py --install <GRB> 28398_-_TEAMMATE_Template.data --csv out.csv
+python rig_census.py --install <GRB> --grep Backpack --all-lods
+```
+
+With no container given it censuses `TEAMMATE_Template` and `PLAYER_Template`,
+which between them hold every player-wearable item's build table.
+
+### What it joins
+
+Three things that had only ever been joined by hand:
+
+```
+BuildTable row  ──►  Skeleton handle      the rig          (entity_skeletons.py)
+                └─►  GraphicObject        the meshes
+Skeleton        ──►  Reflex3 driven bones                  (reflex3.py)
+Mesh            ──►  per-bone Joint weights                (ATK, via atk_bridge.py)
+```
+
+and then intersects: **do any of this row's meshes carry weight on the bones this
+row's rig actually drives?**
+
+### The three verdicts, and why there are three
+
+| bucket | means |
+| --- | --- |
+| **MOVES A MESH** | a mesh in the same row weights bones the rig's Reflex3 records *drive*. This is the donor shortlist. |
+| **NO WEIGHT ON ANY DRIVEN BONE** | meshes were found and checked, and none of them touch a driven bone. Weight on a record's **parent** is reported separately — that is the chain's anchor, and a mesh hanging off it does not swing. |
+| **NO MESH IN THE ROW** | the row assigns a rig but no mesh reachable from it. **Not evidence either way** — it is a gap in what can be seen, not a finding. |
+
+That third bucket exists deliberately. Collapsing "we found nothing to check" into
+"it drives nothing" is how a rig gets written off for the wrong reason.
+
+### Things it gets right that are easy to get wrong
+
+- **Per row, never per table.** `Hats_forREGULAR` holds hundreds of rows, each a
+  different hat with its own rig and mesh. Pairing across the whole table would
+  invent motion that is not there, so rows are read through ATK's own `BuildTable`
+  reader and paired only within a row.
+- **Sub-tables are followed one level.** A garment's mesh is not always in the row
+  that names the rig — the Walker coat's mesh and cloth live in
+  `TP_TACVEST_Walker_Coat_Cloth`, a sub-table of `TP_VestMedium_Walker`.
+- **The joint offset is parsed, not assumed.** GRB garments use at least strides
+  32, 36 and 48, with the joint block at 24, 24 and **32**. A fixed offset reads a
+  stride-48 backpack's normals as weights and reports a fully skinned mesh as
+  carrying none. The offset comes out of `VertexFormat`, the parsed tokens must add
+  up to the mesh's own stride, and the result is cross-checked against ATK's own
+  `PackedJoints` decode before it is believed — with a per-vertex fallback through
+  ATK when they disagree.
+- **Record head, not record parent.** A Reflex3 record is
+  `u32 BoneID | u32 ParentBoneID`; `BoneID` is the constrained bone. Counting both
+  would score a garment as moving because it is anchored.
+
+### Limits, stated rather than hidden
+
+- LOD0 only unless `--all-lods`.
+- A `GraphicObject` handle usually points at a `LODSelector`, and **ATK's own
+  LODSelector reader fails on GRB** (`Failed=True`, every LOD null, and `WriteXml`
+  then throws). The mesh IDs are recovered by scanning the LODSelector payload for
+  64-bit values that are `Mesh` containers — which finds all five kilt LODs.
+- Only rigs *assigned by a table in the containers given* can appear. A physics rig
+  nothing assigns is invisible to this.
+- **It reads files, not the game.** "This mesh is weighted to bones this rig drives"
+  is a much stronger statement than the trench-coat premise it replaced, and still
+  not the same as having watched it move.
+
+READ-ONLY: containers are read straight out of the forges by offset. Nothing is
+unpacked, nothing is written, no forge is opened for writing.

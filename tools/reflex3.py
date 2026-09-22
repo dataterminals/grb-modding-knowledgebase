@@ -333,16 +333,24 @@ def bone_name_hashes(payload, before):
             out.add(struct.unpack_from("<I", payload, k + BONE_NAME_AFTER_HASH)[0])
 
 
-def load_blob(path, oodle):
-    """-> (constraint blob, set of the skeleton's real bone-name hashes)."""
-    raw = open(path, "rb").read()
-    _, off, _ = read_cfd(raw, 0, oodle)
-    files, off, _ = read_cfd(raw, off, oodle)
+def blob_from_files(files):
+    """-> (constraint blob, set of the skeleton's real bone-name hashes).
+
+    Takes a Skeleton's already-decompressed files block, so a caller that pulled
+    the container out of a forge does not have to write it to disk first."""
     i = files.find(REFLEX3_HASH_PAT)
     if i < 0:
         return None, set()
     n = struct.unpack_from("<i", files, i + 4)[0]
     return files[i + 8:i + 8 + n], bone_name_hashes(files, i)
+
+
+def load_blob(path, oodle):
+    """-> (constraint blob, set of the skeleton's real bone-name hashes)."""
+    raw = open(path, "rb").read()
+    _, off, _ = read_cfd(raw, 0, oodle)
+    files, off, _ = read_cfd(raw, off, oodle)
+    return blob_from_files(files)
 
 
 def _deg(pair):

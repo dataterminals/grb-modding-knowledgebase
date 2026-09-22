@@ -556,6 +556,53 @@ with `python tools/atk_bridge.py <container.data> --xml out.xml --resource <Tabl
 `PLAYER_SkelAddons` carries only player-wide rigs. *Inferred:* Index 3 is a holster column —
 vanilla assigns holster rigs at 3 from item tables, and the shared table's default holster is at 3.
 
+### Which rigs actually MOVE something — the donor shortlist
+
+> **Verified 2026-09-17** with [`tools/rig_census.py`](../tools/rig_census.py), joining every
+> `Skeleton`-assigning `BuildTable` row in `TEAMMATE_Template` + `PLAYER_Template` to that rig's
+> Reflex3 record-head bones and to the per-bone weights of the meshes in the same row. **148**
+> physics-carrying rigs are assigned; **117 drive a mesh**, 22 drive none of the meshes in their own
+> rows, and 9 have no mesh reachable from the row (*which is not evidence either way*). 694 rig↔mesh
+> pairs; 0 partial Reflex3 parses.
+
+**Assignment is not motion.** A build-table row only makes a rig *available*; whether anything moves
+is decided by **weight painting**. Vanilla itself ships rows where the rig is assigned and the mesh
+carries no weight on a single bone it drives:
+
+| rig | mesh | weights on **driven** bones | on parents |
+| --- | --- | ---: | ---: |
+| `Addon_Collar_PunkJacket` | `TP_Top_Metal_PunkJacketB_D0_LOD0` | 5,376 | 498 |
+| `Addon_Collar_PunkJacket` | `TP_Top_PunkJacketB_D7_LOD0` | **0** | 1,104 |
+| `Addon_Collar_ArmyJacket` | `TP_Top_ArmyJacket_D7_LOD0` | **0** | 1,966 |
+| `BodarkPlates_Addon` | `TP_Tacvest_Sniper_ForFleeingMan_LOD0` | 2,238 | 2,839 |
+| `BodarkPlates_Addon` | `TP_Top_VKBO_heavyNPC_LOD0` | **0** | 1,407 |
+| `Tsec_Trench_AddonSkeleton` | every LOD of both trench coats | **0** | 0 |
+| `Player_Kilt_Addon` | all four meshes in the kilt's row | **0** | 0 |
+
+Weight on a record's **parent** does not count: that is the chain's anchor, and a mesh hanging off it
+stays put.
+
+**The rigs worth copying,** highest measured weight on driven bones per rig:
+
+| rig | physics | driven bones | proven on | weights on driven |
+| --- | ---: | ---: | --- | ---: |
+| `Vest_Generic_Addon` / `Female_Vests_generic_Addon` | 40,403 B | 9 | 197 meshes across **174 rows** | up to **41,944**, 0 on parents |
+| `Nomad_Vest_511_PlateCarrier_Addon` | 41,699 B | 9 | `TP_NOMAD_LoadOut_LOD0` | 25,860, 0 on parents |
+| `addon_collar_samFisher` | 7,540 B | 11 | `Tpri_Top_SamFisher_LOD0` | 8,786 |
+| `Addon_Collar_PunkJacket` | 4,428 B | 5 | `TP_Top_Metal_PunkJacketB_D0_LOD0` | 5,376 |
+| **`Addon_body_samFisher`** | 21,381 B | **22** | `Tpri_Top_SamFisher_LOD0` — a **torso garment** | 5,105, **0 on parents** |
+| `ShoulderPads_Addon` | 7,387 B | 4 | `TP_Shoulder_OutcastC_B_LOD0` and 46 more | 3,627 |
+| `BP_Fixit_AllHazardsPrime_*` | 55,851 B | 33 | `TP_Backpack_Fixit_LOD0` | 30,213 |
+| `Hair_R6_Ash_Skel` | 12,113 B | 10 | `FTP_Hair_R6_Ash_LOD0` | 15,555 |
+
+> **`Addon_body_samFisher` is the closest vanilla has to a soft outer garment on bones** — 22
+> constrained bones painted into a torso mesh with nothing merely anchored. It is **not** a flowing
+> coat: every flowing garment in GRB checked so far (both trench coats, the kilt, the Golem cape) is
+> cloth. But it does retire the flat claim that Reflex3 only swings danglers.
+>
+> `Vest_Generic_Addon` is the best-trodden path rather than the most dramatic one: 9 driven bones,
+> exercised from 174 rows across 197 meshes, 0 weight on parents anywhere.
+
 ### What a build sheet actually looks like
 
 `python tools/entity_skeletons.py <container.data> --install <GRB folder>` lists every assignment

@@ -3798,6 +3798,294 @@ containers whose walks were complete. Following it rather than filtering it out 
 variable-length row. Following the leftover trailing bytes gave ATK's per-container signature,
 which turned "is this vanilla?" into a byte test.
 
+---
+
+## Entry — 2026-09-17 — ATK's XML round trip is byte-exact on BuildTables; lane 2B's edit path is now testable without launching the game
+
+**Trigger:** the question was *what can we test that does not need a game launch?* Lane 2B step 2
+(add a `Skeleton` Handle to a garment's own build table) rested on an assumption recorded on
+2026-09-16 but never run: *"Edit through the XML round trip: ATK's binary `BuildRow.Write` would
+write every Index as 0 (read in source, untested)."* Whether the XML path preserves a table is
+decidable from files alone. Read-only throughout; every output went to the session scratchpad.
+
+### VERIFIED — ATK has an in-memory XML→binary compiler that cannot write to your install
+
+`ScimitarFile.ImportXml(FileModel)` — the GUI's *Import XML* — is an `OpenFileDialog` wrapped around
+`XmlUtils.CompileXml(string file, string outputFileName)`, which writes the compiled resource to a
+path. There is a **second overload**:
+
+```csharp
+public static byte[] CompileXml(Stream fstream)
+```
+
+It reads the processing instruction, falls through to the generic branch, dispatches on the root
+element's **CRC32** through `ScimitarClassRegistry`, builds the object with
+`ScimitarClassReader.Read(XmlReader, Game)`, and returns `ScimitarFile.SerializeStream(ActiveGame)`
+— `WriteHeader` + `Data.Serialize`, i.e. `[FileHeader][payload]`, exactly the bytes ATK's own unpack
+writes to a file. **The overload has no output path at all**, so the whole edit path can be
+exercised with nothing on disk to overwrite.
+
+> ⚠️ **The file-path overload's return value is inverted.** `ImportXml` reads
+> `if (XmlUtils.CompileXml(openFile.FileName, Model.Path)) throw new Exception("Failed to compile
+> XML.")` — **`true` means failure.**
+
+> ⚠️ **`Directory.SetCurrentDirectory` moves the *process* working directory.** `export_xml` and
+> `prime_filelist` point it at the ATK folder to satisfy the `GameFileList` gate. A plain Python
+> `open(path, "w")` with a relative path during that window lands in the **ATK install**, not your
+> scratchpad. Three files were written into `E:\Anvil Toolkit\` this session before it was noticed,
+> and moved back out; nothing was overwritten.
+
+### VERIFIED — 2,443 of 2,444 BuildTables recompile byte-identical
+
+Every `BuildTable` in the base `TEAMMATE_Template` container (`28398_-_TEAMMATE_Template.data`,
+`DataPC.forge`) was exported with `WriteXml`, recompiled with `CompileXml(Stream)`, and compared
+against `header + payload` from this repo's own container walk:
+
+| | |
+| --- | ---: |
+| BuildTables in the container | 2,444 |
+| **byte-identical after export → recompile** | **2,443** |
+| genuinely different | **1** |
+| errored | 0 |
+| wall clock | 815 s |
+
+Sizes ranged from 466 B to `PLAYER_headCFG` at 381,753 B. **This settles the open question:** through
+XML, row-component `Index` values survive — the binary `BuildRow.Write` concern does not apply to
+this path.
+
+### VERIFIED — an edit produces exactly the intended byte delta, and reads back
+
+Two edits on `TP_PANT_Kilt` (1,182 B), applied to the exported XML and recompiled in memory:
+
+1. **Repoint.** The Index-10 `Skeleton` Handle, `Player_Kilt_Addon` (1889064665537) →
+   `Vest_Generic_Addon` (1439949285021). Result: **same size, 5 bytes differ, at offset 791** — and
+   those 5 are precisely the bytes in which the two ClassIDs differ (both share the high
+   `01 00 00`). Nothing else moved.
+2. **Add a rig where there was none.** A new `Skeleton` Handle at Index 30 appended to row 0.
+   Result: **+25 B**, 1,055 of 1,182 bytes untouched (89.3 %). The delta is a 4-byte row
+   component-count bump `07 00 00 00` → `08 00 00 00` at offset 669, plus a clean 25-byte append:
+
+   ```
+   1e 00 00 00 | 7c cb ae 24 | 00 00 12 00 | 00 00 00 00 | 00 | 9d 66 aa 43 4f 01 00 00
+   Index 30    | Skeleton    | Handle      | Unk00       |    | ClassID 1439949285021
+   ```
+
+   That is the row-component layout recorded on 2026-09-16 — `i32 Index | u32 DataType |
+   u32 Type | u32 Unk00 | u8 | u64 ClassID` — **confirmed from the write side**, having previously
+   been read out of `BuildRow.Read` and out of existing bytes only. 25 B is its exact size.
+
+Feeding the edited bytes back through ATK's own reader: `Failed=False`, `ID` preserved, 2 rows, row 0
+now carrying **8** components with `Skeleton` handles at Index 10 *and* 30, row 1 untouched at 7.
+
+### ⚠️ CORRECTION — four of the sweep's five "differences" were the sweep's own bug
+
+The first full sweep reported 5 differing tables. Four were an artefact: `export_xml` selects a
+resource by `name` and takes `index=0`, while the comparison loop walked resources — and **4 names in
+this container are used by 2 resources each** (`Head_R6_Mozzie`, `TP_CurlyCrewForHelmetGoggles`,
+`TP_SidePartForHelmetGoggles`, `TP_CrewForHelmetGoggles`). So copy A's recompiled bytes were being
+diffed against copy B's original; `Head_R6_Mozzie` "grew" 466 B → 1,317 B, which is just the other
+copy's size. Re-run with the index matched to the ClassID, **all eight of those resources are
+byte-identical**.
+
+*Carry forward:* **select a resource by ClassID, not by name.** A name is not unique inside a
+container, and a name-keyed comparison invents differences that are not there.
+
+### VERIFIED — the one real exception, and what class of component it is
+
+`Animation_HasMediumOrHeavyVest` (ClassID 1181262884888): **383 B → 282 B**, first 280 bytes
+identical, 101 bytes lost. Its row carries a component with
+
+```
+DataType 3646974326 (KinoReplaceIdentifier) | Type 0x150000 | Unk00 512 | <BaseObjectPtr/>
+```
+
+`Type 0x150000` is an **embedded object**, not a Handle — and ATK's XML writer emits it as an empty
+`<BaseObjectPtr />`, so the recompile has nothing to rebuild it from. The lost 101 bytes include a
+16-byte GUID and three 32-bit hashes.
+
+Only **2** of the 2,444 tables carry a `KinoReplaceIdentifier`/`0x150000` component, and the other,
+`tag_VestNONE`, round-trips fine: its one is a *column declaration* with a genuinely empty pointer,
+so nothing is dropped.
+
+> **The rule this gives:** the XML round trip is lossless for `Handle` (`0x120000`) and `Reference`
+> (`0x1C0000`) components — which is what `Skeleton`, `GraphicObject` and `SoftBody` assignments are,
+> i.e. everything lane 2B and the cloth work edit — and **lossy for a row component that embeds an
+> object (`0x150000`) with real content**. Before editing an unfamiliar table, check it for
+> `0x150000` row components, or simply round-trip it unmodified first and compare.
+
+### NOT verified / open
+
+- **Nothing was written and nothing was loaded.** This is still ATK's arithmetic, not the engine's
+  opinion. The wall from 2026-09-09 has not moved: no modified mesh, skeleton or table has ever been
+  confirmed to load in GRB.
+- Whether the engine honours a row component whose `Index` has no same-typed column declaration
+  (still open from 2026-09-16; both installed holster mods do it).
+- Only `TEAMMATE_Template`'s base copy was swept. The patch copy and `PLAYER_Template` are untested,
+  as are the other XML-backed types (`Material`, `TextureSet`, `EntityBuilder`).
+- `LODSelector` is **not** XML-round-trippable: ATK's reader fails on GRB's version outright
+  (`Failed=True`, every LOD null, and `WriteXml` then throws a `NullReferenceException`). Discovered
+  incidentally; see the rig-census entry.
+
+### Tooling
+
+- [`tools/atk_bridge.py`](../tools/atk_bridge.py): `read_object(header, payload, atk_type)` split out
+  of `read_typed`, so a caller holding a resource's bytes — from a forge, never unpacked — can use
+  ATK's readers without a path. `read_typed` now delegates to it; the Walker coat still reads
+  1816/3263, `Failed=False`.
+- Scratchpad only: `xml_roundtrip.py` (one resource), `xml_sweep.py` (a whole container),
+  `xml_edit_test.py` (substitute text in the XML, recompile, localise the byte delta),
+  `xml_add_test2.py` (add a row component, then read the result back through ATK).
+
+### Method note
+
+**A sweep that reports failures is worth more than one that reports none — but only after the
+failures are attributed.** Five differences turned into one real finding and one bug in the
+measuring instrument. Quoting "2,439 identical" without chasing the other five would have understated
+ATK and hidden the `0x150000` caveat, which is the only part of this that can actually bite a modder.
+
+---
+
+## Entry — 2026-09-17 (second) — The rig census: 117 of 148 physics rigs really do move a mesh, and vanilla *does* move a garment body with bones
+
+**Trigger:** the 2026-09-16 (evening) correction left route 2B with a hole in it. The trench-coat
+exemplar was gone — `Tsec_Trench_AddonSkeleton` drives bones no trench mesh is weighted to — and the
+conclusion written down was *"no vanilla bone-only flowing garment to copy; a poncho would be a new,
+hand-weighted chain rig."* That was based on **five rigs checked by hand**. The obvious next move is
+to check all of them, which needs no game launch. New tool:
+[`tools/rig_census.py`](../tools/rig_census.py). Read-only; containers read straight out of the
+forges by offset, nothing unpacked, nothing written.
+
+### VERIFIED — the census
+
+Every `BuildTable` row in `TEAMMATE_Template` (base) and `PLAYER_Template` that assigns a `Skeleton`
+Handle, joined to that rig's Reflex3 record-head bones and to the per-bone weights of the meshes in
+the same row:
+
+| | |
+| --- | ---: |
+| BuildTables that assign a Skeleton | 1,007 + 6 |
+| **physics-carrying rigs assigned** | **148** |
+| — **drive a mesh** (weight on a record-head bone) | **117** |
+| — drive none of the meshes in their own rows | 22 |
+| — no mesh reachable from the row (*not evidence either way*) | 9 |
+| rig ↔ mesh pairs measured | 694 |
+| rigs whose Reflex3 blob parsed only partially | **0** |
+| mesh reads where the parsed joint offset disagreed with ATK's own decode | **0** |
+| wall clock | 47.5 s |
+
+### VERIFIED — vanilla moves a garment BODY with bones, not only danglers
+
+The 2026-08-14 → 2026-09-16 picture was "Reflex3 swings hair, straps and vest rigs." It swings more
+than that. Highest weight-on-driven-bones, per rig, for garment-shaped rigs:
+
+| rig | physics | driven bones | mesh | verts | weights on **driven** | on parents |
+| --- | ---: | ---: | --- | ---: | ---: | ---: |
+| `Vest_Generic_Addon` / `Female_Vests_generic_Addon` | 40,403 B | 9 | `TP_Tacvest_DEVGRU_NJPC_ATAK_LOD0` | 60,344 | **41,944** | 0 |
+| `Nomad_Vest_511_PlateCarrier_Addon` | 41,699 B | 9 | `TP_NOMAD_LoadOut_LOD0` | 26,354 | 25,860 | 0 |
+| `addon_collar_samFisher` | 7,540 B | 11 | `Tpri_Top_SamFisher_LOD0` | 11,978 | 8,786 | 31 |
+| `Addon_Collar_PunkJacket` | 4,428 B | 5 | `TP_Top_Metal_PunkJacketB_D0_LOD0` | 5,755 | 5,376 | 498 |
+| **`Addon_body_samFisher`** | **21,381 B** | **22** | `Tpri_Top_SamFisher_LOD0` | 11,978 | **5,105** | **0** |
+| `ShoulderPads_Addon` | 7,387 B | 4 | `TP_Shoulder_OutcastC_B_LOD0` | 6,815 | 3,627 | 3,397 |
+| `BodarkPlates_Addon` | 26,510 B | 21 | `TP_Tacvest_Sniper_ForFleeingMan_LOD0` | 4,810 | 2,238 | 2,839 |
+
+- **`Addon_body_samFisher` is the find.** 22 constrained bones driving a **torso garment**
+  (`Tpri_Top_SamFisher_LOD0`), 5,105 weight entries on record-head bones and **zero** on parents —
+  so the mesh is painted onto the chain itself, not merely anchored to it. Together with
+  `addon_collar_samFisher` (11 more bones on the same top) this is the nearest vanilla analogue to a
+  soft outer garment moved by a bone chain.
+- **`Vest_Generic_Addon` is the best-trodden path,** not the most dramatic: 9 driven bones, assigned
+  from **174 rows** across 197 distinct meshes, with 0 weight on parents everywhere. If a player
+  garment is going to hang off an existing physics rig, this is the one vanilla exercises hardest.
+- The backpack family dominates by volume — 46–62 KB of constraints, 9–33 driven bones, and their
+  own packs weighted to them (`TP_Backpack_Fixit_LOD0`, 30,213 entries; `…Nomad_AMP24`, 29,686).
+
+### VERIFIED — a rig assignment does NOT imply the mesh is painted for it
+
+The same rig moves one garment and not another, in vanilla:
+
+| rig | mesh | weights on driven | on parents |
+| --- | --- | ---: | ---: |
+| `Addon_Collar_PunkJacket` | `TP_Top_Metal_PunkJacketB_D0_LOD0` | 5,376 | 498 |
+| `Addon_Collar_PunkJacket` | `TP_Top_PunkJacketB_D7_LOD0` | **0** | 1,104 |
+| `Addon_Collar_ArmyJacket` | `TP_Top_ArmyJacket_D7_LOD0` | **0** | 1,966 |
+| `BodarkPlates_Addon` | `TP_Tacvest_Sniper_ForFleeingMan_LOD0` | 2,238 | 2,839 |
+| `BodarkPlates_Addon` | `TP_Top_VKBO_heavyNPC_LOD0` | **0** | 1,407 |
+
+So "vanilla assigns this rig to that item" is **not** evidence the item moves. That is the same trap
+the trench coat set, and it is not a one-off. **Weight painting is the assignment that matters**;
+the build-table row only makes the rig available.
+
+`Player_Kilt_Addon` re-confirms it from the census rather than by hand: 394 B, 1 driven bone, and
+**0** weight on it across all four meshes in the kilt's row — the kilt moves by cloth.
+
+### ⚠️ CORRECTION — a first run of this census said 23 of 148, and it was wrong
+
+The first pass read joint indices and weights at a **fixed** vertex-buffer offset (24 and 28), taken
+from the Walker coat. That is right for stride 36 and wrong for most garments: GRB uses at least
+
+| stride | joint block at | example |
+| ---: | ---: | --- |
+| 32 | 24 | `TP_Backpack_UsGov_MolleII_Rucksack_LOD0` |
+| 36 | 24 | `TP_Tacvest_Walker_Coat_LOD0` |
+| 48 | **32** | `TP_Backpack_wStraps_Hill_LOD0`, `Tsec_IanBlake_Trench_LOD0` |
+
+At stride 48 the fixed offset reads part of the normal/tangent block as weights, and a fully skinned
+mesh comes back with **zero** weighted bones. `TP_Backpack_wStraps_Hill_LOD0` — measured at 1,885
+weight entries by hand on 2026-09-16 — read as 0, which is what exposed it.
+
+**Fixed:** the offset is now parsed out of `VertexFormat` (`Pos3s_Col1s_Norm3ub_Col1ub_Tan4ub_
+Binorm4ub_Tex2s_Joint4_Col4ub` etc., `JointN` = N index bytes then N weight bytes), the parsed tokens
+must sum to the mesh's own stride, and the result is cross-checked against ATK's own `PackedJoints`
+decode before it is used — with a per-vertex ATK fallback when they disagree. In this census all 694
+mesh reads took the fast path and **all 694 agreed**.
+
+*Carry forward:* **a vertex-buffer offset is per-format, never per-game.** The single hardcoded
+offset in `atk_bridge.summarize()`'s influence histogram has the same shape of bug and should be
+read with that in mind (it reports influence counts, not identities, so it degrades to noise rather
+than to a wrong name).
+
+### NOT verified / open
+
+- **Nothing was launched.** "This mesh carries weight on bones this rig drives" is much stronger than
+  the trench-coat premise it replaces, and still not the same as watching it move.
+- **What the 22 "drives nothing in its own rows" rigs are for** is open — including
+  `Tsec_Trench_AddonSkeleton`'s 48 constrained bones, unchanged since 2026-09-16.
+- The 9 "no mesh in the row" rigs include `Regular_Male_Reflex_SklAdd` (107,350 B, **72** driven
+  bones, the largest in the game) — assigned player-wide from `PLAYER_SkelAddons`, whose rows carry
+  no mesh at all. What it drives is unmeasured here, not absent.
+- LOD0 only. `--all-lods` exists and was not run over the whole corpus.
+- Only `TEAMMATE_Template` (base) and `PLAYER_Template` were censused; NPC containers were not.
+
+### Tooling
+
+- **New:** [`tools/rig_census.py`](../tools/rig_census.py) — the whole join, three verdict buckets
+  (*moves* / *no weight* / *no mesh to check*), `--csv`, `--grep`, `--all-lods`, `--limit`.
+  Documented in [`tools/README.md`](../tools/README.md).
+- [`tools/forge_inspect.py`](../tools/forge_inspect.py): new `forge_entries(path)` — every entry with
+  its **offset and length**, so a container can be read out of a forge without unpacking.
+  `parse_forge_index` deliberately drops those; `skeleton_reflex.skeleton_entries` is the
+  Skeleton-only version of the same walk.
+- [`tools/data_inspect.py`](../tools/data_inspect.py): new `read_container_bytes(b, oodle)`;
+  `read_container(path, …)` now delegates to it.
+- [`tools/reflex3.py`](../tools/reflex3.py): new `blob_from_files(files)`; `load_blob(path, …)` now
+  delegates to it.
+- [`tools/atk_bridge.py`](../tools/atk_bridge.py): `read_object(header, payload, atk_type)` (see the
+  first 2026-09-17 entry).
+
+### Method note
+
+**Three buckets, not two.** "No mesh was reachable from this row" is not "this rig drives nothing",
+and collapsing them would have written off `Regular_Male_Reflex_SklAdd` — 72 driven bones — on the
+strength of having found nothing to look at. The bucket that says *I could not check* is the one
+that keeps the other two honest.
+
+**And a measurement that contradicts a hand result is the measurement's problem first.** The
+backpack that read as unweighted had been counted by hand three weeks earlier. Trusting the older,
+smaller, slower number over the new automated one is what turned a wrong headline (23 of 148) into
+the right one (117 of 148).
+
+---
+
 ## Entry — 2026-09-20 — The Reflex3 physics record is fully decoded, the blob's grammar is read, and vanilla chain recipes are extracted
 
 **Trigger:** lane 2B needs a poncho rig *authored*, not copied (2026-09-16: no vanilla garment
@@ -3914,6 +4202,8 @@ question it seemed to answer was never asked. Making each record delimit itself 
 and checking that it lands on a type byte turned the same corpus into a real test — and found the
 count byte, the four-matrix bone info, two record types and 218 hidden records within an hour.
 
+---
+
 ## Entry — 2026-09-20 (second) — The install is a proof-of-load corpus: modified skeletons with physics blobs already run
 
 **Trigger:** the wall — no edit of ours has ever been confirmed to load — and the morning's
@@ -4009,6 +4299,8 @@ one vanilla rig the install already overrides, nothing else.
 **Look for the experiment someone else already ran.** Two hundred mods are two hundred load tests
 with the result on file. Hashing them against the pristine copies took three minutes and moved the
 wall further than eleven weeks of planning our own first write.
+
+---
 
 ## Entry — 2026-09-20 (third) — The Reflex3 writer: byte-exact round trip, edits, generation from a spec, and a verified splice
 

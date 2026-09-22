@@ -140,7 +140,16 @@ def read_cfd(b, off, oodle):
 
 def read_container(path, oodle):
     """Decompress a .data. Returns (metadata block, files block)."""
-    b = open(path, "rb").read()
+    return read_container_bytes(open(path, "rb").read(), oodle)
+
+
+def read_container_bytes(b, oodle):
+    """Decompress a .data already in memory. Returns (metadata block, files block).
+
+    Same two chained compressed-file-descriptors as `read_container`; separate so
+    a caller holding a container it read straight out of a forge - never unpacked
+    to disk - can use it. `rig_census.py` reaches meshes in the 23 GB resources
+    forge this way."""
     meta, off, _ = read_cfd(b, 0, oodle)
     files, _, _ = read_cfd(b, off, oodle)
     return meta, files

@@ -369,11 +369,6 @@ def read_typed(path, type_name, atk_type, index=0, pad=0, atk_dir=None, name=Non
     what is left. `atk_type` is the full ATK type to construct. ATK is handed the
     resource's FileHeader + payload, the same bytes its own unpack would write;
     `pad` zero bytes are appended after them (see the module docstring)."""
-    System, _asm = start(atk_dir)
-    arm()
-    from System.IO import MemoryStream, BinaryReader, StringWriter
-    from System import Array, Byte
-
     res = resources(path)
     hits = [r for r in res if r["type_name"] == type_name
             and (name is None or r["name"] == name)]
@@ -382,9 +377,25 @@ def read_typed(path, type_name, atk_type, index=0, pad=0, atk_dir=None, name=Non
             f"no {type_name} resource{' named ' + name if name else ''} in "
             f"{os.path.basename(path)} (found {len(res):,} resources)")
     hit = hits[index]
+    return read_object(hit["header"], hit["payload"], atk_type,
+                       pad=pad, atk_dir=atk_dir)
+
+
+def read_object(header, payload, atk_type, pad=0, atk_dir=None):
+    """Construct one ATK object from a resource's FileHeader + payload bytes.
+
+    The bytes-in half of `read_typed`, split out so callers that already hold
+    a resource - because they pulled a container straight out of a forge
+    rather than off an unpack folder - can use ATK's readers without a path.
+    Same sequence ATK's own unpack-then-open does: ReadFileHeader, the generic
+    ScimitarClass header, then the concrete type."""
+    System, _asm = start(atk_dir)
+    arm()
+    from System.IO import MemoryStream, BinaryReader, StringWriter
+    from System import Array, Byte
 
     grb = game()
-    stream = bytes(hit["header"]) + bytes(hit["payload"]) + b"\x00" * pad
+    stream = bytes(header) + bytes(payload) + b"\x00" * pad
     br = BinaryReader(MemoryStream(Array[Byte](stream)))
     System.Console.SetOut(StringWriter())   # ATK logs swallowed errors to stdout
     T("AnvilToolkit.FileTypes.AnvilNext.Containers.DataFile") \

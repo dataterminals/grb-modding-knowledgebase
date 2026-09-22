@@ -153,6 +153,35 @@ the same day.
 > references are dropped (`Tsec_Madera_Coat_LOD0`: 12,502 → 12,498). A vertex-count check alone
 > will flag that as a loss; it isn't one.
 
+> **✅ New (2026-09-17): the lane-2B EDIT is proven on paper, and the donor rig has a shortlist.**
+> Two things landed, both read-only, neither needing the game.
+>
+> 1. **ATK's XML round trip is byte-exact on BuildTables.** `XmlUtils.CompileXml(Stream) → byte[]`
+>    is an in-memory XML→binary compiler with **no output path**, so the whole edit path runs
+>    headless with nothing on disk to overwrite. **2,443 of 2,444** BuildTables in
+>    `TEAMMATE_Template` export and recompile byte-identical — so row-component `Index` values do
+>    survive, and the *"binary `BuildRow.Write` writes every Index as 0"* worry does not apply here.
+>    A rig repoint changes only that handle's bytes; **adding** a `Skeleton` Handle costs exactly
+>    **+25 B** — a component-count bump plus one 25-byte component, which confirms the row-component
+>    layout from the *write* side — and the result reads back through ATK with `Failed=False`.
+>    ⚠️ One table in 2,444 is lossy: a row component that **embeds an object** (`Type 0x150000`) is
+>    exported as an empty `<BaseObjectPtr />` and loses its payload. `Skeleton`, `GraphicObject` and
+>    `SoftBody` assignments are all `Handle` (`0x120000`) and unaffected. Round-trip an unfamiliar
+>    table unmodified before editing it.
+>    ⚠️ `Directory.SetCurrentDirectory` moves the **process** CWD — a relative `open(…, "w")` during
+>    an `export_xml`/`prime_filelist` window writes into your **ATK install**.
+>
+> 2. **117 of 148 physics rigs really do drive a mesh** — [`tools/rig_census.py`](../tools/rig_census.py),
+>    47 s over `TEAMMATE_Template` + `PLAYER_Template`. The 2026-09-16 evening conclusion rested on
+>    five rigs checked by hand; all 148 have now been checked, and it **softens**: no vanilla flowing
+>    *coat* moves on bones, but `Addon_body_samFisher` drives a **torso garment** with 22 constrained
+>    bones and zero weight on parents. The shortlist is in lane 2B step 2 below.
+>    ⚠️ It also generalises the trench trap: three more rigs are assigned to garments that carry
+>    **no** weight on their driven bones. **Assignment ≠ motion; weight painting is the real
+>    assignment.**
+>
+> ⚠️ Still arithmetic, not evidence: nothing was written, nothing was repacked, nothing was loaded.
+
 > **🧩 New (2026-09-20): the Reflex3 physics record is fully decoded, and a rig has a recipe.**
 > A self-delimiting parse of all 204 distinct blobs replaced the August scan, whose "204 of 205
 > exact" test was vacuous. The physics record is `BoneInfo (5 matrices) | 5 gated limit slots
@@ -254,9 +283,14 @@ weight-painting and cloth is not, **2B is now the shortest path to Sami's goal**
 > carries any vertex weight on any bone the rig's Reflex3 records drive. Vanilla's bone physics does
 > visibly move hair, backpack straps and vest rigs (meshes weighted to the driven bones); every
 > flowing garment checked — both trench coats, the kilt, the Golem cape — is cloth. Route 2B is
-> still mechanically sound, and weight-painting is still why it matters, but **there is no vanilla
-> bone-only flowing garment to copy**: a poncho on bones would be a new, hand-weighted chain rig.
+> still mechanically sound, and weight-painting is still why it matters, but ~~**there is no vanilla
+> bone-only flowing garment to copy**: a poncho on bones would be a new, hand-weighted chain rig.~~
 > See the 2026-09-16 (evening) research-log entry.
+>
+> ⚠️ **Softened 2026-09-17 by the census** (below): no *flowing coat*, still true — but vanilla does
+> move a garment **body** with bones. `Addon_body_samFisher` drives `Tpri_Top_SamFisher_LOD0` with
+> **22** constrained bones, 5,105 weight entries on record-head bones and **zero** on parents. The
+> conclusion above rested on five rigs checked by hand; all 148 have now been checked.
 
 ---
 
@@ -494,13 +528,29 @@ shape a player garment would copy.
      `Tsec_IanBlake_Trench_Mcloth_MISSION` (Index 4). Vanilla tables declare a same-typed column
      for every row Index, but both holster mods put a `Skeleton` Handle in a column declared
      `BuildTable` — so a matching column is *probably* not required, unverified either way. Edit
-     through the XML round trip: ATK's binary `BuildRow.Write` would write every Index as 0 *(read
-     in source, untested)*.
-   - ⚠️ **Pick the rig for what it moves, not its size** *(2026-09-16, evening)*. The trench rig
-     does not skin the trench coat — its coat moves by cloth. Rigs whose driven bones meshes really
-     are weighted to: hair (`FTP_Casper_Hair_Skeleton`), backpack straps (`BP_Hill_MEDIUMVEST`),
-     vests (`Vest_Generic_Addon`). A mesh only moves with a rig if it is weighted to the bones that
-     rig's Reflex3 records drive — check with `rebind_check.py` before any launch.
+     through the XML round trip: ~~ATK's binary `BuildRow.Write` would write every Index as 0 *(read
+     in source, untested)*.~~ **✅ TESTED 2026-09-17 — the XML route is byte-exact.** 2,443 of 2,444
+     BuildTables in `TEAMMATE_Template` export and recompile byte-identical through
+     `XmlUtils.CompileXml(Stream)`, Index values intact; a repoint changes only the handle's bytes,
+     and adding a `Skeleton` Handle costs exactly **+25 B** (count bump + one 25-byte component) and
+     reads back through ATK. The one exception is a row component that embeds an object
+     (`Type 0x150000`) — not a shape any rig/mesh/cloth assignment uses. See the 2026-09-17 entry.
+   - ⭐ **Pick the rig for what it moves, not its size** *(2026-09-16, evening; **the shortlist now
+     exists**, 2026-09-17)*. Run [`tools/rig_census.py`](../tools/rig_census.py): of **148**
+     physics-carrying rigs assigned by `TEAMMATE_Template`/`PLAYER_Template`, **117 drive a mesh**.
+     Best candidates for a garment:
+
+     | rig | driven bones | proven on | weights on driven |
+     | --- | ---: | --- | ---: |
+     | `Vest_Generic_Addon` | 9 | 197 meshes across **174 rows** | up to 41,944 |
+     | `Addon_body_samFisher` | 22 | `Tpri_Top_SamFisher_LOD0` (a torso garment) | 5,105, **0 on parents** |
+     | `addon_collar_samFisher` | 11 | same top | 8,786 |
+     | `Addon_Collar_PunkJacket` | 5 | `TP_Top_Metal_PunkJacketB_D0_LOD0` | 5,376 |
+
+     ⚠️ And the census found the trench trap is **not a one-off**: `Addon_Collar_PunkJacket` moves
+     one jacket variant and has **0** weight on its driven bones in another, as does
+     `Addon_Collar_ArmyJacket` and `BodarkPlates_Addon`. A rig assignment in a build table does not
+     mean the mesh is painted for it. Check with `rebind_check.py` before any launch.
    - ⚠️ **Number the edited file below the vanilla copy** (`1_-_…`). Both of ATK's repack paths keep
      the lowest-numbered file per ClassID and silently drop the rest.
    - ⚠️ **Back up the live `DataPC_patch_01.forge` (1.63 GB, modded) first.** On SylG5 the only

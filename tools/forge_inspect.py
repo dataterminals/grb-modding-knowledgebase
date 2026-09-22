@@ -83,6 +83,45 @@ def parse_forge_index(path, want_names=True):
     return version, fileset_count, entries
 
 
+def forge_entries(path):
+    """Yield (id, ext, name, offset, length) for EVERY entry in a forge.
+
+    `parse_forge_index` above answers "what is in here" and deliberately drops
+    the offset/length, because inspecting and diffing never need to touch a
+    payload. This one keeps them, so a caller can read one container's bytes
+    straight out of the forge without unpacking it - which is how `rig_census.py`
+    reaches a mesh in the 23 GB resources forge. Same walk, same record layout;
+    `skeleton_reflex.skeleton_entries` is the Skeleton-only version of it."""
+    with open(path, "rb") as f:
+        if f.read(8) != b"scimitar":
+            raise ValueError("not a .forge (missing 'scimitar' magic)")
+        f.seek(9)
+        struct.unpack("<I", f.read(4))                   # version
+        hdrsize = struct.unpack("<Q", f.read(8))[0]
+        f.seek(hdrsize + 32)
+        fileset_count = struct.unpack("<I", f.read(4))[0]
+        pos, seen = struct.unpack("<q", f.read(8))[0], 0
+        while pos != -1 and seen < fileset_count:
+            f.seek(pos)
+            count = struct.unpack("<I", f.read(4))[0]
+            f.read(4)                                    # const 2
+            off_tbl = struct.unpack("<q", f.read(8))[0]
+            nxt = struct.unpack("<q", f.read(8))[0]
+            f.read(8)
+            info_tbl = struct.unpack("<q", f.read(8))[0]
+            f.seek(off_tbl); ob = f.read(count * 20)
+            f.seek(info_tbl); ib = f.read(count * 192)
+            for r in range(count):
+                offset, fid, ln = struct.unpack_from("<qQi", ob, r * 20)
+                b = r * 192
+                ext = struct.unpack_from("<I", ib, b + 16)[0]
+                nm = ib[b + 44:b + 44 + 128]
+                z = nm.find(0)          # bytes.find takes an int; no NUL literal needed
+                yield (fid, ext, nm[:z if z >= 0 else 128].decode("latin-1", "replace"),
+                       offset, ln)
+            seen += 1; pos = nxt
+
+
 def summary(path):
     v, fc, entries = parse_forge_index(path)
     ids = [e[0] for e in entries]
