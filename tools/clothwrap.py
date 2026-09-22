@@ -14,11 +14,15 @@ encoder). It also just inspects the wrap.
 *** THIS IS AN EXPERIMENTAL / RESEARCH TOOL. It edits cloth internals. ***
 *** ALWAYS work on a copy and keep a verified backup of your forge. ***
 
-Record layout (verified on TP_WalkerCoat_Cloth):
-  [u16 flag] [6x u16 weight data] [3x u16 sim-vertex index]   = 20 bytes
-The 3 sim indices (last 6 bytes) are what we edit for the diagnostic - those byte
-positions are certain. The weight encoding is not yet fully decoded (that's what
-the in-game test helps settle), so this tool does NOT yet rebind a new mesh.
+Record layout - CORRECTED 2026-09-18, now fully decoded by clothmap.py:
+  [u8 u[4]] [u8 v[4]] [u8 h[4]] [3x u16 sim-vertex index] [u16 1]   = 20 bytes
+  (u, v, h) x (position, normal, tangent, binormal), each byte quantized by its own
+  {scale, min}. This tool used to frame it as [u16 flag][6x u16 weights][3x u16
+  sim index], one u16 EARLY: its "flag" of record 0 (0xFFFF) is really the last
+  entry of the per-render-vertex table, and every other "flag" is the previous
+  record's trailing 1. The three sim indices sit at the SAME absolute bytes under
+  either framing, so --diagnostic always edited what it meant to. It still does
+  NOT rebind a new mesh - use clothmap.py to read the mapping; an encoder is next.
 
 Input/output: a cloth **.data** (the entry ATK writes when you unpack a forge; pass
 `--oodle <oo2core_7_win64.dll>`) or a decompressed **.Cloth**. When the input is a

@@ -68,11 +68,13 @@ python cloth_inspect.py  clothA.data  clothB.data
 FILE: TP_WalkerCoat_Cloth.Cloth
   2 cloth LOD(s), 2 simulated piece(s).
 
-  A piece named  Sim_<TargetMesh>_LOD<n>  is bound to that exact mesh + LOD -
-  match your mod to it (e.g. Sim_TP_... is the wearable one, not a cutscene).
+  A piece named  Sim_<Mesh>_LOD<n>  was built from that mesh's cage. The mesh it
+  actually DRIVES is listed per piece - usually the same, not always (Kropotkine's
+  trench cloth still carries Blake's cage name). Sim_TP_... is the wearable one.
 
   - LOD0: Sim_TP_Tacvest_Walker_Coat_LOD0   [gameplay / wearable cloth]
       simulation cage: 170 points, 288 triangles
+      drives the visible mesh: TP_Tacvest_Walker_Coat_LOD0
 ```
 
 - **Cloth pieces (LODs)** = the separate simulated pieces in the file.
@@ -816,3 +818,52 @@ That third bucket exists deliberately. Collapsing "we found nothing to check" in
 
 READ-ONLY: containers are read straight out of the forges by offset. Nothing is
 unpacked, nothing is written, no forge is opened for writing.
+
+---
+
+## 🧶 `clothmap.py` — read a cloth's render↔sim mapping, and prove it
+
+A physics garment in GRB is two meshes: a low-detail **simulation cage** that swings, and the
+**visible mesh** you see. The visible mesh follows the cage through a stored mapping — one record
+for every render vertex the cloth moves. This tool reads that mapping completely and, if it can find
+the garment's own render mesh, **rebuilds the mesh from the cage** so you can see it's right.
+
+```
+python clothmap.py 34224_-_TP_WalkerCoat_Cloth.data
+python clothmap.py 34224_-_TP_WalkerCoat_Cloth.data --install "H:/SteamLibrary/steamapps/common/Ghost Recon Breakpoint"
+python clothmap.py cloth.data --mesh 87874_-_TP_Tacvest_Walker_Coat_LOD0.data --lod 0
+```
+
+```
+  LOD0  body Sim_TP_Tacvest_Walker_Coat_LOD0_0x18D7D8D7DBB_0
+    sim cage 170 verts; render mesh 1816 verts, 1268 cloth-driven (70%), 548 skinned only
+    position  u,v in [-0.2631, 1.08]   h in [-0.0276, 0.02937]
+    ...
+    layout: OK
+    MotionBody carries the same numbers: 11/11 checks
+    rebuilt from the cage vs the real mesh (1268 vertices):
+      position  median 0.384 mm   p99 1.15 mm   max 3.55 mm
+      normal    median  3.84 deg
+```
+
+**What a record is.** Twelve quantized bytes plus a sim triangle: a `(u, v, h)` point on that
+triangle for each of **position, normal, tangent and binormal**, i.e. barycentric weights
+`(u, v, 1−u−v)` plus a height along the cage's normals. The table in front of the records says which
+render vertex each record belongs to, and records are in render-vertex order. The full layout is in
+the module docstring and in [`../docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md).
+
+**What the checks mean.**
+- `layout` — the block's own dword offsets, the table and every record agree with each other.
+- `MotionBody carries the same numbers` — 11 cross-checks between the block and the body's §4374,
+  §4376–4380 and §4403–4410, which store the same quantization and the tangent/binormal bytes a second
+  time. **All 1,716 pass** across the game's 156 cloth bodies.
+- `rebuilt from the cage` — needs ATK (via [`atk_bridge.py`](atk_bridge.py)) to read the mesh.
+  `--install` finds the mesh from the body's `Sim_<Mesh>_LOD<n>` name.
+
+**Why this matters.** Putting a garment's cloth onto a **new** mesh means writing a new mapping, and
+vanilla already does it once. Kropotkine's trench coat runs on a sim cage byte-identical to Blake's,
+with a mapping regenerated for his own mesh. This tool is the reader half; the writer is next.
+
+⚠️ **Reads files, not the game.** Sub-millimetre agreement with the shipped meshes is strong evidence
+the decode is right. It is not evidence that the game accepts a mapping *you* write — that is still the
+in-game gate in [`../meta/next-session.md`](../meta/next-session.md). READ-ONLY.

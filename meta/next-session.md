@@ -182,6 +182,29 @@ the same day.
 >
 > ⚠️ Still arithmetic, not evidence: nothing was written, nothing was repacked, nothing was loaded.
 
+> **🧶 New (2026-09-18): the cloth wrap is DECODED, and vanilla ships a rebind.** Lane 2A had been
+> parked since July on two static blockers — the wrap record's "6-u16 weight encoding" and which render
+> vertex each record belongs to. Both are closed, and without a game launch.
+>
+> - **A record is twelve quantized bytes:** `(u, v, h)` on a sim triangle for each of **position,
+>   normal, tangent and binormal**, weights `(u, v, 1−u−v)`, height along the cage's vertex normals.
+>   The table in front of the records is per render vertex (`0xFFFF` = skinned only), and records are
+>   in render-vertex order.
+> - **Proven against the game's own meshes:** it rebuilds the real render mesh from the cage to a
+>   median of **0.45 mm** across **87 cloth LODs / 489,472 vertices**. Every structural rule holds on
+>   **all 156** bodies, and 1,716/1,716 block↔body cross-checks pass. Tool:
+>   [`tools/clothmap.py`](../tools/clothmap.py).
+> - **ATK's "22 unmodelled sections" were this all along.** §4403–4410 are quantization headers plus
+>   SIMD copies of the wrap's tangent/binormal bytes; §4374–4380/4386 hold one group **per mesh
+>   mapping**, which answers why `MeshMappingsCount` exceeds the §4395 slots.
+> - **⭐ Kropotkine's trench coat is Blake's cloth, rebound.** The cage is byte-identical, and the
+>   mapping is regenerated for Kropotkine's mesh. Ubisoft did Sami's operation in shipped content.
+>
+> **Next, still no launch:** write the encoder (new mesh + donor cage → mapping block + body sections),
+> then **validate it by re-encoding vanilla**: Walker, Blake and Bodark from their own meshes, compared
+> with the shipped bytes and geometry. Only then spend the launch — STEP 1 below is still the gate on
+> whether the game accepts a cloth we wrote.
+
 > **🧩 New (2026-09-20): the Reflex3 physics record is fully decoded, and a rig has a recipe.**
 > A self-delimiting parse of all 204 distinct blobs replaced the August scan, whose "204 of 205
 > exact" test was vacuous. The physics record is `BoneInfo (5 matrices) | 5 gated limit slots
@@ -258,7 +281,7 @@ the same day.
 | Lane | State | What it is |
 | --- | --- | --- |
 | **1 — Community tutorial absorption** | idle since 2026-08-09; its open test **answered 2026-09-16** at ATK's repack layer | Working the *Tier 1 Imports* `#mod-tutorials` forum into the KB, thread by thread |
-| **2A — Cloth→mesh rebind** | **PARKED** since 2026-07-09 | Blocked on an in-game test that is staged but never run. ⛔ Narrowed 2026-09-08: the ATK-side route is `MotionCloth`, **not** `SoftBody` |
+| **2A — Cloth→mesh rebind** | **⭐ UNBLOCKED on paper 2026-09-18** — was parked since 2026-07-09 | The wrap is **decoded** (`clothmap.py`) and vanilla ships a rebind (Kropotkine's trench coat on Blake's cage). Next: an encoder, validated against vanilla without the game. STEP 1 (does a modified cloth load?) still gates shipping. ⛔ The ATK-side route is `MotionCloth`, **not** `SoftBody` (2026-09-08) |
 | **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14**; read side complete 2026-09-16 | Same goal, different mechanism. Has a format, a corpus, vanilla exemplars, the exact record that assigns a rig, and mod precedents |
 | **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-30 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo |
 | **4 — Gameplay / AI database** | **active 2026-09-16** | How enemies see, hear, call for backup and cheat — `DBContainerEntry` records, binary-patched. Sylvia's own second track, not a detour from lane 2 |
@@ -408,8 +431,10 @@ has never been validly tested.
 
 **(A) Cloth→mesh REBIND** (the render↔sim remap). The hard, long-standing problem — see
 [`docs/11-cloth-and-physics.md`](../docs/11-cloth-and-physics.md). The cloth is welded to the
-coat's vertices; a poncho needs its binding recomputed. Blocked on cracking the wrap/binding
-encoding **and** on STEP 1. Only pursue heavily if STEP 1 says modified cloths can load.
+coat's vertices; a poncho needs its binding recomputed. ~~Blocked on cracking the wrap/binding
+encoding **and** on STEP 1.~~ **The encoding is cracked (2026-09-18)** — see the callout at the top and
+`tools/clothmap.py`. STEP 1 is now the only blocker between a written mapping and the game, and an
+encoder can be validated against vanilla before STEP 1 is run.
 
 > ⛔ **2026-09-08 — one hoped-for shortcut is closed.** ATK cannot be talked into reading GRB
 > cloth by appending GRB to `SoftBody.SupportedGames`. The formats are unrelated and the gate is
@@ -824,7 +849,9 @@ payoff.
    `bool[64]` **enable bitmap** (a gate, no binding data), §4658 is a **null-terminated string that
    is empty in every vanilla body**. Neither is the rebind lever. Full write-ups in
    [`cloth-section-types.md`](../reference/cloth-section-types.md).
-1b. **⭐ NEW top candidate — the 22 sections ATK does not model.** The same sweep found GRB cloths
+1b. ~~**⭐ NEW top candidate — the 22 sections ATK does not model.**~~ **DONE 2026-09-18 — 13 of the 22 are
+   the render↔sim mesh mapping**, and the 4403–4410 "counters" are quantization headers. See the
+   2026-09-18 research-log entry. Original framing kept below. The same sweep found GRB cloths
    use **86** section types while ATK's `MotionSectionFactory` handles **64**; the other **22** hit
    `UnknownSection`. Since this KB's section knowledge was transcribed *from ATK*, they have never
    been looked at. Best sub-target: the **4403–4410 block** — four `12-byte counter → variable
@@ -846,13 +873,20 @@ payoff.
    Medic" — each through a `SoftBody` Handle beside the same `TP_Tacvest_Walker_Coat` mesh, the cape
    with its own materials. So the repoint works in vanilla **when the mesh is the same**; a
    different mesh is still the rebind problem.
+   **⭐ Upgraded 2026-09-18: the Bodark cloth IS a vanilla rebind.** Its cage is byte-identical to
+   Blake's, but its mapping is **regenerated** for Kropotkine's own mesh (`TP_Top_Bodark_Trench_LOD0`,
+   5,198 verts; §4386 names it; 0 of 2,243 records shared; rebuilds his mesh to 0.42 mm). Ubisoft
+   did the project goal's exact operation — keep the cage, write a new mapping.
 3. **Wrap-collapse validation on the kilt.** Once STEP 1 proves an override loads, run
    `clothwrap.py --diagnostic collapse/twist` on the kilt via the same both-patch pattern. If the
    visible mesh visibly scrambles, the wrap **is** the render driver → the route-A encoder is worth
    building. This is the gate; it was never validly tested (ghillies were pinned/invalid, Walker
    isn't player-viewable).
-4. **Decode the wrap weight encoding** (the 6×u16 per-record) + the record↔render-vertex
-   correspondence — the remaining blocker for a reskin encoder (only after lead 3 is green).
+4. ~~**Decode the wrap weight encoding** (the 6×u16 per-record) + the record↔render-vertex
+   correspondence — the remaining blocker for a reskin encoder (only after lead 3 is green).~~
+   **DONE 2026-09-18, without lead 3.** Twelve quantized bytes = `(u, v, h)` × (position, normal,
+   tangent, binormal); the table in front of the records is the render-vertex map. Verified to a
+   median 0.45 mm on 87 cloth LODs against their own meshes.
 4b. **⭐ Port ATK's `SoftBody` rebind maths** (new 2026-09-08). `ComputeBarycentric`,
    `ClosestPointOnTriangle`, `GetSimulationBones`, `ToMesh`/`ToMeshNext`/`ToMeshOld` and
    `SoftBodyVertexMapping` are a working cloth→mesh binding implementation sitting in ATK's

@@ -25,10 +25,11 @@ INTRO = (
     "  •  Open a cloth file…        inspect one cloth\n"
     "  •  Compare two cloth files…  see two cloths side by side\n\n"
     "Reskin note: the visible garment is a SEPARATE skeleton-skinned mesh that follows\n"
-    "the low-res sim cage via a stored wrap (not yet validated in-game); rebinding a\n"
-    "brand-new mesh is unsolved for GRB. Reshaping the vanilla garment while keeping the\n"
-    "cage's points in order is the route that works today.\n\n"
-    "Tip: a piece named  Sim_<Mesh>_LOD<n>  is bound to that exact mesh + LOD.\n"
+    "the low-res sim cage via a stored mapping - decoded (see clothmap.py), but not yet\n"
+    "validated in-game; no tool writes a new one yet. Reshaping the vanilla garment while\n"
+    "keeping the cage's points in order is the route that works today.\n\n"
+    "Tip: a piece named  Sim_<Mesh>_LOD<n>  was built from that mesh's cage; the mesh it\n"
+    "actually drives is printed per piece (usually, not always, the same one).\n"
 )
 
 CLOTH_TYPES = [("Cloth files", "*.Cloth"), ("Cloth data", "*.data"), ("All files", "*.*")]

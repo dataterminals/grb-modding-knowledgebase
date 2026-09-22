@@ -4086,6 +4086,207 @@ the right one (117 of 148).
 
 ---
 
+## Entry — 2026-09-18 — The render↔sim wrap is DECODED: four quantized barycentric mappings, a per-vertex table, and a vanilla rebind
+
+**Trigger:** lane 2A's parked lead #1b — *"the 22 sections ATK does not model… best sub-target: the
+4403–4410 block"* — picked because it needs no game launch. It went much further than the block:
+it closed the two static blockers the wrap has carried since 2026-07-01 (*"the 6-u16 weight
+encoding"* and *"the record↔render-vertex correspondence… hit a static-analysis wall"*). Read-only
+throughout; cloths read from the unpacked `Extracted\` tree, render meshes straight out of the forges
+through ATK's reader. New tool: [`tools/clothmap.py`](../tools/clothmap.py).
+
+### VERIFIED — the "12-byte counters" are quantization headers, and the buffers are u8
+
+The 2026-08-09 table called §4403/4405/4407/4409 *"12-byte counters"* and §4404/4408 *"4-byte
+elements"*. Neither is right. Each 12-byte section is three **floats** `{scale, min, max}`, and in
+every header `(max − min) / scale = 254.5` to four digits. The buffers are **u8**, dequantized as
+`min + byte × scale`, and every one of them spans **exactly 0…254**. §4376, §4377, §4379 and §4380
+(ATK-unmodelled, "12 B constant") are **four more** headers of the same form.
+
+### VERIFIED — §4404–§4410 are a SIMD-packed copy of half of each wrap record (156/156 bodies)
+
+Walker LOD0's §4406 holds exactly **1,268** values and the stored wrap has **1,268** records; LOD1:
+**956** and **956**. Byte for byte, in every one of the 156 bodies:
+
+| section | = | layout |
+| --- | --- | --- |
+| §4406 | the wrap record's byte 10, record order | planar |
+| §4410 | the wrap record's byte 11 | planar |
+| §4404 | record bytes 2 and 6 | **AoSoA-4**: `[b2 of rec 0..3][b6 of rec 0..3][b2 of rec 4..7]…` |
+| §4408 | record bytes 3 and 7 | AoSoA-4 |
+
+Every pad byte — the partial last AoSoA block and the tail up to a multiple of 16 — is **the section's
+own byte 0**. (A first sweep reported §4404 matching in only 24 bodies; the partial-block rule was the
+difference, and the corpus is what found it.)
+
+### VERIFIED — the wrap record is 12 independent quantized bytes, not six u16s
+
+That is why it never decoded as a normalized barycentric (*"sums to ~1.2–1.5"*, 2026-07-01): it was
+being read as six little-endian `u16`s, pairing bytes that belong to different quantities. The 12 bytes
+are a **3 × 4 matrix** — rows `u, v, h`, columns **position, normal, tangent, binormal** — the four
+vertex attributes of GRB's render format (`Pos…Norm…Tan…Binorm…`):
+
+```
+record (20 B):  u8 u[pos,nrm,tan,bin] | u8 v[pos,nrm,tan,bin] | u8 h[pos,nrm,tan,bin] | u16 sim[3] | u16 1
+```
+
+Headers: position `(u,v)` = §4376, `h` = §4377; normal §4379/§4380; tangent §4403/§4405; binormal
+§4407/§4409. The same 16 floats are also stored in the wrap block itself (below), and they equal the
+sections in **156/156** bodies — once each body's *right* §4374 group is used (next heading).
+
+### VERIFIED — the geometry: this rebuilds the real render mesh from the sim cage
+
+Decode, for a record with sim triangle `(x₀, x₁, x₂)`, cage vertex normals `(n₀, n₁, n₂)`:
+
+```
+weights  w = (u, v, 1 − u − v)                     ← NOT (1−u−v, u, v)
+position P = Σ wᵢ · (xᵢ + h · nᵢ)
+N̂_P      = unit(Σ wᵢ · nᵢ)                          (at the POSITION's barycentrics)
+normal / tangent / binormal = unit( Σ w'ᵢ · xᵢ + h' · N̂_P − P )     their points sit at |Q−P| ≈ 1
+```
+
+Checked against the render mesh through the table (next heading) — the exact correspondence, not a
+nearest-neighbour guess:
+
+| | Walker LOD0 (1,268 verts) | corpus: 87 distinct cloth LODs, 489,472 verts |
+| --- | ---: | --- |
+| position | median **0.384 mm**, p99 1.14, max 3.55 | per-cloth median 0.035–1.36 mm, **median 0.45 mm** |
+| normal | 3.8° | median-of-medians 3.9°, none flipped |
+| tangent | 2.9° | ~3° typical |
+| binormal | 1.6° | ~2° typical; **anti-parallel (~174°) in 32 cloths**, almost all ghillie |
+
+The losing conventions were ruled out, not assumed: `A + u(B−A) + v(C−A)` is ~12 mm — no better than
+the sim-triangle-centroid control at 13 mm — and offsetting along the flat face normal instead of the
+interpolated vertex normals leaves a 4 mm p90. The render/binormal convention differs in 32 cloths;
+normals and tangents agree there, so it is a sign convention, not a decode error.
+
+> ⚠️ **ATK's `Vertex.Position` is BEFORE `Mesh.Scale`.** These garment meshes have `Scale = 2.0`;
+> without it the render mesh sits at exactly half size against its own cage. Anything comparing ATK
+> positions to cloth, skeleton or world data must multiply.
+
+**Why LOD1 is looser (1.36 mm vs 0.38 mm on the Walker coat):** a coarser cage (66 vs 170 vertices)
+puts render vertices far outside their triangles, so position `u,v` spans [−2.4, 3.2] instead of
+[−0.26, 1.08] and the same 8 bits step ~4× coarser. The worst cloths are ghillie arms (p99 up to
+31 mm); every median is under 1.4 mm.
+
+### VERIFIED — the table in front of the records is the record↔render-vertex map
+
+The 2026-07-01 reading was *"a 0xFFFF-delimited table that groups the 1268 record indices into ~547
+buckets… not mesh-buffer order"*. It is `u16 table[renderCount]` — **one entry per render vertex**:
+that vertex's record index, or `0xFFFF` = *not cloth-driven, skinned only*. The "~547 delimiters" are
+the **548** unbound vertices (1,816 − 1,268). The non-`FFFF` entries run 0, 1, 2… in order in
+**156/156** bodies, so **records are in render-vertex order**.
+
+`clothwrap.py` had the table one `u16` short: its record 0 "flag" (`0xFFFF`) is the table's last entry,
+and the per-record "flag" is really a trailing `u16` that is `1` in all 868,875 records. The bytes its
+`--diagnostic` edits (the three sim indices) are the same bytes either way, so the 2026-07-01 ghillie
+edits changed what they meant to.
+
+### VERIFIED — the block is self-describing, in dwords (156/156)
+
+```
++0    u32 1, u32 0 ×12
++52   u32 bufferSize          dwords, counted from +56
++56   u32 tableOffset = 18    dwords from +56
++60   u32 recordsOffset       dwords from +56  = 18 + ⌈renderCount / 2⌉
++64   f32 min_uv[4] · scale_uv[4] · min_h[4] · scale_h[4]      (pos, nrm, tan, bin)
++128  u16 table[renderCount], padded to 4 bytes
+      record × bound (20 B)
+```
+
+Walker LOD0: `7266 = 5 × 1268 + 926`, `926 = 18 + ⌈1816/2⌉`. Offsets in 32-bit words and quantization
+in vec4 groups is a **GPU-buffer layout** — *inferred:* the render mesh is deformed by a compute shader
+reading this block as-is. An odd `renderCount` (e.g. the ghillie hood's 40,317) is what exposes the
+4-byte table padding; the Walker coat's counts are even.
+
+### VERIFIED — `MeshMappingsCount` counts §4374…§4380 groups; exactly one is the render mapping
+
+Bodies carry 1, 2 or 3 groups of `§4374, §4376, §4377, §4379, §4380` (plus §4389–§4393), in the
+proportions **{1: 6, 2: 123, 3: 27}** — exactly the §4356 `MeshMappingsCount` distribution recorded on
+2026-08-09, and `6 + 2·123 + 3·27 = 333`, the occurrence count of every one of these sections. So:
+
+- **One group per mesh mapping.** Exactly one per body has §4374 byte 8 = `1`: the render mapping.
+  §4374 = `i32 renderCount | i32 ? | u8 1 | i32 bound (0 when every vertex is bound) | …`; byte 13 is
+  `1` iff some vertex is unbound. Render count 156/156; bound 127 + 29 = 156/156.
+- **The others are LOD↔LOD cage mappings.** In all 177 flag-0 groups, the first `i32` is **another
+  LOD's sim vertex count**, and where they carry a §4386 name (27) it is the other LOD's `Sim_…` body.
+- **§4386 is each mapping's target-mesh name**: `<Mesh>_VIS_0x…` for every render mapping (156/156).
+- It is not always group 0: in 16 bodies the render mapping is group 1. Looking only at the first copy
+  is what made 16 bodies "fail" the header comparison in the first sweep.
+
+This answers the 2026-08-09 open question *why `MeshMappingsCount` exceeds the §4395 enabled slots*:
+§4395 enables the **render** mappings (always slot 0); the extra count is the LOD↔LOD mappings.
+
+### ⭐ VERIFIED — vanilla ships a cloth REBIND, and it shows how
+
+The 2026-08-09 note said the Bodark trench cloth was *"a copy, not a shared reference"* of Blake's.
+Decoded, it is more than that:
+
+| | `IanBlake_TrenchCoat_Cloth` | `TP_Top_Bodark_Trench_Cloth` |
+| --- | --- | --- |
+| sim body name | `Sim_Tsec_IanBlake_Trench_LOD0_…A17` | `Sim_Tsec_IanBlake_Trench_LOD0_…3C9` |
+| sim cage (positions, normals, triangles) | 186 verts | **byte-identical** |
+| §4386 mapping target | `Tsec_IanBlake_Trench_LOD0_VIS` | **`TP_Top_Bodark_Trench_LOD0_VIS`** |
+| render verts / cloth-driven | 5,206 / 2,243 | 5,198 / 2,243 |
+| rebuilds | Blake's mesh, median 0.377 mm | **Kropotkine's mesh, median 0.417 mm** |
+| records identical to Blake's | — | **0 of 2,243**; different quantization header |
+
+**Ubisoft kept Blake's simulation cage and regenerated only the mapping** for a different render mesh.
+That is Sami's north star — *put an existing garment's cloth physics onto a new mesh* — done in
+shipped content, and it bounds exactly what a rebind has to rewrite: the mapping block, §4374,
+§4376–4380, §4386, §4403–4410. Not the cage, not the constraints. (The two meshes are close variants —
+8 vertices apart — so this proves the mechanism, not that an arbitrary mesh will look good.)
+
+### ⚠️ CORRECTIONS
+
+1. **§4403/4405/4407/4409 are not counters** and §4404/4408 hold u8, not 4-byte elements
+   (2026-08-09, `reference/cloth-section-types.md`). The "size(4404) == 2 × size(4406)" rule is
+   approximate: both are padded to 16 separately (2,544 vs 1,280 on Walker LOD0).
+2. **The wrap's "6-u16 weight encoding"** (2026-07-01) is 12 u8 quantized values; **"records carry no
+   render index… not mesh-buffer order"** is wrong — the table is the index and the order *is*
+   mesh-buffer order. **The record layout** `[u16 flag][6×u16][3×u16]` is
+   `[12×u8][3×u16][u16 1]`, one `u16` later.
+3. **"The render mesh does not store a per-vertex binding"** (2026-07-01) still holds — the binding is
+   stored in the *cloth*, per render vertex, which is what makes a rebind a cloth-side edit.
+
+### NOT verified / open
+
+- **Nothing was launched.** This is a static decode verified against the game's own meshes to
+  sub-millimetre; whether the engine *drives* the render mesh from it at runtime is still in-game
+  unvalidated, and lane 2 STEP 1 (does a modified cloth load at all?) still gates any shipping edit.
+  The layout (dword offsets, vec4 quantization) makes a GPU skinning path the natural reading.
+- §4374's second `i32` (Walker LOD0 1,432, LOD1 840) and its last bytes.
+- **§4389–§4393** occur 333 times — once per mapping group, like §4374–§4380 — and are small
+  (multiples of 16). *Inferred:* per-mapping data; not decoded.
+- Where the LOD↔LOD mappings' own records live; only their headers were seen.
+- Why only tangent and binormal get SIMD copies in the MotionBody, while position and normal get only
+  headers there.
+- The 32 anti-parallel binormal cloths: which sign the engine uses.
+
+### Tooling
+
+- **New:** [`tools/clothmap.py`](../tools/clothmap.py) — decodes the block, dequantizes, cross-checks
+  it against the MotionBody (11 checks per body; **1,716/1,716 pass** across 156 bodies), and with
+  `--install` or `--mesh` rebuilds the render mesh from the cage and reports the error. Stdlib for the
+  decode; ATK only for reading the mesh.
+- [`tools/clothwrap.py`](../tools/clothwrap.py): docstring corrected to the decoded layout; behaviour
+  unchanged (its edits already hit the right bytes).
+- [`tools/motioncloth.py`](../tools/motioncloth.py): names for the 13 sections decoded here.
+- [`tools/cloth_inspect.py`](../tools/cloth_inspect.py) (and the GUI's tip): no longer says a
+  `Sim_<Mesh>_LOD<n>` piece *"is bound to that exact mesh"* — the Bodark cloth disproves it. It now prints
+  the mesh each piece actually drives, from §4386 (`drives the visible mesh: TP_Top_Bodark_Trench_LOD0`).
+
+### Method note
+
+**The coincidence was the way in, and the corpus was the referee.** The first hypothesis — that
+§4404's 1,272 `u16`s *were* the wrap — died in the first dump, but it put the Walker's record count
+next to §4406's length, and 1,268 = 1,268 did the rest. After that, every "that fits" was run against
+all 156 bodies before it was believed; that is what found the table padding, the AoSoA pad rule and
+the multi-group §4374 — each of which looked like a failure of the decode on first sight, and each of
+which was a rule the Walker coat alone could never have shown.
+
+---
+
 ## Entry — 2026-09-20 — The Reflex3 physics record is fully decoded, the blob's grammar is read, and vanilla chain recipes are extracted
 
 **Trigger:** lane 2B needs a poncho rig *authored*, not copied (2026-09-16: no vanilla garment

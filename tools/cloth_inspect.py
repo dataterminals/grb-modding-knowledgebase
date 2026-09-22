@@ -45,6 +45,19 @@ def _purpose(name):
     return ""
 
 
+def _mapping_target(body):
+    """The visible mesh this piece drives: §4386 of the render mapping group
+    (the one whose §4374 flag byte is 1). Decoded 2026-09-18 - see clothmap.py."""
+    render = False
+    for s in body.sections:
+        if s.type == 4374:
+            render = len(s.payload) > 8 and s.payload[8] == 1
+        elif s.type == 4386 and render:
+            name = s.payload.split(bytes(1))[0].decode("latin-1", "replace")
+            return re.sub(r"_0x[0-9A-Fa-f]+_\d+$", "", name).replace("_VIS", "")
+    return None
+
+
 def _describe_body(body, lod_index):
     L = []
     raw = mc.body_name(body)
@@ -55,6 +68,9 @@ def _describe_body(body, lod_index):
     tag = f"   [{purpose}]" if purpose else ""
     L.append(f"  - LOD{lod_index}: {name}{tag}")
     L.append(f"      simulation cage: {sv} points, {tr} triangles")
+    target = _mapping_target(body)
+    if target:
+        L.append(f"      drives the visible mesh: {target}")
     if mc.uses_barycentric(body):
         L.append("      (+ 'additional-vertices' sections 4561-4565: a small per-triangle")
         L.append("       point set, likely collision - NOT the visible-mesh binding.)")
@@ -77,8 +93,9 @@ def report(path):
     total_bodies = sum(len(p.bodies) for p in pkgs)
     L.append(f"  {len(pkgs)} cloth LOD(s), {total_bodies} simulated piece(s).")
     L.append("")
-    L.append("  A piece named  Sim_<TargetMesh>_LOD<n>  is bound to that exact mesh + LOD -")
-    L.append("  match your mod to it (e.g. Sim_TP_... is the wearable one, not a cutscene).")
+    L.append("  A piece named  Sim_<Mesh>_LOD<n>  was built from that mesh's cage. The mesh it")
+    L.append("  actually DRIVES is listed per piece - usually the same, not always (Kropotkine's")
+    L.append("  trench cloth still carries Blake's cage name). Sim_TP_... is the wearable one.")
     for i, pkg in enumerate(pkgs):
         for body in pkg.bodies:
             L.append("")

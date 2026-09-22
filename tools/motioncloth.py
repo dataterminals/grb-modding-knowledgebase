@@ -86,12 +86,25 @@ SECTION_NAMES = {
 }
 
 # Present in real GRB cloths, but NO ATK class parses them (they hit UnknownSection).
-# 4403/4405/4407/4409 are 12-byte counters for the variable buffers 4404/4406/4408/4410;
-# that block is the leading unexamined candidate for the render<->sim mapping.
 UNMODELED_BY_ATK = {
     4374, 4376, 4377, 4379, 4380, 4386, 4389, 4390, 4391, 4392, 4393,
     4403, 4404, 4405, 4406, 4407, 4408, 4409, 4410, 4414, 4445, 4660,
 }
+
+# 13 of those, decoded by this KB from bytes (2026-09-18): the render<->sim mesh
+# mapping. Not ATK's names - ATK has none. The 12-byte ones are {scale, min, max}
+# quantization headers, NOT counters (as the 2026-08-09 notes had them). Verified on
+# all 156 bodies; see clothmap.py and reference/cloth-section-types.md.
+SECTION_NAMES.update({
+    4374: "MeshMappingHeader",            # one per mapping (= MeshMappingsCount)
+    4376: "MeshMappingPositionUVQuant", 4377: "MeshMappingPositionHQuant",
+    4379: "MeshMappingNormalUVQuant", 4380: "MeshMappingNormalHQuant",
+    4386: "MeshMappingTargetName",        # "<Mesh>_VIS_0x..." or another LOD's "Sim_..."
+    4403: "MeshMappingTangentUVQuant", 4404: "MeshMappingTangentUV",      # u8, AoSoA-4
+    4405: "MeshMappingTangentHQuant", 4406: "MeshMappingTangentH",
+    4407: "MeshMappingBinormalUVQuant", 4408: "MeshMappingBinormalUV",    # u8, AoSoA-4
+    4409: "MeshMappingBinormalHQuant", 4410: "MeshMappingBinormalH",
+})
 
 
 class Section:
