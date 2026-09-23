@@ -37,7 +37,7 @@ Both are bounded, and neither asks anyone to share a file, a channel, or a mod.
 > it"*, especially in a server where that access is what supporting a project earns you. The distinction is the whole reason these
 > asks are viable when the access ask was not.
 
-> **On names.** This file keeps the repo's Modder A–R pseudonyms, as the crowdfund prose does. The
+> **On names.** This file keeps the repo's Modder A–S pseudonyms, as the crowdfund prose does. The
 > handle for each is on the [live panel](https://dataterminals.github.io/t1-crowdfunds/), matched by
 > catalogue number. Activity is described coarsely and deliberately — who is around is a fair thing
 > to weigh before asking someone a question, and not a thing this repo should publish a timeline of.
@@ -46,9 +46,11 @@ Both are bounded, and neither asks anyone to share a file, a channel, or a mod.
 
 ## Before either list — do not ask for what is already known
 
-- **All 34 System 2 crowdfunds are named.** Only **#3** and **#7** are unnamed, both System 1.
+- **All 37 System 2 crowdfunds are named.** Only **#7** is unnamed, and it is System 1.
 - **11 crowdfunds have full vote + delivery data** — see §5. Do not re-ask those.
-- **Turnout is known for 40 of 58 and destination for 47** (2026-08-30). **Do not re-ask either.**
+- **Turnout is known for 40 of 61 and destination for 49** (2026-09-22). **Do not re-ask either.** The
+  three that closed since 08-30 — #51 Pastaslov, #53 Rangers Lead The Way, #54 GWOT Classics — have no
+  tally yet; that is the A9 shape again, three lines.
 - **Supporter counts are known for 41.** Do not ask.
 - **Only #7 is unnamed**, and it is absent from the moderator's list as well.
 - **Sign-up counts for closed crowdfunds are gone permanently.** No lookup recovers a deleted
@@ -68,8 +70,8 @@ Ordered by what they settle per second of someone's time. Each is a *look and te
 | **A4** | Either of the above, targeted | Two specific answers: what was the project **by Modder D announced 2024-11-23** (`1309770589795520592`), and what was **Modder B's "new weapon" announced 2024-12-12** (`1316621603978874991`) | The last two unnamed crowdfunds in the catalogue | ~1 min if A2/A3 are already open |
 | **A5** | The crowdfund **category** (`1310270708303138816`) | The `*-confirmed` channel names, and whether the `*-unconfirmed` channels sit in the **same** category or a different one | A second independent check on every System 2 name, plus a structural fact the write-up currently infers from 11 visible channels | ~1 min |
 | **A6** | Their own memory | Did the **March 2025 leak** cause the move to the reaction-role system? | §2 flags this as **inferred** — the leak and the changeover are adjacent in time and theme and *no message states a cause*. One sentence from anyone who was staff then closes it either way | ~1 min |
-| **A7** | Their own memory | Are crowdfund posts **deleted deliberately** when a project closes, or was there a one-off purge? | §7 calls the mechanism **unestablished**. Two of the posts on the board are months past their stated end date and still up, which argues against rolling removal but does not settle it | ~1 min |
-| **A8** | — | Nothing to look at: a **request**. Sign-up counts die with the post, so if posts stay up — or if `tools/refresh.py` is simply left running on a schedule — the numbers stop being lost from here on | The one gap that closes itself. Costs nobody anything and grants nobody anything | — |
+| **A7** | Their own memory | What takes a crowdfund post **off the board** — the release, the vote, or a periodic tidy? | **Half-answered 2026-09-22:** Rangers Lead The Way, GWOT Classics and Pastaslov all came down as their projects closed, so removal is rolling, not a one-off purge. But CYBERSAMI is ten weeks past its stated end and still up, so the trigger is not a date. One sentence settles it | ~1 min |
+| **A8** | — | Nothing to look at: a **request**. Sign-up counts die with the post, so if posts stay up — or if `tools/refresh.py` is simply left running on a schedule — the numbers stop being lost from here on | The one gap that closes itself. Costs nobody anything and grants nobody anything. **Seen working 2026-09-22:** three posts came down between reads, and their last counts survive only because the script had run on 08-30 and 09-10 | — |
 | ~~**A9**~~ | ~~Each `*-confirmed` channel~~ | ~~The release-vote poll result~~ | ✅ **DONE 2026-08-30** — a moderator supplied all 40, plus membership counts nobody thought to ask for. This row is kept because it is the one that worked, and because the *shape* of it — a bounded lookup, two numbers, no access — is the template | — |
 
 ---
@@ -89,25 +91,27 @@ made what.
 | **#5 and #10's destination** | Modder B | The only two closed crowdfunds with no destination. #5 may never have been built at all |
 | **#6 ≡ #8** | Modder E | Is the GZW assortment one crowdfund or two? The moderator recalls two but flagged it as memory |
 | **#4 vs #12** | Modder B, or any long-standing member | The moderator's *"Shadow Company Heavies as Wolves"* suggests #4 and #12 are one project, where this file had guessed #10 and #12 |
-| **Delivery counts** | any creator, about their own | Still 11 of 58 — the one column nothing has widened, because a drop leaves no trace and nobody tallies them |
+| **Delivery counts** | any creator, about their own | Still 11 of 61 — the one column nothing has widened, because a drop leaves no trace and nobody tallies them |
+| **#51 Pastaslov's destination**, and the tallies for #51, #53 and #54 | Modder K for #51; a moderator, in the A9 shape, for the three tallies | All three closed after the 08-30 data drop. Rangers Lead The Way and GWOT Classics have a destination from their creators' own release threads; Pastaslov has nothing public as of 2026-09-22 |
 
 The table below is now a *who-made-what* reference rather than an ask list.
 
 | Modder | Crowdfunds with no turnout figure | Around? | Notes |
 | --- | --- | --- | --- |
-| **Modder B** | **#1, #7, #10, #15, #16, #19, #23, #26, #43** | active | ⭐ **By far the highest-value single conversation** — nine crowdfunds, a quarter of everything the server has run. Three separate things only this person can settle: the **name of #7**, and the **destination of #10 and #16**, the only two closed crowdfunds with no public trace at all |
+| **Modder B** | **#1, #7, #10, #15, #16, #19, #23, #26, #43** | active | ⭐ **By far the highest-value single conversation** — eighteen crowdfunds, nearly a third of everything the server has run. Two things only this person can settle: the **name of #7**, and the **destination of #5 and #10**, the only closed crowdfunds of theirs with no public trace. #53 Rangers Lead The Way went to supporters (09-01); #60 JSOC is live |
 | **Modder J** | #18, #21, #25, #28 | quiet since spring | Four, including **#28 Steyr**, whose name we only have via The Bivouac |
 | **Modder E** | #2, #6, #8 | active | Also the one person who can confirm the **#6 ≡ #8** inference — that the GZW assortment and the "new gear pack" are one crowdfund counted twice. That is currently our strongest *inferred* claim in System 1 |
 | **Modder A** | #9, #11 | quiet since spring | #38 is already measured, so this is a short conversation |
 | **Modder G** | #13, #20 | around recently | — |
 | **Modder I** | #17, #24 | occasionally | Both destinations known; turnout only |
-| **Modder K** | #22, #41 | active | Both destinations known; turnout only |
+| **Modder K** | #22, #41, #51 | active | #22 and #41 have votes. **#51 Pastaslov closed with no public destination** — the one live question for them. #61 The Great Pasta Heist is live |
 | **Modder L** | #39, #46 | active | Both recent, both his own, both already named by his own posts |
 | **Modder O** | #40, #45, #52 | active | Plus #56, live. **#45 Wolf Pack was attributed to them on 2026-08-30** (msg `1502850378373271692`), which makes five crowdfunds — level with Modder L |
-| **Modder M + Modder R** | #42 | both active | The tag-team crowdfund; either could answer |
+| **Modder M + Modder R** | #42 | both active | The tag-team crowdfund; either could answer. Modder M's #54 GWOT Classics went to supporters from their own release thread (09-08); its tally is unknown |
 | **Modder N** | #48 | active | Plus #57, live |
 | **Modder H** | #14 | long quiet | Lowest expected reply rate; one crowdfund |
-| **Modder D** | **#3** | referenced in chat as recently as this week, but their account could not be resolved from this member account | ⭐ Holds a **name and a destination** — #3 has neither, and no public trace. The only person who can settle it short of A2/A4 |
+| **Modder D** | ~~**#3**~~ | — | ✅ Closed 2026-08-30 from the moderator's list — #3 is the MCX Spear LT, public, 10 of 14 voted. Nothing left to ask |
+| **Modder S** | — | active | #59 Spiritus Invictus, live, their first crowdfund — nothing to ask yet |
 
 ### Six crowdfunds have no creator recorded at all
 
@@ -133,8 +137,9 @@ Short, one question, names what it is for, and makes clear it is not a request f
   second, larger pitch would get a firmer no and would spend goodwill that sections A and B need.
 - **Anything from the `*-unconfirmed` channels.** They are the confirmation channels and hold
   proof-of-support screenshots — a moderator disabled images there on 2026-03-20 *"because users
-  keep on posting personal info in their crowdfund payment posts"* (msg `1484600258473496628`).
-  Nothing the archive needs is in them.
+  keep on posting personal info in their crowdfund payment posts"* (msg `1484600258473496628`), and
+  on 2026-09-10 staff removed file attachments and link embeds there too, for the same reason
+  (msg `1547725287847100446`). Nothing the archive needs is in them.
 - **Mod files, exclusives, or armoury content.** The archive records *that* something exists and
   where it went. It has never needed the thing itself, and asking would recast every question above
   as an attempt to get supporter-only content for free.

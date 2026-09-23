@@ -69,7 +69,7 @@ assets/      Diagrams and supporting images
 
 Lookup tables of note: [`reference/forge-inventory.md`](reference/forge-inventory.md) · [`reference/resource-types.md`](reference/resource-types.md) · [`reference/resource-type-ids.md`](reference/resource-type-ids.md) · [`reference/buildtable-xml.md`](reference/buildtable-xml.md) · [`reference/cloth-section-types.md`](reference/cloth-section-types.md) · [`reference/ai-db-records.md`](reference/ai-db-records.md) · [`reference/mod-anatomy.md`](reference/mod-anatomy.md) · [`reference/install-edit-classes.md`](reference/install-edit-classes.md) · [`reference/glossary.md`](reference/glossary.md)
 
-Techniques and sources: [`reference/hex-item-swaps.md`](reference/hex-item-swaps.md) (swap what an item *does*, in a hex editor) · [`reference/community-tutorials.md`](reference/community-tutorials.md) (index of absorbed Tier 1 Imports tutorials) · [`reference/crowdfund-history.md`](reference/crowdfund-history.md) (how the community funds mods, and why two thirds never reach Nexus) · [live panel](https://dataterminals.github.io/t1-crowdfunds/)
+Techniques and sources: [`reference/hex-item-swaps.md`](reference/hex-item-swaps.md) (swap what an item *does*, in a hex editor) · [`reference/community-tutorials.md`](reference/community-tutorials.md) (index of absorbed Tier 1 Imports tutorials) · [`reference/crowdfund-history.md`](reference/crowdfund-history.md) (how the community funds mods, and why a third of the results never reach Nexus) · [live panel](https://dataterminals.github.io/t1-crowdfunds/)
 
 ## Tools
 

@@ -298,7 +298,7 @@ the same day.
 | **1 — Community tutorial absorption** | idle since 2026-08-09; its open test **answered 2026-09-16** at ATK's repack layer | Working the *Tier 1 Imports* `#mod-tutorials` forum into the KB, thread by thread |
 | **2A — Cloth→mesh rebind** | **⭐ UNBLOCKED on paper 2026-09-18** — was parked since 2026-07-09 | The wrap is **decoded** (`clothmap.py`) and vanilla ships a rebind (Kropotkine's trench coat on Blake's cage). Next: an encoder, validated against vanilla without the game. STEP 1 (does a modified cloth load?) still gates shipping. ⛔ The ATK-side route is `MotionCloth`, **not** `SoftBody` (2026-09-08) |
 | **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14**; read side complete 2026-09-16 | Same goal, different mechanism. Has a format, a corpus, vanilla exemplars, the exact record that assigns a rig, and mod precedents |
-| **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-30 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo |
+| **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-30; **caught up 2026-09-22** with #59–#61 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo |
 | **4 — Gameplay / AI database** | **active 2026-09-16** | How enemies see, hear, call for backup and cheat — `DBContainerEntry` records, binary-patched. Sylvia's own second track, not a detour from lane 2 |
 
 Lane 1 is not a detour — it turns the only real primary documentation GRB modding has into
@@ -689,12 +689,17 @@ modder to ask about which of their own crowdfunds. Neither list asks anyone to g
 a file, which is why they survive the refusal in lead 4. Read it before opening any conversation
 about this in the server.
 
-**Panel and repo are in sync as of 2026-08-30 (second pass).** Both carry the 2026-08-24 naming pass,
-crowdfunds #56–#58, and the moderator's vote and membership figures. Names go on the panel under real handles; this repo keeps the Modder A–R pseudonyms.
-**Modder R** is SexyCouchPotato, co-creator of Step Brothers in Arms with Modder M — the first
-crowdfund with two creators. When they diverge again, the panel's `tools/refresh.py` re-pulls
+**Panel and repo are in sync as of 2026-09-22.** They had diverged: a 2026-09-10 session put #59 Spiritus
+Invictus, #60 JSOC and Rangers Lead The Way's destination on the panel without touching this repo, and
+the 09-22 pass — triggered by #61 The Great Pasta Heist going up — folded all of it back in. Both now
+carry #59–#61, destinations for Rangers Lead The Way and GWOT Classics (both → supporters, from their
+creators' own release threads), and a board read from 2026-09-23T03:31Z. Names go on the panel under
+real handles; this repo keeps the Modder A–S pseudonyms. **Modder S** is Mackle (Spiritus Invictus,
+their first); **Modder R** is SexyCouchPotato, co-creator of Step Brothers in Arms with Modder M — the
+first crowdfund with two creators. When they diverge again, the panel's `tools/refresh.py` re-pulls
 sign-ups and the cohort block but **deliberately never touches the catalogue**, so names, creators,
-dates and outcomes are always a hand edit in both places.
+dates and outcomes are always a hand edit in both places — **and a panel-only edit is exactly how the
+two drifted apart this time.** Update both in the same session, or write the debt down here.
 
 ### What is actually left
 
@@ -775,10 +780,17 @@ dates and outcomes are always a hand edit in both places.
    crowdfunds whose post is gone cannot be recovered by any permission — the messages are deleted.
    But it stops getting worse the moment `tools/refresh.py` runs on a schedule — nobody's permission
    required, and it is the one gap that closes itself if the script is simply left running.
+   **Proven 2026-09-22:** Rangers Lead The Way, GWOT Classics and Pastaslov came down between reads,
+   and their last counts survive only because the script had run on 08-30 and 09-10. Posts are
+   removed as projects close — the first removals actually observed — so the window is real and
+   finite. A weekly run is the whole fix.
 8. **Re-run the forward oracle when new forwards appear.** Discord's search index covers forwarded
    message snapshots, so a deleted post's verbatim text survives in whoever forwarded it. Method and
    the six known forwards are in §7. It named nothing new this time; it is the only route to a
    deleted post's exact wording if one is ever needed.
+9. **Pastaslov's destination, and three unread tallies.** #51 closed with nothing public; #53 and
+   #54 have destinations from their creators' release threads but no vote figures. The A9 shape
+   (ask for the numbers, three lines) is the route for the tallies; Modder K is the person for #51.
 
 ### Don't repeat
 
@@ -796,6 +808,9 @@ dates and outcomes are always a hand edit in both places.
 - **Searching a bot-heavy guild by keyword mostly returns the bot.** Scope by author.
 - **The adjacent-community trick is exhausted.** All 85 readable guilds were enumerated; only Tier 1
   Imports and The Bivouac are GRB, and the Bivouac has nothing from 2026. Don't re-run it hoping.
+- **A panel-only edit is a fork.** The 2026-09-10 refresh added two crowdfunds to the panel's
+  `data/crowdfunds.json` and this repo did not hear about it for twelve days. Every catalogue change
+  lands in both places in the same session, or is written down here as a debt.
 
 ---
 

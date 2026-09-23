@@ -4658,3 +4658,86 @@ record-head bone by string.
 **A merge is a measurement.** Two sessions that never saw each other's work each left numbers the
 other side's code could re-derive. One census re-run on the other session's parser took a minute.
 It separated the figures that belong to the game from the ones that belonged to the August scan.
+
+---
+
+## Entry — 2026-09-22 — Crowdfund #61 caught live, the write-up catches up with the panel, and the first post removals are observed
+
+### What I did
+Sylvia flagged a new crowdfund. Read it off the board through the bridge, added it to both the panel
+and the write-up, and found the two had drifted: a 09-10 panel refresh had added #59 and #60 and
+Rangers Lead The Way's destination without touching this repo. Folded that in, re-read the board
+with a reactor expansion, and recorded three posts that have come down since 08-30.
+
+### VERIFIED (new)
+- **#61 — The Great Pasta Heist**, Modder K, posted **2026-09-22T16:43:53Z** by a moderator (post
+  `1551997476741849128`; `@everyone` msg `1551998584717836320` at 16:48:17Z, *"You guys gotta earn
+  that payday in the Great Pasta Heist"*). Six items: *"MRGSS S"* (the attachment is named for the
+  Geissele VSASS MRGG-S), an Arc'teryx hoodie, cargo pants, a balaclava, an AR57, a *"Spiffy Suit"*.
+  Minimum pledge $10, no end date stated. Modder K's fourth after #22, #41 and #51, and their third
+  pasta name. Its unconfirmed channel (`1547677982909538416`) was created 2026-09-10T18:39Z, twelve
+  days before the post.
+- **#59 Spiritus Invictus** (**Modder S**, new to the file; post `1545322260452220939`,
+  2026-09-04T06:38Z; announcement `1545323100491743264`, *"Making Their Crowdfund Debut"*; MARSOC
+  kit) and **#60 JSOC** (Modder B; post `1547722231516504195`, 2026-09-10T21:35Z; announcement
+  `1547723127604117677`, *"JSOC would like a word"*; Delta Force kit) — on the panel since 09-10, in
+  this repo only now.
+- **Board read 2026-09-23T03:31Z, eight posts, exact reactor lists:** CYBERSAMI 234, Spiritus
+  Invictus 216, Dealer's Choice 214, Flash Point 214, Heavy Metal 213, JSOC 205, WMD 193, The Great
+  Pasta Heist 45. **782 distinct people, 1,534 sign-ups; 61.5 % on exactly one post; 10 on all
+  eight.** Flash Point and WMD doubled since 08-30.
+- **Three posts have left the board — the first removals actually observed.** Rangers Lead The Way
+  (on the board 08-30 at 420, gone by 09-10), GWOT Classics (357 on 09-10, gone by 09-22), Pastaslov
+  (145 on 09-10, gone by 09-22). Checked with a `limit=10` read that returned the channel's full
+  eight posts, floor still CYBERSAMI `1493032233727033454`. All three had closed: Rangers' supporter
+  release went up 09-01 (`1544464453163024507`); GWOT Classics' creator opened a *"GWOT Classics |
+  Supporters Release"* thread 09-08 — *"yet another CF making its way to Supporters Armory"*
+  (`1546978784757026827`); members had asked since 09-01 whether Pastaslov had ended
+  (`1544521390416207913`). Retires §7's "no deletion has actually been observed".
+- **#54 GWOT Classics → supporters** (creator statement, strong). Destination now **49 of 61**;
+  System 2 destinations **16 public / 12 supporters**; the overall split stays two thirds public
+  (33 / 14 / 2).
+- **The channel pair is created days to weeks before the post.** From the snowflakes of the
+  unconfirmed channels the live posts link to: WMD 32 days ahead, JSOC 26, Spiritus Invictus 16,
+  Flash Point 12, The Great Pasta Heist 12, Dealer's Choice 1.
+- **Role recovery policy** (2026-09-21, msg `1551538095709618227`): after a wave of hijacked
+  accounts, a member who regains one has *"30 Days to get your roles back automatically through
+  Carl Bot's Sticky Roles"*; after that *"proof of purchase per CF will have to be provided"* and
+  staff re-add roles by hand. Also 2026-09-10 (`1547725287847100446`): attachments and link embeds
+  removed from the confirmation channels, same reason as the March image ban.
+- **First-day repeat pattern, second instance.** 37 of The Great Pasta Heist's first 45 backers
+  already back another live crowdfund; their median backer is on five of the eight live posts. Flash
+  Point was 10 of 11 on its first day. `refresh.py` skipped it for the new-blood figure as designed
+  and used JSOC (12 days, 39 of 205 fresh).
+
+### INFERRED (new)
+- **The one-and-done share tracks the board's age mix.** Arithmetically the "1 of k" bucket is the
+  sum of every post's fresh backers, and within this read fresh share rises with age — 18 % at
+  eleven hours, 19–22 % at two to three weeks, 23–31 % at a month, 43 % at nearly four months, 56 %
+  at five. So swapping the three oldest posts for three young ones is enough to move 65 % to 61 %
+  without the base narrowing. Also: a post's fresh share is measured against whichever other posts
+  are live, so figures compare within one read, not across reads — Dealer's Choice read 32 %, 28 %
+  and 31 % on three boards of different make-up.
+- Posts come down as projects close, but the trigger is not a date — CYBERSAMI is ten weeks past
+  its stated end and still up. Release, vote, or a periodic tidy remain the candidates (ask A7).
+
+### Questions answered / opened
+- ✅ #59–#61 named and dated at source; #54's destination.
+- ✅ A7 half-answered: removal is rolling, not a one-off purge.
+- 🆕 **Pastaslov (#51) closed with nothing public.** Its post is gone, members have asked since
+  09-01 whether it had ended, and no release thread is searchable. Modder K, or the A9 ask.
+- 🆕 The tallies for #51, #53, #54 — three lines, the A9 shape.
+
+### Docs written this session
+Updated: [`reference/crowdfund-history.md`](../reference/crowdfund-history.md) (status, §1, two §3
+callouts, §4 catalogue and two callouts, §5 sign-ups / overlap / destination / cadence /
+concentration, §7), [`meta/crowdfund-asks.md`](crowdfund-asks.md),
+[`meta/next-session.md`](next-session.md), the README's one-line description of the crowdfund file
+(it still said two thirds *never* reach Nexus — the claim §5 reversed on 08-30); in the panel repo
+`data/crowdfunds.json` (#61, #54's destination, #51's note, refreshed cohort) and `README.md` counts.
+
+### Method note
+**A panel-only edit is a fork.** The 09-10 session refreshed the panel and added two crowdfunds
+there, and this repo did not hear about it for twelve days. Two files that claim to be the same
+dataset have to move in the same session, or the debt gets written down where the next session
+reads first.
