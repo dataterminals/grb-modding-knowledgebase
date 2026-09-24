@@ -413,6 +413,42 @@ The recipes: [`../reference/reflex3-chain-templates.md`](../reference/reflex3-ch
 
 ---
 
+## 🦴 Skeleton Bones — add bones to a GRB skeleton (never into the game)
+
+A physics rig for a new garment needs bones no vanilla skeleton has. ATK cannot
+make a skeleton from a Blender glTF (its glTF importer only reads bone nodes for
+meshes), so this writes the `Bone` records directly, in the layout ATK's own
+`Bone.Read` / `Bone.Write` define for GRB, and leaves the rest of the skeleton
+byte for byte as it was.
+
+```
+python skeleton_bones.py 1889064665537_-_Player_Kilt_Addon.data --spec rig.json --out kilt_plus.data
+  added 5 bone(s); payload 969 -> 1,554 B
+    T_Test_Anchor (9297f346) <- Hips           local (0.0, 0.0, 0.2)  global (0.0, 0.0, 0.2)  id 0xf8000005
+    RFX_Test_01 (a1890137)   <- T_Test_Anchor  local (0.1, 0.0, 0.0)  global (0.1, 0.0, 0.2)  id 0xf8000006
+    ...
+```
+
+The spec's `bones` list gives each bone a name (hashed with CRC32 exactly as the
+game does), a parent (a bone already in the skeleton, or one earlier in the list)
+and a local position, optionally a local rotation. Global transforms are composed
+down the parent chain, the parents' subtree counts are recomputed (ATK's
+`ChildrenCount` is the size of the subtree, not the number of direct children),
+and new bones take the next free local object IDs. Keys and the Reflex3 blob are
+untouched.
+
+**Checked against the reference implementation, headlessly.** ATK's own skeleton
+reader accepts the result with the right bones, parents, indices and positions,
+and ATK's writer re-serialises the file **byte for byte**, exactly as it does
+the vanilla kilt. The same spec then feeds `reflex3_write.py --generate`, so one
+JSON describes a whole rig: the bones, then the physics on them. The recipe:
+[`../reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md).
+
+⚠️ Read-only on the game; writes only `--out`. Nothing produced this way has been
+loaded in game yet.
+
+---
+
 ## 🔤 ATK Hash Dictionary — turn bone numbers into bone names
 
 Anvil names things by **CRC32 of the name**, so a skeleton stores `LeftForeArm`

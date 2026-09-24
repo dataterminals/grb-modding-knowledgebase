@@ -4569,6 +4569,69 @@ that did not named exactly the two inputs the spec is still missing.
 
 ---
 
+## Entry — 2026-09-21 — Skeleton authoring: new bones written in the game's layout, and ATK's writer agrees byte for byte
+
+**Trigger:** the physics generator needs bones that no vanilla skeleton has. ATK cannot make a
+skeleton from a Blender glTF — `AnvilGLTF` only reads bone nodes for meshes (checked in the
+decompiled source) — so the bones have to be written into a Skeleton resource directly.
+**Read-only on the game:** every output went to the session scratchpad.
+
+### VERIFIED
+- **The GRB `Bone` record**, as ATK's `Bone.Read` / `Bone.Write` define it and as the kilt carries
+  it: `u8 0 | u64 local ID | u32 hash 2507411529 | u32 Name | ObjectPtr Parent | ObjectPtr Mirror |
+  Vector4 GlobalPosition | Quat GlobalRotation | Vector4 LocalPosition | Quat LocalRotation | u8
+  SolvingPriority | u8 EnvInfluence | i32 MirroringType | i32 modifiers | i32 dependencies | i32
+  WrinkleCategory | f32 WrinkleFactor | u16 Index | u16 ChildrenCount` — 109 bytes for a root, 117
+  with a parent link (`02` + `u64`); a null pointer is the single byte `03`. The payload before the
+  bones is `u64 ClassID | u32 class hash | u8 1 | u32 SkeletonType | u32 count`.
+- **`ChildrenCount` is the subtree size, not the number of direct children.** The kilt's `Hips` has
+  one direct child and a count of 3; ATK's `CalculateChildrenCount` recomputes it recursively on
+  write. The first version of the writer stored direct counts, and ATK's writer disagreed in exactly
+  those bytes — which is how the meaning was found.
+- **[`tools/skeleton_bones.py`](../tools/skeleton_bones.py)** appends bones from a JSON spec (name,
+  parent, local position, optional local rotation): global transforms composed down the chain, the
+  next free local object IDs, subtree counts recomputed, everything else byte for byte. On the kilt
+  plus a five-bone test chain (an anchor 20 cm under `Hips` and four 10 cm links): **ATK's reader
+  accepts the file** (`Failed = False`, 9 bones, the right parents, indices, positions, subtree
+  counts `[8, 2, 1, 0, 4, 3, 2, 1, 0]`), and **ATK's `Skeleton.Write` re-serialises it byte for
+  byte** (1,542 of 1,542), as it does the vanilla kilt (957 of 957).
+- **The same spec then feeds the physics generator:** `reflex3_write.py --generate rigtest.json
+  --body Regular_Male_Body_Skl.data` writes four physics records onto the new chain (frame heights
+  0.964 → 1.264 m), and the finished `.data` reads back through `reflex3.py` (4 of 4 exact) and
+  through ATK (9 bones, a 1,552 B opaque blob), with ATK's writer again byte-identical.
+- **The three mod-shipped holster rigs keep the vanilla `SkeletonKey` and `SkeletonHierarchyKey`**
+  (`0x1210cfa0`, both, same as `Player_Holster_NoSling_Addon`) after re-parenting a bone, and the
+  game runs with them. The keys are therefore not validated against the hierarchy at load, or a
+  mismatch is tolerated; an authored rig can keep its donor's.
+- Through pythonnet, ATK's `Vector4` exposes `x`, `y`, `z` in lower case and `Bone.Parent.ID` is the
+  parent's local ID; `read_skeleton` needs the Oodle DLL beside the file or in the install.
+
+### INFERRED
+- That "ATK's writer re-serialises it byte for byte" means "game-loadable". ATK's writer is what the
+  modders used for the 278 mod-written skeletons the install loads, so it is the best proxy short of
+  a launch. It is still a proxy.
+
+### NOT verified / open
+- Nothing authored has been loaded in game.
+- New local IDs are appended past the highest in use rather than kept contiguous with the bones, as
+  vanilla keeps them. No reader has objected; the runtime has not been asked.
+- Bones with modifiers or dependencies are refused, not modelled. The spec has no mirror bones.
+
+### Docs and tools
+- New: [`tools/skeleton_bones.py`](../tools/skeleton_bones.py); README section.
+- [`tools/reflex3_write.py`](../tools/reflex3_write.py): `splice_payload` (any-size payload
+  replacement, shared by both tools); `parse_bones` records each bone's offset.
+- Updated: [`reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md),
+  [`reference/skeleton-reflex3-physics.md`](../reference/skeleton-reflex3-physics.md),
+  [`meta/next-session.md`](next-session.md).
+
+### Method note
+**When the reference implementation has a writer, make it the judge.** ATK could not create the
+bones, but it could re-serialise ours, and "byte-identical to what ATK would write" is a stronger
+claim than any amount of reading our own file back.
+
+---
+
 ## Entry — 2026-09-22 — Two parallel lines merged: the rig census holds on the self-delimiting parser
 
 **Trigger:** the three entries dated 2026-09-17/18 were written on SylDesk and the three dated

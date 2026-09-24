@@ -70,7 +70,7 @@ def parse_bones(payload):
     A pointer is one byte 03 (null) or 01/02 + u64 (a local id)."""
     out, k = [], payload.find(BONE_CLASS_HASH)
     while k >= 0:
-        b = {"id": struct.unpack_from("<Q", payload, k - 8)[0],
+        b = {"off": k, "id": struct.unpack_from("<Q", payload, k - 8)[0],
              "name": struct.unpack_from("<I", payload, k + 4)[0]}
         o = k + 8
         for fld in ("parent", "mirror"):
@@ -290,18 +290,33 @@ def splice(data_path, new_blob, out_path, oodle_dll):
     """Replace the Reflex3 blob of the Skeleton resource in `data_path`; write `out_path`."""
     oodle = Oodle(oodle_dll)
     raw = open(data_path, "rb").read()
+    _, off1, _ = read_cfd(raw, 0, oodle)
+    files, _, _ = read_cfd(raw, off1, oodle)
+    res, _ = walk(files)
+    r = next((q for q in res if q.type_id == SKELETON_TYPE and REFLEX3_HASH_PAT in q.payload), None)
+    if r is None:
+        raise SystemExit("no Skeleton resource with a Reflex3 blob in this container")
+    i = r.payload.find(REFLEX3_HASH_PAT)
+    n = struct.unpack_from("<i", r.payload, i + 4)[0]
+    new_payload = r.payload[:i + 4] + struct.pack("<i", len(new_blob)) + new_blob + r.payload[i + 8 + n:]
+    return splice_payload(data_path, new_payload, out_path, oodle_dll)
+
+
+def splice_payload(data_path, new_payload, out_path, oodle_dll):
+    """Replace the whole payload of the Skeleton resource in `data_path`; write `out_path`.
+    Any size. The resource frame and the metadata row are fixed up, both container
+    blocks rebuilt, and the result read back before it is kept."""
+    oodle = Oodle(oodle_dll)
+    raw = open(data_path, "rb").read()
     meta, off1, _ = read_cfd(raw, 0, oodle)
     files, off2, _ = read_cfd(raw, off1, oodle)
     res, end = walk(files)
     if end != len(files):
         raise SystemExit("container walk is incomplete; refusing to rebuild it")
-    idx = next((i for i, r in enumerate(res) if r.type_id == SKELETON_TYPE and REFLEX3_HASH_PAT in r.payload), None)
+    idx = next((i for i, r in enumerate(res) if r.type_id == SKELETON_TYPE), None)
     if idx is None:
-        raise SystemExit("no Skeleton resource with a Reflex3 blob in this container")
+        raise SystemExit("no Skeleton resource in this container")
     r = res[idx]
-    i = r.payload.find(REFLEX3_HASH_PAT)
-    n = struct.unpack_from("<i", r.payload, i + 4)[0]
-    new_payload = r.payload[:i + 4] + struct.pack("<i", len(new_blob)) + new_blob + r.payload[i + 8 + n:]
     frames = []
     for j, q in enumerate(res):
         slen = struct.unpack_from("<i", files, q.offset + 8)[0]

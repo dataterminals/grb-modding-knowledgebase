@@ -723,6 +723,14 @@ Read-only; touches nothing in the install.
 > them into a skeleton container that re-reads identically. Regenerating the kilt and the Casper
 > hair rig from their own decoded fields reproduces every matrix to the float — the matrix rules
 > above are complete for those rigs. Nothing generated has been loaded in game.
+>
+> **Skeleton authoring (2026-09-21):** [`tools/skeleton_bones.py`](../tools/skeleton_bones.py) appends
+> new `Bone` records to a GRB skeleton in the game's layout. On the kilt with a five-bone chain added,
+> ATK's reader accepts the file and ATK's `Skeleton.Write` re-serialises it byte for byte. Two facts
+> from the way: `ChildrenCount` is the **subtree size** (the kilt's `Hips` is 3 with one direct
+> child), and the three mod-shipped holster rigs keep the vanilla `SkeletonKey` /
+> `SkeletonHierarchyKey` (`0x1210cfa0`) after re-parenting a bone — the game does not validate those
+> keys against the hierarchy, or tolerates the mismatch.
 
 1. ~~**Finish the blob decode.**~~ **Done 2026-08-14** — see "Blob body — decoded" above. What
    remains inside it: the 8-byte header remainder (bone hash?), the meanings of `param[0..3]` /

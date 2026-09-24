@@ -125,7 +125,10 @@ fields have a worked example.
 
 ## A poncho recipe
 
-*Inferred throughout. Nothing here has been written into a skeleton or loaded in game.*
+*Inferred throughout. Both halves can now be written — the bones with
+[`tools/skeleton_bones.py`](../tools/skeleton_bones.py), the physics with
+[`tools/reflex3_write.py`](../tools/reflex3_write.py), one JSON spec for both, each checked byte for byte
+against ATK's own writer (2026-09-21) — but nothing has been loaded in game.*
 
 1. **Anchor.** Hang the rig under `Spine2` (the trench coat, the scarf and every backpack do), with
    one static anchor bone per panel at the shoulder line, named `T_…` by the vanilla grammar.
@@ -147,8 +150,9 @@ fields have a worked example.
 
 **What this does not give you.** Collision: the limits are the only thing keeping a panel out of
 the body, so start conservative. Wind: the wind factor exists but nothing shows what feeds it. The
-meaning of `p3`. The write path exists: [`tools/reflex3_write.py`](../tools/reflex3_write.py)
-builds the blob from a spec (`--example-spec` prints the strand above as JSON), splices it into the
+meaning of `p3`. The write path exists: [`tools/skeleton_bones.py`](../tools/skeleton_bones.py)
+adds the bones (2026-09-21; ATK's reader accepts the result and ATK's writer re-serialises it byte
+for byte), then [`tools/reflex3_write.py`](../tools/reflex3_write.py) builds the blob from a spec (`--example-spec` prints the strand above as JSON), splices it into the
 skeleton's `.data`, and reads it back; regenerating the kilt and the Casper hair from their own
 fields reproduces every matrix to the float. What is left is the in-game test, and the install has
 already loaded every step of it except the blob itself

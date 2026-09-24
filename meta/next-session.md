@@ -240,9 +240,18 @@ the same day.
 > write test — one swing limit in the Hill backpack rig the install already overrides — is one
 > command in lane 2B step 2 below.
 
-> **🔀 Reconciled (2026-09-22): the five callouts above come from two parallel lines.** SylDesk
-> wrote the 2026-09-17 and 2026-09-18 ones, and SylG5 the three dated 2026-09-20. Both started from
-> the 2026-09-16 state, and neither saw the other. Where they meet:
+> **🦴 New (2026-09-21): skeleton authoring works, judged by ATK itself.** `tools/skeleton_bones.py`
+> appends bones to a GRB skeleton from a JSON spec (name, parent, local position). ATK cannot make a
+> skeleton from a Blender glTF, but its reader accepts ours and its writer re-serialises the result
+> **byte for byte** — on the kilt with an anchor and four 10 cm links added, and again after
+> `reflex3_write.py --generate` put four physics records on the chain. `ChildrenCount` is the subtree
+> size, not the direct-child count. The holster mods keep vanilla skeleton keys after re-parenting a
+> bone, so the keys are not checked against the hierarchy. **Everything a poncho rig needs can now be
+> written from one spec; nothing has been launched.**
+
+> **🔀 Reconciled (2026-09-22): the five callouts dated 2026-09-17 to 2026-09-20 above come from two
+> parallel lines.** SylDesk wrote the 2026-09-17 and 2026-09-18 ones, and SylG5 the three dated
+> 2026-09-20. Both started from the 2026-09-16 state, and neither saw the other. Where they meet:
 >
 > - **The census holds on the new parser.** Re-run on the 2026-09-20 `reflex3.py`, it still finds
 >   148 rigs, split 117 / 22 / 9, over 694 pairs. Eleven rigs' own counts moved, because the August
@@ -637,6 +646,10 @@ shape a player garment would copy.
    inferred, untested): six four-link strands under `Spine2` with the hair strand's limits and
    mass taper, a generated blob carried into the skeleton through ATK's XML round trip (the blob
    is Base64 there) — [`reference/reflex3-chain-templates.md`](../reference/reflex3-chain-templates.md).
+   **Both halves have tools now (2026-09-21):** `skeleton_bones.py --spec rig.json` adds the bones,
+   `reflex3_write.py --generate rig.json --body <body rig>` adds the physics; the kilt with a five-bone
+   test chain passes ATK's reader and ATK's writer re-serialises both files byte for byte. A poncho
+   rig is a spec away; only the launch is missing.
 
 **The pipeline, as of 2026-09-09:**
 
@@ -644,6 +657,9 @@ shape a player garment would copy.
    ATK export  ──►  Blender transfer  ──►  rebind_check  ──►  ATK import  ──►  repack
    AUTOMATED        AUTOMATED             AUTOMATED          CHECKED          manual
    (09-01)          (08-31)               (09-01)            (09-09)          by policy
+
+   rig bones:    skeleton_bones.py (add bones from a spec)  ──►  ATK reads it; ATK's writer re-emits it byte-exact
+                 (09-21)
 
    rig physics:  reflex3.py (read)  ──►  reflex3_write.py (edit / generate / splice)  ──►  repack
                  EXACT, all 204          BYTE-EXACT round trip, verified splice          manual
