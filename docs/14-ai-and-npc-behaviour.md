@@ -265,20 +265,39 @@ against an offset map you got from `--diff` (§3). No size change means no conta
 
 ## 6. How to actually do it
 
-1. **Back up first.** [`../CLAUDE.md`](../CLAUDE.md) rule 1 is not optional. Confirm ATK's
-   backup exists before any repack.
+1. **Back up first — yourself.** [`../CLAUDE.md`](../CLAUDE.md) rule 1 is not optional, and
+   **ATK's automatic backup will not cover a modded install.** With `AddDateToBackups` off (ATK
+   1.3.1's shipped default) it copies a forge or `.data` into `Backups\` only when no backup is
+   there yet, so on an install that has been modded before, `Backups\` holds the *pristine*
+   original and restoring it wipes every mod. *(Verified 2026-09-23 in `ForgeFile` /
+   `DataFile.CreateBackup` source; on this install both `Backups\DataPC_patch_01.forge` and the
+   DB `.data` backup are the unmodded originals.)* Copy the live `DataPC_patch_01.forge` somewhere
+   safe before repacking it.
 2. In ATK, open `DataPC_patch_01.forge` → unpack → find `DBContainerEntry_0X104634F921.data` →
-   unpack **that** too. You get one file per record, named `<name>.<TypeName>`.
-3. Edit the record bytes in a hex editor. Use `tools/db_inspect.py --diff` first to know which
-   offsets matter.
-4. **Mind the number in front of the file.** ATK's repack keeps the **lowest-numbered** file per
+   unpack **that** too. You get one file per record, named `<N>_-_<name>.<TypeName>` (a
+   decimal type id where ATK has no name for the type), in
+   `Extracted\DataPC_patch_01.forge\Extracted\1_-_DBContainerEntry_0X104634F921.data\`.
+3. **Check the folder is in sync with the live container** before changing anything:
+   `python tools/db_patch.py <that folder> --sync <install>\DataPC_patch_01.forge`. ATK rebuilds the
+   container from the folder, not from the container, so a folder that has fallen behind (the GRB
+   Mod Manager writes containers directly) would silently revert whatever it missed.
+4. **Make the edit.** For a handle — which config a unit uses — `db_patch.py --record <name>
+   --repoint OLD=NEW --out <dir>` writes a checked `1_-_` copy (same type only, one occurrence
+   only). For a field, edit the bytes in a hex editor, using `tools/db_inspect.py --diff` first to
+   know which offsets matter.
+5. **Mind the number in front of the file.** ATK's repack keeps the **lowest-numbered** file per
    ClassID and silently drops the rest — so if you save your edit as a copy beside the vanilla file
    (rather than overwriting it), give the copy a lower number, the way installed mods ship
-   `1_-_…` files. See [`08-naming-conventions.md`](08-naming-conventions.md).
-5. **Repack inside-out**: the `DBContainerEntry` container first, let it finish, *then*
+   `1_-_…` files. See [`08-naming-conventions.md`](08-naming-conventions.md). Deleting the copy and
+   repacking undoes the edit.
+6. **Repack inside-out**: the `DBContainerEntry` container first, let it finish, *then*
    `DataPC_patch_01.forge`. This is the same two-stage rule as `TEAMMATE_Template` and
-   `Dbcontainer` — see [`../reference/mod-anatomy.md`](../reference/mod-anatomy.md) §5.
-6. Compression: the cloth work found raw/uncompressed blocks hang GRB at load
+   `Dbcontainer` — see [`../reference/mod-anatomy.md`](../reference/mod-anatomy.md) §5. The
+   container repack overwrites `Extracted\DataPC_patch_01.forge\1_-_DBContainerEntry_0X104634F921.data`
+   — copy that file aside first, and `db_patch.py --compare <copy> <new>` afterwards should show
+   exactly the records you meant to change. After the forge repack, `--compare <new .data>
+   <install>\DataPC_patch_01.forge` should show no changes at all: that is the edit in the forge.
+7. Compression: the cloth work found raw/uncompressed blocks hang GRB at load
    ([`../meta/research-log.md`](../meta/research-log.md), 2026-07-02) — but this install's DB
    container is already fully raw after ATK's repack and reportedly plays, so the rule is narrower
    than it sounds (§8).
@@ -293,6 +312,13 @@ python tools/db_inspect.py "<install>/Extracted/DataPC.forge/5_-_DBContainerEntr
 > verified end to end; the **write** path is inferred from how the installed mods are shaped.
 > The first in-game test should be a single-field change to one fixed-size record, so a failure
 > is unambiguous.
+>
+> **Staged 2026-09-23 — every step short of the repack is verified.** `SC_TGT_Rifleman_Marks1`
+> (the MK1 rifleman behind `TGT_Fighter` and its five variants) with its cheat handle @75 repointed
+> from `NoCheat` to `Miter_Omniscience`: 5 bytes of 463 change, type-checked. The unpack folder on
+> this install is in sync with the live forge (all 61,446 records reproduced), and a copy of it with
+> the edit dropped in predicts exactly one changed record on repack. No installed mod touches any
+> soldier config, so the edit is the only change. Steps: `meta/next-session.md`, lane 4.
 
 ---
 
@@ -455,6 +481,18 @@ Each slot is 10 bytes: `01 00` and a handle, or `03 00` and zeros for "none". Fo
 `SC_TGT_Rifleman_Wolves_Default` → general `Rifleman_Wolves`, health `Rifleman_Wolves`, cheat
 **`NoCheat`**, sound `Default`, visual `Wolves`, radio **`NoCall`** — Wolves riflemen neither cheat
 nor call for backup.
+
+> **Verified 2026-09-23 — the whole record is slots.** A soldier config is its 13-byte head and
+> **45 slots**, tags at @13 + 10k and handles at @15 … @455, each resolving by ClassID
+> (`db_patch.py --record <name>` lists them). Beyond the six above they select toxic gas, loot,
+> teams, weapon usage, grenades, targeting, cover, bush use, vantage, retrench, static defence,
+> approach, chase, escape, assault, investigation, turret use, revival, hostage handling, special
+> ability, optical camo, aiming, fidgets, reactions, hit reactions, sound threat, locomotion, vehicle
+> use, confidence and marking. Choosing which of these a unit gets is a repoint, not a field edit;
+> tuning one is an edit to the config it points at. Across the 237 `SC_TGT_*` configs the radio slot
+> is **`NoCall` in 229**, `CallPMC` in 2, `CallBodark` in 1 and empty in 5: calling for backup
+> belongs to a handful of dedicated caller configs, so giving an ordinary rifleman a call config may
+> not be enough on its own to make the unit radio *(inferred)*.
 
 | Who | Cheat config |
 | --- | --- |

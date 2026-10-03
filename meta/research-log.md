@@ -4804,3 +4804,88 @@ concentration, §7), [`meta/crowdfund-asks.md`](crowdfund-asks.md),
 there, and this repo did not hear about it for twelve days. Two files that claim to be the same
 dataset have to move in the same session, or the debt gets written down where the next session
 reads first.
+
+---
+
+## Entry — 2026-09-23 — Lane 4's first write test is staged: a checked repoint, a proven-safe repack, and ATK's backups do not cover a modded install
+
+**Trigger:** lane 4 step 2 — change one 8-byte handle in one soldier config. Before handing over a
+file to repack, find out exactly what that repack would do to the live database. **Read-only on the
+game:** the edited record, and a copy of the whole unpack folder, went to the session scratchpad.
+
+### VERIFIED
+- **The DB unpack folder is nested one level deeper than docs/14 said:**
+  `Extracted\DataPC_patch_01.forge\Extracted\1_-_DBContainerEntry_0X104634F921.data\` — 61,820
+  files. ATK's container repack writes its result to
+  `Extracted\DataPC_patch_01.forge\1_-_DBContainerEntry_0X104634F921.data` (`DataFile.Serialize`:
+  the folder's grandparent + the folder's name), which the forge repack then packs.
+- **How ATK 1.3.1 builds a container from that folder** (`DataFile.Serialize`, decompiled): files
+  from `GetFiles("*.*")` minus the `IgnoredExtensions` setting (`dependency;bak;dds;obj;glb;xml;ignored`
+  in the shipped config, replacing `DataStorage`'s hardcoded list); a stable sort on the number
+  before `_-_`; for each file the FileHeader, then the ClassID and type id **read from the file's own
+  bytes**; the first file per ClassID is packed and later ones skipped; the record's **name comes
+  from the filename** after `_-_` (extension stripped, `unnamed` → empty). The extension plays no
+  part — the mod-shipped `…CallPMC.DBAIRadioCallConfig` and the vanilla `…CallPMC.4037536590` are
+  the same type.
+- **The folder is in sync with the live forge.** The live `DataPC_patch_01.forge` DB entry and the
+  extracted `.data` are byte-identical (57,688,741 B), and replaying ATK's selection on the folder
+  reproduces all **61,446** live records — payload, name, type id, FileHeader and order — with the
+  373 surplus files being exactly the ones ATK drops. So a repack of the untouched folder changes
+  nothing, and no mod would be reverted by one.
+- **The edit.** `SC_TGT_Rifleman_Marks1` (`0x18bdbf04bae`, general config `Rifleman_MK1`: alignment
+  3, faction 1, tier 0) is referenced by 25 records — `TGT_Fighter` and its `_EVENTS`, `_GUERILLA`,
+  `_LONER`, `_MISSION`, `_WARFARE` variants, `TGT_Rifleman_Marks1` and its five voice archetypes, and
+  a handful of mission NPCs. Its handle @75 repointed from `DBAICheatConfig_NoCheat`
+  (`0x1bc67bf6bd2`) to `DBAICheatConfig_Miter_Omniscience` (`0x1b513a784f3`), both type
+  `0x07becb9f`: **5 bytes of 463 change** (the two ids share their top three bytes). Written as
+  `1_-_SC_TGT_Rifleman_Marks1.DBSoldierConfig`.
+- **A copy of the unpack folder with that file dropped in predicts exactly one changed record** on
+  repack, nothing added or removed. Repointing back by ClassID reproduces the vanilla file byte for
+  byte.
+- **No installed mod touches a soldier config:** all 240 `DBSoldierConfig` records in the live
+  container match the pristine 2023 patch.
+- **The soldier config is all slots:** a 13-byte head and 45 slots (tags @13 + 10k, handles @15 …
+  @455), every one resolving by ClassID. Radio slot across the 237 `SC_TGT_*` configs: `NoCall`
+  229, `CallPMC` 2, `CallBodark` 1, empty 5. Cheat slot: `NoCheat` 190, `Miter_Omniscience` 16,
+  `Teammate` 7, `SC_TGT_Grenadier` 5, `BlackGate` 4, `NoPerception` 4, `FactionWarfare` 4,
+  `Miter_Omniscience_Ambush` 4, `Miter_Omniscience_Blackgate` 2, `Walker` 1.
+- **⚠️ ATK's automatic backups do not protect a modded install.** With `AddDateToBackups` False — the
+  shipped default and this machine's setting — both `ForgeFile` and `DataFile.CreateBackup` copy the
+  file into `Backups\` **only if no backup exists there yet**. On this install both already exist
+  and both are unmodded: `Backups\DataPC_patch_01.forge` (831,750,144 B, the 2023 original) and
+  `Extracted\DataPC_patch_01.forge\Backups\1_-_DBContainerEntry_0X104634F921.data` (13,911,655 B,
+  compressed, i.e. vanilla). Repacking will not refresh them, and restoring from them would wipe
+  every installed mod. This is why the next-session note found "only the pristine 2023 copy".
+- `--compare` of base against live finds **390** payload changes, 26 added and 6 removed — the
+  figures docs/14 §8 recorded — plus 376 records that differ only in name or FileHeader.
+
+### INFERRED
+- That `Miter_Omniscience` will be visible in play: the MK1 riflemen of a Sentinel patrol should
+  detect the player without line of sight, inside the ~250 m the cheat profile's @28 float suggests
+  (docs/14 §9, unverified units). Other units at the same site stay honest — a built-in control.
+- `Miter` is the Terminator event's faction: the 16 soldier configs already on this cheat config are
+  named `…endoskeleton` and `…human`. From names only.
+- That a rifleman given a radio call config would still not radio, since calling looks confined to
+  dedicated caller configs. Untested — which is why the first test is the cheat slot, not the radio.
+
+### NOT verified / open
+- **Nothing has been repacked or launched.** The test is staged: next-session lane 4 step 2.
+- Whether the game minds the edited record moving to the front of the container (the `1_-_` file is
+  packed first). Mods do this constantly; not checked separately.
+
+### Tooling
+- New: [`tools/db_patch.py`](../tools/db_patch.py) — `--sync` (replay ATK's container repack
+  against a `.data` or the live forge), `--record` (every resolvable handle in a record),
+  `--repoint OLD=NEW` (one handle, same type only, refuses ambiguity and a copy ATK would not pack),
+  `--compare` (records added/removed/changed between two containers). README section. It carries a
+  private forge-entry reader for now; upstream's `forge_inspect.forge_entries` should replace it
+  once `origin/main` is merged.
+- Updated: [`docs/14-ai-and-npc-behaviour.md`](../docs/14-ai-and-npc-behaviour.md) §6 (backup, the
+  nested folder, the sync check, the edit, the compare after each repack) and §10 (the slot map and
+  usage counts); [`meta/next-session.md`](next-session.md).
+
+### Method note
+**Before handing over a file to repack, replay the repack.** ATK rebuilds a container from a folder,
+so what reaches the game is the folder's state, not the one file you changed. Replaying the
+selection against the live forge turned "drop this in and repack" from a hope into a prediction
+with a checkable answer: one record, five bytes.

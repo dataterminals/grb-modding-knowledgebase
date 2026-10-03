@@ -449,6 +449,75 @@ loaded in game yet.
 
 ---
 
+## 🎛️ DB Patch — one checked edit to an AI/gameplay record (never into the game)
+
+GRB's gameplay database (how enemies see, hear, cheat and call for backup) is
+one container of 61,000+ records that ATK can unpack and repack but not decode —
+see [`../docs/14-ai-and-npc-behaviour.md`](../docs/14-ai-and-npc-behaviour.md).
+`db_inspect.py` reads it. This makes the edit, and tells you what a repack will
+change **before** you run one.
+
+The unpack folder is ATK's, one level deeper than you might expect:
+`<install>\Extracted\DataPC_patch_01.forge\Extracted\1_-_DBContainerEntry_0X104634F921.data\`.
+
+**1. Is the folder safe to repack?** ATK rebuilds the container from this folder,
+not from the container, so anything that wrote the container since you unpacked it
+would be silently reverted:
+
+```
+python db_patch.py <unpack folder> --sync "<install>\DataPC_patch_01.forge"
+  folder   : 61,819 files -> ATK would pack 61,446 records (373 lose to a lower-numbered file)
+  container: 61,446 records  (DataPC_patch_01.forge)
+    only in folder 0 | only in container 0 | differ 0 | order identical True
+  IN SYNC - repacking this folder as it stands reproduces the container byte for byte
+```
+
+**2. What does a record point at?** Every handle, resolved by name:
+
+```
+python db_patch.py <unpack folder> --record SC_TGT_Rifleman_Marks1
+  SC_TGT_Rifleman_Marks1  0x18bdbf04bae  type 0x2a1ff55d  463 B  <- 9638_-_SC_TGT_Rifleman_Marks1.DBSoldierConfig
+    @15    0x1bfb3e016c3  DBNpcGeneralConfig_Rifleman_MK1  (type 0x0eddf5f8)
+    @75    0x1bc67bf6bd2  DBAICheatConfig_NoCheat  (type 0x07becb9f)
+    ...
+```
+
+**3. Repoint one handle** — refused unless the old target occurs exactly once, the
+new one is unambiguous, and both have the same type id (a cheat slot can only get
+a cheat config):
+
+```
+python db_patch.py <unpack folder> --record SC_TGT_Rifleman_Marks1 --repoint DBAICheatConfig_NoCheat=DBAICheatConfig_Miter_Omniscience --out out
+  @75: 0x1bc67bf6bd2 DBAICheatConfig_NoCheat  ->  0x1b513a784f3 DBAICheatConfig_Miter_Omniscience
+  5 byte(s) changed of 463; size, ClassID and type unchanged
+  wrote out\1_-_SC_TGT_Rifleman_Marks1.DBSoldierConfig
+```
+
+The `1_-_` number makes ATK pack your copy and skip the vanilla one. Delete it
+and repack to undo.
+
+**4. What did the repack change?** Compare containers — `.data` files, or a
+`.forge` (its DB entry):
+
+```
+python db_patch.py --compare <old .data> <new .data>
+```
+
+After the container repack you want one changed record; after the forge repack,
+the forge against the `.data` should be identical.
+
+Checked on this install: `--sync` replays ATK 1.3.1's `DataFile.Serialize`
+selection and reproduces all 61,446 live records; on a copy of the folder with
+the edit dropped in it predicts exactly one changed record; `--compare` of base
+against live finds the 390 payload changes docs/14 §8 records.
+
+⚠️ **ATK will not back up your modded forge for you.** With `AddDateToBackups`
+off (the default) it copies a forge or `.data` into `Backups\` only if no backup
+is there yet — on a modded install, that is the pristine original, and restoring
+it wipes every mod. Copy the live forge yourself before repacking.
+
+---
+
 ## 🔤 ATK Hash Dictionary — turn bone numbers into bone names
 
 Anvil names things by **CRC32 of the name**, so a skeleton stores `LeftForeArm`

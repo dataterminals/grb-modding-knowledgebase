@@ -264,6 +264,15 @@ the same day.
 >   carrying physics blobs already load. What remains is a blob the game did not compile, and the
 >   first write test in lane 2B step 2 isolates exactly that.
 
+> **🎛️ New (2026-09-23): lane 4's first write test is staged, and a repack is now predictable.**
+> `tools/db_patch.py` replays ATK's container repack against the live forge (`--sync`), lists a
+> record's handles (`--record`), makes one type-checked repoint (`--repoint`) and diffs containers
+> after each repack (`--compare`). On SylG5 the DB unpack folder reproduces all 61,446 live records,
+> and with the edit in, a repack changes exactly one: MK1 riflemen get `Miter_Omniscience`. Steps in
+> lane 4 step 2. ⚠️ **Found on the way: ATK's automatic backups never refresh** (`AddDateToBackups`
+> off, the shipped default) — on a modded install `Backups\` holds the pristine originals, and
+> restoring them wipes every mod. Back up the live forge yourself, every time.
+
 > **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
 >
 > **What now works.** Export a real GRB garment to GLB, move weights in Blender, check the
@@ -308,7 +317,7 @@ the same day.
 | **2A — Cloth→mesh rebind** | **⭐ UNBLOCKED on paper 2026-09-18** — was parked since 2026-07-09 | The wrap is **decoded** (`clothmap.py`) and vanilla ships a rebind (Kropotkine's trench coat on Blake's cage). Next: an encoder, validated against vanilla without the game. STEP 1 (does a modified cloth load?) still gates shipping. ⛔ The ATK-side route is `MotionCloth`, **not** `SoftBody` (2026-09-08) |
 | **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14**; read side complete 2026-09-16 | Same goal, different mechanism. Has a format, a corpus, vanilla exemplars, the exact record that assigns a rig, and mod precedents |
 | **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-30; **caught up 2026-09-22** with #59–#61 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo |
-| **4 — Gameplay / AI database** | **active 2026-09-16** | How enemies see, hear, call for backup and cheat — `DBContainerEntry` records, binary-patched. Sylvia's own second track, not a detour from lane 2 |
+| **4 — Gameplay / AI database** | **active 2026-09-16**; first write test **staged 2026-09-23** | How enemies see, hear, call for backup and cheat — `DBContainerEntry` records, binary-patched. Sylvia's own second track, not a detour from lane 2 |
 
 Lane 1 is not a detour — it turns the only real primary documentation GRB modding has into
 something durable, and it produced independent corroboration of the 64-bit ID model from a
@@ -868,12 +877,44 @@ changed. It is a second track in its own right, not a detour from lane 2.
    descriptors cheat at all; regular Wolves, Bodark and Sentinel troops are `NoCheat`. Also resolved:
    Fear the Radio's four `TGT_*_Marks*` files make Heavy MK1–3 and Rusher MK1 descriptors identical
    to `TGT_Caller`. See `docs/14` §10.
-2. **The first write test — now a one-handle repoint.** Change **one 8-byte handle** in one soldier
-   config: e.g. `SC_TGT_Rifleman_Wolves_Default` @355 from `NoCall` to `CallBodark` (do Wolves
-   riflemen start radioing?) or @75 from `NoCheat` to `Miter_Omniscience`. Visible, reversible, and
-   no record changes size. ⚠️ Never edit the shared `DBAICheatConfig_NoCheat` (`0x1BC67BF6BD2`) — 320
-   soldier configs use it. Back up the live `DataPC_patch_01.forge` first; number the edited record
-   `1_-_` so ATK packs it rather than the vanilla copy; repack the container, then the forge.
+2. **⭐ The first write test — STAGED 2026-09-23, ready to run on SylG5.** MK1 Sentinel riflemen
+   (`SC_TGT_Rifleman_Marks1`, behind `TGT_Fighter` and its variants) get the Terminator-event
+   omniscience: cheat handle @75 `NoCheat` → `Miter_Omniscience`, 5 bytes of 463. Everything short
+   of the repack is verified — the unpack folder reproduces the live forge's 61,446 records exactly,
+   and with the edit dropped in a repack changes exactly that one record. Chosen over the radio slot
+   because calling looks confined to dedicated caller configs (229 of 237 are `NoCall`), so a
+   rifleman given `CallBodark` might do nothing even if the edit loads. ⚠️ Never edit the shared
+   `DBAICheatConfig_NoCheat` (`0x1BC67BF6BD2`) itself — 320 soldier configs use it.
+
+   ```powershell
+   # from the repo root
+   $G  = "D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint"
+   $DB = "$G\Extracted\DataPC_patch_01.forge\Extracted\1_-_DBContainerEntry_0X104634F921.data"
+   $BK = "D:\GRB_KnownGood_ForgeBackup_2026-09-24"
+   # 1. back up YOURSELF - ATK's Backups\ hold the pristine originals and it will not refresh them
+   New-Item -ItemType Directory -Force $BK
+   Copy-Item "$G\DataPC_patch_01.forge", "$G\Extracted\DataPC_patch_01.forge\1_-_DBContainerEntry_0X104634F921.data" $BK
+   # 2. still in sync? (expect IN SYNC)
+   python tools\db_patch.py $DB --sync "$G\DataPC_patch_01.forge"
+   # 3. make the edit and drop it in
+   python tools\db_patch.py $DB --record SC_TGT_Rifleman_Marks1 --repoint DBAICheatConfig_NoCheat=DBAICheatConfig_Miter_Omniscience --out $BK\edit
+   Copy-Item "$BK\edit\1_-_SC_TGT_Rifleman_Marks1.DBSoldierConfig" $DB
+   ```
+   4. **ATK: repack the `1_-_DBContainerEntry_0X104634F921.data` folder**, let it finish, then
+      `python tools\db_patch.py --compare "$BK\1_-_DBContainerEntry_0X104634F921.data" "$G\Extracted\DataPC_patch_01.forge\1_-_DBContainerEntry_0X104634F921.data"`
+      → expect **changed 1**, `SC_TGT_Rifleman_Marks1`, 5 bytes at @75..@79. Anything else: stop.
+   5. **ATK: repack `DataPC_patch_01.forge`**, then `--compare` the new `.data` against
+      `"$G\DataPC_patch_01.forge"` → expect **changed 0**: the edit is in the forge.
+   6. **Launch.** At a Sentinel patrol or outpost, stay hidden and out of line of sight at 50–150 m.
+      MK1 riflemen should find you anyway; heavies, snipers and MK2/MK3 at the same site should
+      not — the built-in control. *(What omniscience does in play is inferred from docs/14 §9.)*
+   7. **Undo:** delete `1_-_SC_TGT_Rifleman_Marks1.DBSoldierConfig` from the folder and repeat 4–5
+      (compare should then show the record back to vanilla), or copy the backed-up forge back.
+
+   Whatever happens, it answers something: **it works** → every behaviour slot in a soldier config
+   is a tested lever (docs/14 §10 lists all 45); **no visible change but compare says it landed** →
+   the edit loads and omniscience is subtler than inferred — try `NoPerception` on the same slot for
+   the loud opposite; **hang or crash** → restore the backup and write down which step.
 3. **What the tier int scales.** MK1/2/3 is `DBNpcGeneralConfig` @25 *(inferred)*, chosen per
    soldier config; `DBNpcHealth` is identical across tiers, so whatever scales is keyed on the int.
 4. **The 1,557 `[MVET] AI_*` / `[VECN] AI_*` records** the old walker never reached. Unexamined;
@@ -1052,6 +1093,16 @@ that is not a forge resource. Full detail in the 2026-08-14 research-log entry.
 - **Don't read an unsigned container as vanilla.** ATK's trailer marks what ATK wrote; the GRB Mod
   Manager writes containers without it, and most of this install's mods went in that way. In
   `DataPC_patch_01`, 2,140 of the 2,349 mod-changed resources sit in unsigned containers (2026-09-20).
+
+**On repacking (added 2026-09-23):**
+
+- **Don't count ATK's `Backups\` as a restore point.** With `AddDateToBackups` off — the shipped
+  default — ATK backs a forge or `.data` up only when no backup exists yet, so on a modded install it
+  holds the pristine original forever. Restoring it wipes every mod. Copy the live file yourself.
+- **Don't repack a folder you haven't checked against the live container.** ATK rebuilds from the
+  folder; anything written to the container since the unpack is silently reverted.
+  `db_patch.py --sync` answers it for the DB container in half a minute; the same replay would work
+  for any container.
 
 **On the cloth work:**
 
