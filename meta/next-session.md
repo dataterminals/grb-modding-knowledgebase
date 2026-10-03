@@ -273,6 +273,16 @@ the same day.
 > off, the shipped default) — on a modded install `Backups\` holds the pristine originals, and
 > restoring them wipes every mod. Back up the live forge yourself, every time.
 
+> **🔀 Reconciled again (2026-10-03): the 2026-09-21, 09-22 (crowdfund) and 09-23 callouts were a
+> second parallel line.** SylG5 wrote them from the 2026-09-20 state, without the SylDesk merge just
+> above, which had been pushed that morning. They are rebased onto it, and every entry is kept in
+> date order. On the merged tree, `reflex3_write.py --selftest` is 204 of 204 byte-exact and every
+> tool compiles and imports. SylDesk's `reflex3.py` change is a refactor (`load_blob` split around
+> `blob_from_files`), and nothing the skeleton tool imports moved. **Not re-run:**
+> `skeleton_bones.py`'s ATK byte-for-byte check and `db_patch.py --sync`. **Now possible:**
+> `db_patch.py`'s private forge-entry reader can give way to `forge_inspect.forge_entries`, which
+> arrived with the merge.
+
 > **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
 >
 > **What now works.** Export a real GRB garment to GLB, move weights in Blender, check the

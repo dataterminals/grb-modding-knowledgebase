@@ -4889,3 +4889,37 @@ game:** the edited record, and a copy of the whole unpack folder, went to the se
 so what reaches the game is the folder's state, not the one file you changed. Replaying the
 selection against the live forge turned "drop this in and repack" from a hope into a prediction
 with a checkable answer: one record, five bytes.
+
+---
+
+## Entry — 2026-10-03 — Two parallel lines again: SylG5's 09-21 to 09-23 work rebased onto SylDesk's merge
+
+**Trigger:** a routine pull found `main` diverged. SylDesk pushed the 2026-09-22 merge (`f1b463d`)
+at 07:24 EDT that day. SylG5 then committed the 09-22 crowdfund entry at 23:44 EDT and the 09-21
+skeleton-authoring entry the next night, both on the pre-merge 2026-09-20 state. The 09-23 lane-4
+session was never committed at all. Its files sat in the working tree until today.
+
+### What was done
+- Rebased the two SylG5 commits onto `f1b463d`, then committed the 09-23 session on top. Every
+  entry and callout from both lines is kept, in date order. The only conflicts were in this log and
+  `next-session.md`, where both sides had appended at the same place. The 09-22 merge callout's
+  "the five callouts above" is now pinned to their dates, since the 09-21 callout sits between.
+
+### VERIFIED (on the merged tree)
+- `reflex3_write.py --selftest` on this install: **204 distinct blobs, 204 round-trip byte-exact**.
+- Every `tools/*.py` compiles, and `skeleton_bones`, `reflex3_write`, `rig_census` and `clothmap`
+  import together.
+- SylDesk's change to `reflex3.py` splits `load_blob` around a new `blob_from_files` with the same
+  behaviour. `reflex3_write.py` imports `parse_blob`, `is_matrix`, `REFLEX3_HASH_PAT`, `BLOB_MAGIC`
+  and `BLOB_VERSION` from it, and none of them changed.
+
+### NOT verified / open
+- `skeleton_bones.py`'s ATK byte-for-byte check and `db_patch.py --sync` were not re-run.
+- `db_patch.py` still carries the private forge-entry reader that its 09-23 entry meant to retire
+  once `origin/main` was merged. `forge_inspect.forge_entries` is here now.
+
+### Method note
+**Pull before the first edit, every session.** The first split took a deliberate merge to undo, and
+the second began sixteen hours after that merge was pushed. A session that starts with `git pull`
+can fork only against work pushed while it runs. One that ends without committing leaves the next
+merge a third line to carry.
