@@ -4923,3 +4923,145 @@ session was never committed at all. Its files sat in the working tree until toda
 the second began sixteen hours after that merge was pushed. A session that starts with `git pull`
 can fork only against work pushed while it runs. One that ends without committing leaves the next
 merge a third line to carry.
+
+---
+
+## Entry — 2026-10-04 — How GRB.exe finds forges: patch slots are a wildcard, any number, and a higher number wins
+
+**Trigger:** Sylvia asked whether a modder could ship a whole user-made forge — their own patch —
+instead of repacking mods into the shipped `_patch_01` forges. That turns on how the game decides
+which forge files to mount, which docs/06 had listed as open since June. **Read-only on the game:**
+nothing was written to the install, nothing was launched, nothing was repacked. Machine: **SylG5**
+(`D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint`). Five research lanes ran in parallel
+(exe, ATK source, forge headers, web, Discord). Every lane except Discord was re-derived by an
+independent adversarial verifier.
+
+### Environment — this install has not taken the 2026-09-29 update, and Steam has it queued
+- `appmanifest_2231380.acf`: `StateFlags` 6 (update required), `buildid` 12284183 →
+  `TargetBuildID` 25349072, `AutoUpdateBehavior` 0 (always keep updated), `ScheduledAutoUpdate`
+  1791365530 = **2026-10-07 05:32 EDT**. Live forge mtimes: `DataPC_patch_01` and
+  `Resources_patch_01` 2026-01-13, `extra_patch_01` 2025-12-31, `DataPC.forge` 2026-07-01.
+- Community-reported (Tier 1 Imports, ViruS, 2026-09-29): that update replaced `DataPC.forge`
+  and the `_patch_01` forges for `extra`, `patch`, `Resources` and `WorldMap_Bootstrap_Split`,
+  wiping repacked mods. People restored their setups by repacking from their `Extracted\` folders.
+  With the 2026-09-23 finding that ATK's `Backups\` hold only 2023 vanilla copies, an unattended
+  update would cost this install its ~200 mods and the July test cloths.
+
+### VERIFIED — from GRB.exe (static analysis; build `ChangeList:7793716`, linked 2023-09-11)
+- **Protected but analyzable.** Section names are shuffled. The real code is the section named
+  `.rsrc` (VA 0x1000, RX, entropy 6.58) and the real `.rdata` is `.xcode` (VA 0x4526000), which
+  starts with the original IAT. The exception directory (RVA 0x1fb2f150, ~374k entries) gives
+  function bounds. Imports were resolved through the original IAT (e.g. 0x45269c0 =
+  `FindFirstFileW`).
+- **No forge filename list.** No `DataPC`/`GRN_GhostRoom`/`TGT_WorldMap` literals.
+  `"%sData%s.%sforge"` (rva 0x45674e0, fn 0x19ffd0, which also truncates the name at the first `(`)
+  composes names from the platform table at 0x50a5c30 (`PC`, …; `_dx11`, `_vulkan`, …) plus suffix
+  getters (`_extra` 0x2634b0, `_Resources` 0x2634c0, `_extra_chr` 0x263490) or a world name from
+  data. Bases are checked by exact name (`GetFileAttributesW`).
+- **Patch scan** (fn 0x197b50, called for every base inside `OpenForge` 0x1b4960, vtable slot
+  +0xb8): `sprintf("*%s%s*.forge", name, "_patch_")` → `FindFirstFileW`/`FindNextFileW`. Per hit:
+  if `strstr(name,"Data")`, skip 4 chars from the start; find `_patch_` case-insensitively; skip 7
+  chars and spaces; accumulate decimal digits as N. Priority = base priority (0) + 1 + N
+  (`mov ecx,[r13+0x200]; inc ecx; add ecx,ebx` at 0x197e74). Directories are skipped.
+- **One list, stable sort, first hit wins.** 0x199980 stores the priority at forge+0x50 and
+  inserts each new forge at index 0. 0x1895d0 stable-sorts the whole manager list, highest first,
+  at the end of every `OpenForge`. The global resolver 0x1b29c0 (slot +0x198) returns the first
+  forge whose index holds the ID. ⇒ `_patch_02` (3) outranks every set's `_patch_01` (2). Ties go
+  to the most recently opened forge.
+- **Other lookups exist:** 0x19f280 (slot +0xf8) tests one forge plus its attached patches and
+  split siblings, ignoring priority; 0x1a2020 (slot +0x160) reads by explicit forge index.
+- **Split scan** (0x189350): `"%s%s%s_*_Split.forge"` plus the std::regex `%s_[a-zA-Z]+_Split`, used
+  only when no exact `Data<name>.forge` exists. The callback gives sort key 2 to `_Bootstrap`, 1 to
+  `_OrphanCells`, 0 otherwise.
+- **No `*.forge` scan of the game folder.** The only standalone `*.forge` (0x469b3c0) is used
+  inside `game:` + `dlc_*` folders (0x1141ef0, 0x1130481). Stems that start with `PC` and end in
+  `_dlc` go to `OpenForge` (via 0x1130da0). The gating is untraced, and the install has no `dlc_*`.
+- **Livepatch** (0x197890, 0x278550, 0x2790f0): the game probes
+  `%LOCALAPPDATA%\My Games\Ghost Recon Breakpoint\livepatch\Data<name>_livepatch.forge`. The
+  manifest name `livePatch.bin` is XOR-hidden; the manifest holds version 2 and changelist
+  7793716. The game deletes every `*_livepatch.forge` that a valid manifest does not name, and
+  deletes files recursively under that root once it reaches ≥ 1 GiB. The folder exists and is
+  empty.
+- **Switches** (0x371f7ba): `workingdir` (sets the CWD that forge paths resolve against, default
+  the exe folder; 0x3723173), `nolivepatch`, `installdlc`, and others. No switch names a forge.
+- `GRB_vulkan.exe`: same strings, same patch-scan function (0x195b50). `Uyuni.tgt` is 17 bytes, an
+  online ID string read by UbiServices code; unrelated to forges. `dbdata.dll` is a Uplay loader.
+
+### VERIFIED — from the forges and ATK 1.3.1 source
+- First 1050 bytes identical in all 27 live forges and 6 backup originals. No field names the
+  forge, links a sibling, or flags a patch. Three writer layouts are present: Ubisoft (2 FileSets
+  with an empty reserve, folder table with `_Lost&Found`); Ubisoft's 2023 Vulkan forges (1
+  FileSet, cap N+2); ATK (1 FileSet, 880,000-byte zeroed folder table, UMACHash = CRC64 of the
+  extracted file's path, `EntriesCount` counting the files ATK then drops). The game boots with
+  ATK's layout at the existing filenames.
+- ATK's repack builds every byte from the folder and never reads the original forge. Create Folder
+  `Extracted\<Name>.forge` + Repack writes `<Name>.forge` with `FileMode.Create`, no backup. A
+  headless `ForgeFile.Serialize` also needs `DataStorage.OodleLocation` set, and
+  `atk_bridge.arm()` does not set it, so as written it would fail quietly.
+- **GlobalMetaFile (16):** build tag (`tgt-data/Y2E4.1.0/` base, `Y2E4.5.0/` patch and the
+  reissued Vulkan forges), build numbers (1474467 base, 1507941 patch), one GUID, class tables,
+  and a trailing kind byte (0 DataPC, 1 Resources, 2 extra, 3 Bootstrap, 4 regions, 5 GhostRoom,
+  6 dx11/vulkan; a patch has its base's kind). `DataPC` and `DataPC_Resources` share GUID
+  `f9dc440d-…`; their patches share `4934f499-…`. No GMF GUID appears in any game binary.
+- **PrefetchingFileInfos (145):** a stored/LZO-wrapped table, ID-sorted, one record per entry in the
+  forge (minus 16/145) in every Ubisoft-written forge. The modded forges still carry Ubisoft's
+  original 145 byte for byte, so it is stale. The size depends on how it is counted: 1490 / 26 /
+  57 entries (Resources / extra / DataPC patch) are missing from their own forge's 145, and
+  685 / 17 / 35 have no record in any forge. The game boots anyway.
+- **ATK's `.gfl` ID list credits an overridden ID to the base forge,** the opposite of the game's
+  override. `rig_census.py`'s "ATK path for an ID" therefore says where an ID lives, not which copy
+  the game uses.
+- Smallest Ubisoft forge: `OrphanCells_Split_patch_01` (98,304 B) = header + 1 FileSet + GMF
+  (52,757 B) + PFI (179 B) + 2 content overrides. The minimal real template.
+
+### Community-reported (Tier 1 Imports; paraphrased, message ids in the lane output)
+- **Kamzik123 (ATK's author):** a resources `_patch_02` working (2025-07-06). "You can make a
+  custom resources_patch02" to add content (2025-09-14). Recipe (2026-03-06): only the MetaFile has
+  to differ, specifically its CodeCL/DataCL/SoundCL ints; he said from memory that GRB's metafile
+  holds both previous and current CL values. MetaFile + PrefetchingData is all a forge needs.
+  Textures worked; prefetch-dependent files crashed. BuildTables in `_patch_01` can drive new
+  resources in `_patch_02`. ATK 1.3.5 (2026-07-13) "fully" supports PrefetchingFileInfos; 1.3.7 is
+  out. This repo uses 1.3.1.
+- **ViruS:** a renamed copy of the patch folders, MetaFile unedited, hung in an infinite load
+  (2026-03-06).
+- Deef's *Play With Vanilla Players* (Nexus 1237) swaps vanilla metafiles into modded patch forges
+  so modded players can matchmake. The metafile acts as a version gate.
+- Priler's *GRB Tweaks* ModLoader (Nexus 2032) serves mods at runtime from `<game>\mods\` without
+  repacking. Users report it handles replacements but is unreliable for additions; Tier 1
+  supports only ATK.
+- Nobody has published a working `_patch_02` with files, tried a new-name forge, tried a patch for
+  a patchless base, or compared `_patch_01` and `_patch_02` on one ID.
+
+### Engine-family precedent (web; UplayDB depot manifests and mod pages)
+- Official `_patch_02`+ ship in Steep, AC Unity, AC Origins, AC Shadows (later build) and Skull and
+  Bones. GRB and GRW never pass `_patch_01`. AC Odyssey and Mirage mods ship as
+  `DataPC_patch_02.forge`. WildlandsToolkit (GRW) writes user forges into slots 02–99; its GMF
+  parser does not fit GRB's grammar. GRB's BattlEye was removed in 2023.
+
+### INFERRED
+- A valid `Data<base>_patch_<N>.forge` (N ≥ 2) loads and overrides `_patch_01` in game. The
+  mechanism is decoded and Kamzik reports it working for Resources, but this repo has not observed
+  it.
+- Bases without a shipped patch (`DataPC_dx11`, `DataPC_vulkan`, `GhostRoom*`, WorldMap
+  `_dx11`/`_vulkan`) get the same scan. Every base goes through 0x197b50, but how those sets are
+  opened was not traced.
+- The set-scoped lookups may explain the forge-shadow hang better than priority does.
+- Trailing text after the number parses (`_patch_05_MyPoncho`). Read from the digit loop; not run.
+
+### NOT verified / open
+- Any in-game test. The cheapest one is a tiny `DataPC_Resources_patch_02.forge` holding one
+  visible texture override, with the GMF copied from `Resources_patch_01` and a matching 145,
+  watched with Process Monitor. It needs Sylvia's go-ahead. Do it after the update question is
+  settled, since the update changes the version values the MetaFile has to match.
+- Where CodeCL/DataCL/SoundCL sit in the GMF, and which value the engine compares.
+- The order the sets are opened in (tie-breaks), the `dlc_*` gating, and the trigger of the "A
+  corruption of the game files was detected" dialog.
+- Whether the 2026-09-29 update ships a new exe. If it does, re-find these functions; the RVAs
+  above are for CL 7793716.
+
+### Method note
+**When the data can't tell you, read the loader.** Months of forge-side evidence (headers,
+sidecars, a census of every ID) could only show that nothing *in* a forge marks it as a patch. The
+answer was in how the exe names and finds files, and the exe's strings pointed at the exact
+function to disassemble. A protector does not stop this when the real code section is plain: use
+the exception directory for function bounds and the original IAT for imports.
