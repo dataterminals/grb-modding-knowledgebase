@@ -283,6 +283,17 @@ the same day.
 > `db_patch.py`'s private forge-entry reader can give way to `forge_inspect.forge_entries`, which
 > arrived with the merge.
 
+> **🦙 New (2026-10-08): Wildlands is a second cloth corpus, and it has ponchos.** GRW is installed on
+> SylDesk at `D:\SteamLibrary\steamapps\common\Wildlands` (vanilla). It uses the same forge (v27),
+> and its containers are LZO with `uint16` block info. ATK has no GRW. **Its 378 cloths include two
+> ponchos** (`Cloth_UNP_ElYayo_Poncho`, `Cloth_bol_E_PonchoPlastic`). `motioncloth.py` round-trips
+> them byte for byte, and their section types are a strict subset of GRB's: 54 shared, 32 GRB-only,
+> the GRB-only ones being the whole quantized wrap among them. GRW stores the wrap as float
+> `SoftBodyVertexMapping` objects (ATK's Unity/Syndicate layout), so a GRW poncho comes with its
+> binding already computed. That makes it lane 2A's encoder input *and* a test oracle. **No
+> Reflex3 in any of 7,444 GRW skeletons**, so lane 2B gains nothing. Read-only; nothing written or
+> launched. See the 2026-10-08 research-log entry.
+
 > **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
 >
 > **What now works.** Export a real GRB garment to GLB, move weights in Blender, check the

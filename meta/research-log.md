@@ -5263,3 +5263,128 @@ Write-up: [`../reference/grbmod-package-format.md`](../reference/grbmod-package-
 - Nothing was run: the manager's behaviour in practice, its forge writer's output, and whether
   the game loads what it writes.
 - What re-keyed this install's `TEAMMATE_Template` entry, and how common that is in modded installs.
+
+---
+
+## Entry — 2026-10-08 — Wildlands read against GRB: the same forge, LZO containers, and two ponchos whose cloth is GRB's cloth without the wrap
+
+**Trigger:** the maintainer installed *Ghost Recon Wildlands* (GRW, Steam) and asked how it holds up
+against this repo's GRB work. Machine: **SylDesk**, install `D:\SteamLibrary\steamapps\common\Wildlands`
+(311 files, 77.3 GB, every file dated 2026-10-08, so vanilla). **Read-only:** nothing was written to
+the install, nothing was launched. All reads went through throwaway scripts in the session scratch.
+Container decompression called `lzo1x_decompress_safe` from ATK's own `Libs\lzo.dll` (native x64 LZO2)
+through ctypes. GRB comparisons used the SylDesk GRB install (`H:\SteamLibrary\…`).
+
+### VERIFIED — forge layer: unchanged
+- **19 forges, all `scimitar` version 27**, the same as GRB. `forge_inspect.forge_entries` reads every
+  one unmodified: 236,145 entries, 0 duplicate IDs, **1 FileSet each** (GRB's Ubisoft-written forges
+  have 2).
+- **No `DataPC_Resources`.** Meshes and textures live in `DataPC` (7.7 GB) and `DataPC_GRN_WorldMap`
+  (20.4 GB, plus a 14 GB patch). DLC ships as `dlc_<N>\DataPC_<N>_dlc.forge` and
+  `dlc_<N>\DataPC_GRN_WorldMap_<N>_dlc.forge` (N = 2, 27, 28, 29, 30), not as patch slots.
+  No `oo2core_*.dll` ships with the game.
+
+### VERIFIED — container layer: one field narrower, a different codec
+- Same `CompressedFileData` magic, same 7-byte CompressionInfo, 32 KB blocks. **Version 1** (GRB: 3).
+  **Algorithm 1 (LZO1X-999) in base and patch forges, 0 (LZO1X) in DLC forges** (GRB: 3, Oodle
+  Mermaid), sampled at about 60 entries per forge across all 19.
+- **v1 block-info entries are `uint16` pairs** `(uncompressed, compressed)`, where v3 uses `int32`
+  pairs. Hex of `Cloth_bol_E_PonchoPlastic`: `nblocks 1`, `2c 00 26 00` (44 → 38 B), adler32,
+  38 B, then the second descriptor's magic at byte 65, exactly where that layout puts it.
+- **The decompressed files block is GRB's.** `data_inspect.walk()` reads it unchanged: the same
+  `TypeId | len | nameLen | name | FileHeader | payload` framing, FileHeader `00`. A census over
+  every container in all 19 forges (skipping only texture, terrain, shape, sound and
+  streamed-animation payload types) decompressed and walked **every one to its last byte**, with zero
+  failures. It found 1,107 inner resource types.
+- **ATK 1.3.1 has no Wildlands.** `AnvilToolkit.Utils.Game` (22 values) has no GRW member;
+  `DataStorage.DataVersions` lists only Steep `(2, 5, 32768…)`, Origins `(2, 8, 262144…)` and GRB
+  `(3, 3, 32768…)`. ATK cannot unpack GRW, and nothing in `atk_bridge.py` applies to it.
+
+### VERIFIED — what is where
+- Forge-level types: 134 in GRW, 68 in GRB. GRB's top-level `DB*` gameplay records (`DBUnlockable`,
+  `DBKnowledge`, …) are absent at GRW's forge level (GRW keeps `DBLootConfig`, `DBLocationInfos`
+  and others *inside* containers), and GRW adds about 50 `*DLCAddon` types. **`Skeleton`: 0 at forge
+  level vs GRB's 2,183**, but 7,444 inside containers. `Animation`: 0 vs 1,564 (40,399 inside).
+  **`Cloth`: 378 vs 107.**
+- **GRW ships two ponchos with cloth physics:** `Cloth_UNP_ElYayo_Poncho` (mesh
+  `CN_Primary_ElYayo_Poncho_LOD0`, 1232441844093) and `Cloth_bol_E_PonchoPlastic` (mesh
+  `bol_E_PonchoPlastic_LOD0`, 372745116739). Also capes (`Cloth_civ_f/h_diablada_cape`), a ghillie
+  cloak, coats, aprons, skirts, and cloth on hair braids, necklaces, hat strings and backpack straps
+  (`Cloth_Backpack_TheDivision_Straps`).
+- **A GRW cloth container holds the same three resources as GRB's:** `Cloth` + `SoftBodySettings` +
+  `LiteRagdoll` (GRB checked on Walker, Blake and the kilt). GRB's `SoftBodySettings` is 192 B in all
+  three; GRW's are 157, 165 and 189 B, so that resource changed layout between the games.
+
+### VERIFIED — the cloth: GRB's `ClothPackage` minus the wrap
+- **`motioncloth.py` parses GRW's `ClothPackage` and rewrites it byte for byte**
+  (`--roundtrip OK`). El Yayo poncho: 1 LOD, a 456-point / 810-triangle cage, 66 sections. The
+  plastic poncho has a 2,680-point / 2,144-triangle cage, and the diablada cape 205 / 354.
+- **Section types: GRW ⊂ GRB.** Over three GRW cloths and four GRB cloths (Walker, Blake trench and
+  belt, kilt): **54 shared, 0 GRW-only, 32 GRB-only**. The GRB-only ones are §3085, the whole
+  **§4374–4410 MeshMapping run** (`clothmap.py`'s quantized wrap), §4386, §4389–4393, §4414,
+  §4415, §4444–4445, **§4530–4532** (per-vertex data) and **§4561–4565** (additional-vertex
+  barycentrics). GRB cloths carry 2 bodies of 101–109 sections; GRW's carry 1 body of 64–66.
+- **The LOD around the package is ATK's `MotionSoftBodyLOD` (Unity/Syndicate branch), almost
+  field for field.** Six per-vertex byte arrays (MaxDistance 456, BackStop 0, GravityScale 456,
+  Damping 456, SkinWidth 0, Friction 0) end exactly on the package's `i32` length, then
+  `TriQuadIndex` 810, `VertexPos` 456, `VertexNormals` 456, `Indices` 2,430, and then
+  **`VisualVertexMappings`: 525 objects**. GRB's cloths hold 0 there. This confirms from data what
+  `clothwrap.py`'s comment had inferred from ATK's layout: the "empty list" before GRB's render
+  count is the vestigial `VisualVertexMappings` slot.
+- **A mapping is a 37-byte object:** a 12-byte header `{u32 0xF8000000|id, u32 0, u32 0x62BA80E1}`
+  (`0x62BA80E1` = CRC32 `SoftBodyVertexMapping`), then exactly ATK's Unity/Syndicate fields:
+  `bool UseVisualSkinning | u16 TriangleIndex | f32 Offset | u16 Indices[3] | f32 Weights[3]`.
+  **`TriangleIndex` names the cage triangle whose vertices are `Indices`, in order, in every record
+  of all three cloths (525/525, 858/858, 798/798).** `Offset` is 0.0 in every record.
+  `UseVisualSkinning` is set on 85/525, 399/858 and 414/798.
+- **A GRW cloth LOD carries its own copy of the render mesh.** Straight after the mappings (with
+  no `TrueDuplicateVertices` or `CollapsedVertices` counts; GRW omits both lists) come
+  `VisualIndices` 2,733 (911 triangles, max index 524, starting `0,1,2, 2,3,0`),
+  `VisualTextureCoords` 525 `vec2` and `VisualVertexColors` 0. Further on: **911
+  `SoftBodyFaceNTRange`** objects (28 B, one per visual triangle), **37 `MeshBone`** and **3
+  `MotionClothLOD`**. Object IDs run on from 1 to 1,476 across all four runs.
+
+### VERIFIED — skeletons: no Reflex3 in Wildlands
+- **0 of 7,444** GRW `Skeleton` resources contain the `Reflex3SkeletonConstraints` hash
+  (2386539642) or the blob magic `0x12341234`. The control: the same byte search finds both in
+  **291 of the first 300** GRB skeletons in `DataPC.forge`.
+- No inner type name matches reflex, jiggle, spring, constraint or secondary motion.
+  Physics-flavoured types are `LiteRagdoll` (367) and `RagdollNew` (3).
+
+### INFERRED
+- **`Weights` reads as `(h, u, v)` with the third weight 1−u−v, GRB's convention, not ATK's three
+  weights.** The first float is small and signed (−0.036 to +0.032; median 0.003, −0.001, −0.003),
+  which fits a height along the normal. The other two sum to a median of 0.97, 0.74 and 0.70, and
+  overshoot 1 at the edges as extrapolation would. **Untested:** it needs the render mesh's
+  positions, which need a GRW mesh reader.
+- **The engine moved the wrap between the games.** GRW maps render vertices with float
+  `SoftBodyVertexMapping` objects *outside* the package. GRB left that list empty and put a quantized
+  copy *inside* the MotionBody (§4374–4410) plus a GPU-buffer block after the package.
+- **`UseVisualSkinning` is GRW's version of GRB's `0xFFFF` table entries** (a vertex that skins
+  and does not follow the cage). Unchecked.
+- **Wildlands has no bone physics, so GRB's Reflex3 is new in GRB.** That would explain why GRW
+  puts hair, necklaces and straps on cloth where GRB moves hair, straps and vests with Reflex3 bones.
+
+### What this means for the lanes
+- **2A (cloth rebind) gains a second corpus and a poncho.** A GRW poncho is a cage plus a
+  **ready-made binding** to its own mesh (cage triangle and weights per render vertex). To port one
+  into GRB, keep the 54 shared sections and **synthesise the 32 GRB-only ones and the mapping block
+  from the GRW records**. That is the encoder `next-session.md` already asks for, except that the
+  binding is given rather than computed. GRW is also a second test oracle: an encoder that
+  re-derives GRW's own `SoftBodyVertexMapping`s from geometry has been checked against Ubisoft's
+  answer. ATK's `SoftBody` rebind code (`ComputeBarycentric`, `ClosestPointOnTriangle`) emits this
+  exact object.
+- **2B (Reflex3) gains nothing.** GRW has no Reflex3 to compare against.
+- **Do not copy GRW assets into this repo** (rule 3). Document them; point at the install.
+
+### NOT verified / open
+- **A GRW mesh reader.** It would test the `(h, u, v)` reading and is needed for any port.
+  `atk_bridge` cannot help, because ATK has no GRW.
+- The bytes between `VisualVertexColors` and the first `SoftBodyFaceNTRange` (about 17 KB in the El
+  Yayo poncho), the `SoftBodyFaceNTRange` fields, and the `MeshBone`/`MotionClothLOD` tail.
+- Whether GRB would accept a cloth built from GRW data. Nothing was written and nothing was
+  launched, and lane 2A's STEP 1 (does a modified cloth load?) still gates any port.
+- GRW's `GR_PLAYER_Template`, `CharacterSmith*` and `DB*` records, the lane-2B and lane-4
+  analogues, were seen by type only.
+- The scratch reader is not a repo tool. `data_inspect.read_cfd` would need two changes to read
+  GRW: `uint16` block info when the version is 1, and an LZO path for algorithms 0 to 2.
