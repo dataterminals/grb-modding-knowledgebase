@@ -5386,5 +5386,23 @@ through ctypes. GRB comparisons used the SylDesk GRB install (`H:\SteamLibrary\�
   launched, and lane 2A's STEP 1 (does a modified cloth load?) still gates any port.
 - GRW's `GR_PLAYER_Template`, `CharacterSmith*` and `DB*` records, the lane-2B and lane-4
   analogues, were seen by type only.
-- The scratch reader is not a repo tool. `data_inspect.read_cfd` would need two changes to read
-  GRW: `uint16` block info when the version is 1, and an LZO path for algorithms 0 to 2.
+- ~~The scratch reader is not a repo tool. `data_inspect.read_cfd` would need two changes to read
+  GRW: `uint16` block info when the version is 1, and an LZO path for algorithms 0 to 2.~~
+  **Done the same day**, see the addendum below.
+
+### Addendum, same day: the repo's tools read Wildlands
+- **`data_inspect.read_cfd` reads both versions.** It reads `uint16` block info when the version
+  is 1, and decodes algorithms 0–2 with ATK's `lzo.dll` (`lzo1x_decompress_safe` for 0 and 1,
+  `lzo2a_decompress_safe` for 2), found on first need through `atk_bridge.find_atk()`. Every tool
+  built on `read_cfd` or `read_container*` reads Wildlands with no change of its own.
+  `--forge <forge> <name|id>…` reads a container straight out of a forge (GRB or GRW), and
+  `--extract <dir>` copies its bytes unchanged, which stands in for the ATK unpack Wildlands lacks.
+- **`motioncloth.load_resource_payload` now delegates its `.data` path to `data_inspect`.** It had
+  its own Oodle-only reader that returned the first resource's `len` bytes counted from the
+  FileHeader: one byte early, the slice `data_inspect` fixed on 2026-09-16. So every cloth read
+  from a `.data` lost its last byte. **Nothing read that byte.** On 16 GRB cloth containers,
+  `motioncloth` (report and `--roundtrip`), `clothmap` and `cloth_inspect` print byte-identical
+  output before and after (64 runs). 20 GRB containers through `data_inspect` also print
+  identically, apart from the reworded algorithm label.
+- On the extracted GRW ponchos, `motioncloth --roundtrip` and `cloth_inspect` work. `clothmap`
+  detects the populated `VisualVertexMappings` slot and says it does not decode that layout yet.

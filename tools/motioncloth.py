@@ -30,6 +30,10 @@ payload[size-8]. See docs/11-cloth-and-physics.md and reference/cloth-section-ty
 """
 import sys, os, struct
 
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:          # data_inspect, even under `python -I`
+    sys.path.insert(0, _HERE)
+
 MAGIC = 0xECD7
 
 # Complete SectionTypeID -> class map from ATK v1.3.1 MotionSectionFactory.ReadSection
@@ -241,10 +245,20 @@ def additional_vertices_count(body):
     return struct.unpack_from("<i", s.payload, 0)[0] if s else None
 
 
-# ---- input loading (.Cloth payload, or .data via Oodle) ----
+# ---- input loading (.Cloth payload, or a .data container) ----
 
 def load_resource_payload(path, oodle_dll=None):
-    """Return the decompressed resource bytes for a .Cloth file or a cloth .data."""
+    """Return the decompressed resource bytes for a .Cloth file or a cloth .data.
+
+    For a .data this is the Cloth resource's FileHeader + payload - the bytes
+    ATK's unpack writes as the .Cloth file - so both inputs give the same
+    offsets. The container itself is data_inspect's job, which reads GRB
+    (Oodle) and Ghost Recon Wildlands (LZO) alike.
+
+    CHANGED 2026-10-08: this used to carry its own Oodle-only reader and
+    return the FIRST resource's `len` bytes counted from the FileHeader - one
+    byte early, the slice data_inspect fixed on 2026-09-16 - so every .data
+    read lost the cloth's last byte. No reader here touched it."""
     raw = open(path, "rb").read()
     if raw[:8] == b"scimitar":
         raise ValueError("that's a .forge, not a cloth resource")
@@ -252,54 +266,13 @@ def load_resource_payload(path, oodle_dll=None):
     magic = struct.unpack_from("<Q", raw, 0)[0] if len(raw) >= 8 else 0
     if magic != 1154322941026740787:
         return raw                     # already a decompressed resource (.Cloth)
-    # It's a .data: decompress its two blocks and pull the single resource payload.
-    import ctypes
-    if oodle_dll is None:
-        d = os.path.dirname(os.path.abspath(path))
-        for _ in range(8):
-            c = os.path.join(d, "oo2core_7_win64.dll")
-            if os.path.isfile(c):
-                oodle_dll = c
-                break
-            nd = os.path.dirname(d)
-            if nd == d:
-                break
-            d = nd
-    if not oodle_dll:
-        raise RuntimeError("cloth .data is Oodle-compressed; pass --oodle <oo2core_7_win64.dll>")
-    oo = ctypes.WinDLL(oodle_dll)
-    dec = oo.OodleLZ_Decompress
-    dec.restype = ctypes.c_longlong
-    dec.argtypes = [ctypes.c_char_p, ctypes.c_longlong, ctypes.c_char_p, ctypes.c_longlong,
-                    ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_void_p, ctypes.c_longlong,
-                    ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_longlong, ctypes.c_int]
-    off = [0]
-
-    def rd(fmt):
-        v = struct.unpack_from("<" + fmt, raw, off[0]); off[0] += struct.calcsize("<" + fmt); return v
-
-    def cfd():
-        rd("Q"); rd("h"); rd("B"); rd("H"); rd("H"); nb = rd("i")[0]
-        infos = [(rd("i")[0], rd("i")[0]) for _ in range(nb)]
-        out = bytearray()
-        for un, cn in infos:
-            rd("I"); blk = raw[off[0]:off[0] + cn]; off[0] += cn
-            if un == cn:
-                out += blk
-            else:
-                dst = ctypes.create_string_buffer(un)
-                if dec(blk, cn, dst, un, 1, 0, 0, None, 0, None, None, None, 0, 3) != un:
-                    raise RuntimeError("Oodle decompress failed")
-                out += dst.raw[:un]
-        return bytes(out)
-
-    cfd()
-    files = cfd()
-    p = 0
-    struct.unpack_from("<I", files, p); p += 4
-    L = struct.unpack_from("<i", files, p)[0]; p += 4
-    sl = struct.unpack_from("<i", files, p)[0]; p += 4; p += sl
-    return files[p:p + L]
+    import data_inspect as di
+    _meta, files = di.read_container_bytes(raw, di.Oodle(di.find_oodle(path, oodle_dll)))
+    res, _end = di.walk(files)
+    if not res:
+        raise ValueError("container holds no resources")
+    cloth = next((r for r in res if di.type_name(r.type_id) == "Cloth"), res[0])
+    return cloth.header + cloth.payload
 
 
 def roundtrip_ok(payload):

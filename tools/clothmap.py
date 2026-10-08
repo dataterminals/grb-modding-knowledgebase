@@ -329,6 +329,14 @@ def report(path, mesh_path=None, install=None, only_lod=None):
             continue
         body = p.bodies[0]
         name = mc.body_name(body) or "?"
+        vvm = after_package(buf, p.end)["empty_list"]
+        if vvm:
+            # Ghost Recon Wildlands fills the VisualVertexMappings slot GRB leaves
+            # empty, and has no quantized block (see the 2026-10-08 research-log entry).
+            print(f"\n  LOD{lod}  body {name}")
+            print(f"    {vvm} SoftBodyVertexMapping objects where GRB has 0: this is the "
+                  f"Wildlands mapping layout, which this decoder does not read yet")
+            continue
         m = read_mapping(buf, p.end)
         rc = m["after"]["render_count"]
         print(f"\n  LOD{lod}  body {name}")

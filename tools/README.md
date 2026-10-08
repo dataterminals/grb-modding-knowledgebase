@@ -169,6 +169,22 @@ files sit under it in `Extracted\`). If it can't, use **“Set Oodle DLL…”**
 window, or pass `--oodle` on the command line. The DLL is **not** bundled with the
 `.exe` (it's Ubisoft's). The tool is **read-only**.
 
+### Ghost Recon Wildlands (added 2026-10-08)
+Wildlands uses the same forge format, but its containers are LZO-compressed (with block sizes
+stored as 16-bit numbers instead of 32-bit), and ATK can't unpack Wildlands at all. The tool reads
+both: for LZO it borrows **ATK's own `Libs\lzo.dll`**, found the way `atk_bridge.py` finds ATK
+(`$GRB_ATK`, then a search; or pass `--lzo`). Since there's no ATK unpack to give you `.data`
+files, read a container **straight out of a forge** by entry name or decimal ID, and `--extract`
+copies its bytes unchanged into a folder so the other tools can read it:
+```
+python data_inspect.py --forge "D:\...\Wildlands\DataPC.forge" Cloth_UNP_ElYayo_Poncho 406584141038
+python data_inspect.py --forge "D:\...\Wildlands\DataPC.forge" Cloth_UNP_ElYayo_Poncho --extract grw
+python motioncloth.py grw\Cloth_UNP_ElYayo_Poncho.data --roundtrip
+```
+`--forge` works on GRB forges too. `motioncloth.py` and `cloth_inspect.py` read Wildlands cloth;
+`clothmap.py` recognises the Wildlands mapping layout but does not decode it yet. Background:
+the 2026-10-08 entry in [`../meta/research-log.md`](../meta/research-log.md).
+
 ### Get / build the `.exe`
 - **Download:** grab **`DataInspector.exe`** from
   [Releases](https://github.com/dataterminals/grb-modding-knowledgebase/releases)
