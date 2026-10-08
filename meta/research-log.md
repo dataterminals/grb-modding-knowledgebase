@@ -5065,3 +5065,201 @@ sidecars, a census of every ID) could only show that nothing *in* a forge marks 
 answer was in how the exe names and finds files, and the exe's strings pointed at the exact
 function to disassemble. A protector does not stop this when the real code section is plain: use
 the exception directory for function bounds and the original IAT for imports.
+
+---
+
+## Entry — 2026-10-07 — A `grbmod` package read end to end: new items by merge ops, an edited Reflex3 blob, and the prefetch table decoded
+
+**Trigger:** Sylvia downloaded *SCUBA CoD 1.0.0* by fox77x
+([Nexus 2164](https://www.nexusmods.com/ghostreconbreakpoint/mods/2164), zip
+`SCUBA CoD 1.0.0 2164 1 2026-10-05T16-18Z mPuXwwD40.zip`, 191,510,252 B, files dated 2026-10-03)
+and asked what could be learned from it. **Read-only:** the zip was unpacked to a scratch folder;
+nothing was installed, written to the game, repacked or launched. Machine: SylG5, install
+`D:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint` (pre-2026-09-29-update build). Write-up:
+[`../reference/grbmod-package-format.md`](../reference/grbmod-package-format.md).
+
+### Sources that could not be read
+- The Nexus page: the in-app browser stopped at a Cloudflare human check (not clicked through)
+  and plain fetches got HTTP 403. The author's description, requirements and install notes are
+  unknown.
+- Web search found nothing on `grbmod.json` or on this mod.
+
+### VERIFIED — the package
+- **A new format.** `grbmod.json` (`formatVersion` 1, `id` `fox77x.scuba`) + `forge/<Forge>.forge/`
+  whole new entries (named by real decimal ID) + `forge/DataPC_patch_01.forge/Extracted/<container>/`
+  new resources to append (53) + `records/records.json` (**290 ops**: `list_add`, `string_add`,
+  `prefetch_add`) + `records/bin/{rows,dicts,groups,prefetch}` payloads.
+- **The installed GRB Mod Manager cannot read it.** `D:\Anvil Toolkit\_grbmm\resources\app.asar`
+  is `grb-mod-manager` **1.0.6** (2025-10-14) and contains none of `records.json`, `list_add`,
+  `prefetch_add`, `formatVersion`. (Its 9 hits for "grbmod" are all `com.grbmods.manager`.)
+- **Targets, all resolved and all vanilla.** 51 records: 42 in `TEAMMATE_Template` (the
+  EntityBuilder, `PLAYER_Custo` / `UppBodyCFG` / `LowBodyCFG` / `headCFG`, `Pants`, `Shoes`,
+  `GlassGOGGLES`, `VestsCFG`, five `Top_for…`, 28 `Hats_for…`); 8 in `DBContainerEntry_0X104634F921`
+  (the container root and the `CharacterSmithEntryContainer` categories TOPS, PANTS, VESTS, SHOES,
+  GLASSES, FACE MASKS, HEAD PROTECTION); and **`TagDictionnaries` (record `0xBD6`) in Game
+  Bootstrap Settings (entry `0x800`)**. All 51 exist in the pristine 2023 `DataPC_patch_01`, as do
+  the 38 tag dictionaries the ops add to and the 20 `after:` anchors. Type names were resolved by
+  CRC32 through ATK's dictionary (`tools/atk_hashes.py`): `TagDictionnaries` `0xFFC5A970`,
+  `TagDictionnary` `0x0196529F`, `TagDescriptor` `0xA31AA51D`, `BuildRow` `0x348B28D6`,
+  `BuildTags` `0x11BD5345`, `CharacterSmithEntryContainer` `0x4CD967BE`, `DBContainerEntry`
+  `0x5768183B`, `TextureMapSpec` `0x989DC6B2` (what a UI `…_MapDesc` is), `LODDescriptor`
+  `0xA360319A`.
+- **Closure.** All 53 `Extracted/` resources are reachable: 35 from an op, 18
+  (`TP_Helmet_ScubaHelmet_*_CFG` ×17 and `TP_Vest_ScubaVest_CFG`) from the build-row payloads the
+  ops insert, one helmet config per headgear context table. The 11 IDs the ops reference but
+  `Extracted/` lacks are the new `TagDictionnary` objects, which ship under `records/bin/dicts`.
+- **140 new IDs, none in the install's 385,408.** Ranges: `0x1F01C1B02x0` LODSelector / `…x1`
+  mesh, `0xC0DE…`, `0x0FEEDBEEF…`.
+- **Built from donors.** Each of the 9 `LODSelector`s equals its donor's vanilla `LODSelector` byte
+  for byte except its own ID (offset 0) and the main-mesh pointer (offset 308 → the new `…_LOD0`).
+  So every item shows the donor's vanilla LOD1–4 at a distance. Donors: `TP_Top_ScubaDiver`,
+  `TP_Pants_ScubaDiver`, `TP_Balaclava_511-Nomad` (hood and hood + net), `TP_Helmet_OpsCoreFastXP`,
+  `TP_Goggles_Scuba_Diving_Mask`, `TP_Tacvest_511_PlateCarrier`, `TP_Shoes_RangerBoots` (boots and
+  fins). Each LODSelector ships into `DataPC_patch_01` **and** the Bootstrap patch, byte-identical
+  in both, the same way the donors are shadowed across `DataPC` and the Bootstrap base.
+- **New meshes bundle their textures.** Each `…_LOD0.data` holds Mesh + three TextureMaps +
+  TextureSet + Material (the top's maps are 22,369,772 B each).
+- **The rig: `BP_Scuba_TubeRig_P3` (`0xC0DE5370001`) is vanilla
+  `BP_TacTailor_HydrAdvPack_MEDIUMVEST` with 8 bytes changed** (diffed against pristine
+  `Backups\DataPC.forge`; the other four HydrAdvPack variants differ by thousands): the skeleton's
+  ID, and two floats in the 48,525-byte Reflex3 blob (blob offsets 46,574 and 46,960). Decoded
+  with `tools/reflex3.py`: **`p3` 0 → 0.5 on physics records 0 and 1** (chain
+  `276e5795 → 3678b950` under `7dcd5e11`). Nothing else in the blob moved. The rig is assigned by
+  the shipped `TP_Vest_ScubaVest` BuildTable.
+- **The `.bin` payloads are serialized engine objects.** `rows/` = a `BuildRow` tree (`BuildRow`,
+  `BuildTag`, `BuildTags`, n × `BuildTag`); `dicts/` = a `TagDescriptor`; `groups/` =
+  `TagGroupDescriptor` → `BuildTags` → `BuildTag`; `prefetch/` = one PFI record. Every object
+  carries a container-local `0xF800xxxx` number. 39 of 40 row files use numbers above all of their
+  target table's. **The `GlassGOGGLES` row uses `0x51`–`0x56`, and vanilla `GlassGOGGLES` already
+  has `0x51` (`RowSelector`) and `0x52` (`BuildTags`)**, in the 2023 pristine patch and in this
+  install. Whether the manager renumbers, or the table ends up with duplicates, is unknown.
+- **GRB Mod Manager 1.0.6 never repacks.** From its `app.asar`: it copies mod files into ATK's
+  `Extracted\` tree (`gamePath` = `…\Ghost Recon Breakpoint\extracted`), then logs "Installation
+  finished. Please repack the following files in AnvilTool". Its `launchAnvilTool()` only opens
+  the ATK window. Backups are "ownership-aware": an original is saved under
+  `_GRBbackups\originals\` only when no other mod owns the file yet. 113 `.BuildTable` files are
+  written by more than one installed mod (e.g. `var_facepaints` by three shemagh/facepaint mods,
+  `PMC_patch` by eight SC_Revamp_PMC mods). This install's `Extracted\DataPC_patch_01.forge\Extracted\`
+  holds unpacked folders for exactly the three containers SCUBA's ops edit (Game Bootstrap
+  Settings, `DBContainerEntry_0X104634F921`, `TEAMMATE_Template`) plus `MIS_Y2E4_Katya_Maksimov`.
+- **This install's `TEAMMATE_Template` has a different forge-entry ID.** Pristine 2023
+  `DataPC_patch_01` keeps it at entry `0x165C84D83A1` (917,279 B). The live `DataPC_patch_01` has
+  no such entry. The container is keyed `0x19D30A1CAEC` (8.4 MB, 3,963 resources, first resource
+  `OUT_RIFLEMAN`) and holds the EntityBuilder `0x165C84D83A1`. The ops name `0x165C84D83A1` as
+  their `entry`.
+
+### VERIFIED — PrefetchingFileInfos (ID 145), decoded
+- **Frame:** `u64 0x1004FA9957FBAA33 | u16 3 | u8 0 (LZO1X) | u16 0x8000 | u16 0`, then blocks
+  `{u8 1 | u32 comp | u32 uncomp | u32 check | data}` and a closing `u8 0`. A block whose comp
+  equals uncomp is stored raw. The per-block `more` byte is why `read_cfd()` could not parse it
+  (2026-09-16 (night) census note). `check` is not zlib's adler32 of either side.
+- **Table:** `u32 n | n × {u64 ID, u32 size, u32 offset} | u32 data_size | data`. **Record:**
+  `u16 0 | u16 k | k × {u64 ID, 3 bytes}`.
+- **Proof:** on nine forges (`DataPC`, `DataPC_extra`, `DataPC_Resources`, the Bootstrap base,
+  `DataPC_patch_01`, `extra_patch_01`, `Resources_patch_01`, `Bootstrap_Split_patch_01`,
+  `OrphanCells_Split_patch_01`), every
+  frame ends on the entry's last byte and every table ends on the last decoded byte. Record counts
+  are the entry count minus the two sidecars (`DataPC_Resources` 123,569; `DataPC` 48,705). The
+  LZO1X decoder is a plain port of the reference state machine, now in
+  [`../tools/prefetch_inspect.py`](../tools/prefetch_inspect.py).
+- **The package's 45 prefetch records:** 27 are byte-identical to vanilla records (the
+  LODSelector's lists the donor's LOD1–4, the mesh's lists the donor's textures). 9 are empty (UI
+  icons, as in vanilla). 9 are new, each MapDesc → its own icon, in the vanilla pattern. The mod's
+  own textures appear in none: they sit inside the mesh's container.
+
+### INFERRED
+- **The recipe for a brand-new appearance item** is the union of what this package touches: mesh
+  container, UI icon + `TextureMapSpec`, LODSelector (in both shadowed forges), item BuildTables,
+  slot-table subtables/rows/tags, CharacterSmith entry + menu placement, `TagDictionnaries`
+  registration, a string, and prefetch records. Leaving any one layer out has not been tested.
+- The ops format exists so mods survive an update that replaces the `_patch_01` forges (the
+  2026-09-29 update did). Ops against vanilla records can be re-applied; whole replaced
+  containers cannot.
+- The edited chain is the drinking hose: it is the rig's one unpaired chain. The other two sit
+  mirror-image at ±z. Bone names do not resolve.
+- `p3` = 0.5 was set on purpose, by hand or with a tool. 0.5 is not among the vanilla `p3`
+  values in `reference/skeleton-reflex3-physics.md`.
+
+### What this does to the wall (bone physics, lead B)
+The 2026-09-20 (second) entry found that no installed mod changes a Reflex3 blob, and that the one unproven
+step for an authored rig was "a blob the game did not compile". **This is a published mod that
+ships one**, with the smallest possible edit: two values of one parameter, everything else
+vanilla, under a new ID, assigned through a new BuildTable. If it runs for its users, the runtime
+accepts edited constraint values. That is community evidence only; nobody here has run it. The
+cheapest confirmation is to install it on a backed-up install, look at the vest hose, then swap
+the 0.5 back to 0 and compare.
+
+### NOT verified / open
+- Any in-game behaviour; which manager and version reads `grbmod`; how that manager resolves an
+  `entry` whose forge-entry ID has drifted (as `TEAMMATE_Template`'s has here).
+- The 3-byte tail of a prefetch item (`01 00 00` on gear, `04 00 00` on the OrphanCells weapon
+  parts); the PFI `check` algorithm; the 57 new tag names (not CRC32s of the obvious names); what
+  `p3` controls.
+
+### Environment
+- Steam still has the 2026-09-29 update queued for this install at 02:57 local today:
+  `StateFlags` 6, `TargetBuildID` 25349072, `BytesDownloaded` 0, `ScheduledAutoUpdate`
+  1791365530 (05:32 the same morning). Every check above ran against build 12284183.
+
+---
+
+## Entry — 2026-10-07 (second) — GRB Mod Manager 1.15.7 read: it repacks by itself, re-applies merges, and looks `entry` up strictly by ID
+
+**Trigger:** Sylvia downloaded the manager that reads `grbmod`:
+`GRB Mod Manager 1.15.7 1602 1.15.7 2026-10-06T02-30Z ps6mMMAE2.zip` (117,246,111 B, Nexus 1602).
+**Read, not run:** unpacked to scratch, nothing executed, the bundled `python.exe` included.
+Write-up: [`../reference/grbmod-package-format.md`](../reference/grbmod-package-format.md#how-grb-mod-manager-1157-applies-it).
+
+### VERIFIED — from the code
+- **Same author as SCUBA CoD:** `package.json` `"author": "Fox77x"`, `"name": "grb-mod-manager"`,
+  `"productName": "Ghost Recon Breakpoint Mod Manager"`. `grbpkg.js` `SUPPORTED_FORMAT = 1`.
+- **Self-repacking:** `main.js` "Rebuilds the packed patch forge with tools/repack/manager_repack.py;
+  no AnvilToolkit step is needed". `autoRepack` defaults to true. Base forges are never rewritten.
+  A container gaining pages is rebuilt "from its packed bytes with only these pages changed".
+- **Record edits** (`records.js`, `main.js` `repackForges`, `records_apply.pyc`):
+  1. every step is dry-run first (no `--swap`);
+  2. then apply → journal under userData `records\<mod>\<forge>\` → pack → verify → atomic swap;
+  3. undo replays the journal;
+  4. after any rebuild of a forge, every other enabled package's ops on it are re-applied
+     (`apply --reapply`).
+
+  Duplicate items are refused with "(another mod?)" messages.
+- **`entry` is a forge-entry ID, strictly.** Disassembled `Entries.__init__` builds
+  `index = {e[0]: (k, e) for k, e in enumerate(F.entries)}`. `Entries.get` raises
+  `Refused(f"{basename(forge)} has no entry {entry:016X}")` when the ID is absent, with no fallback.
+  `main.js` words it "… doesn't have a game record this mod adds to (made for another game
+  version?)". **So SCUBA CoD is refused on this install**: `DataPC_patch_01` holds
+  `TEAMMATE_Template` under `0x19D30A1CAEC`, not `0x165C84D83A1` (first entry of the day).
+- **Rows are renumbered:** `records_tmpl.add` calls `_reseq` (uses `object_ids`, `pack_into`)
+  after inserting, and refuses a table "not numbered in sequence". This resolves the
+  `GlassGOGGLES` numbering overlap noted in the first entry.
+- **Fingerprints:** after every write, `_GRBbackups\forges\index.json` `current[forge]` = SHA-1 +
+  size. A mismatch before the next write or restore throws `FORGE_CHANGED_MSG` ("… probably a game
+  update or another tool … remove them from the list and add them again"). The exception
+  (`rebaseline`) is an install into a forge no other managed mod uses.
+- **Backups:** one permanent `<forge>.pristine.bak` (first write; never pruned) + `FORGE_BACKUPS_KEEP = 2`
+  rolling copies, SHA-1-verified. The space check before a repack is Σ(size × 2 if no pristine
+  yet, else × 1) + rebuild growth + largest forge + 256 MiB. Here: the first operation touching
+  `DataPC_Resources_patch_01` (36,889,690,112 B) needs ≈ 111 GB; SCUBA's four forges ≈ 115 GB.
+  D: had 88.1 GiB free when this was read. (SCUBA would stop at the `entry` check first; the dry
+  run comes before the space check.)
+- **Wider format:** `plugins` (`.dll`/`.asi`, PE export check, a `dinput8.dll` loader with marker
+  `GRB_LOADER_MARKER_1`), `config` `.ini`, `requires`/`conflicts`, `options/`, `dataFolder`,
+  `keepOnUpdate`, `overlayHost`. On first start it copies a legacy userData folder
+  (`Ghost Recon Breakpoint Mod Manager`, `GRB Mod Manager`, `GRB-Mod-Manager`) into its own.
+
+### Method — reading CPython 3.14 bytecode without a 3.14
+- `marshal.loads` in 3.12 accepts most 3.14 code objects, but `co_code` comes back de-optimized
+  through **3.12's** opcode table, which garbles it. Two modules use 3.14's new slice type
+  (`:`) and do not load at all.
+- Fix: a 60-line marshal reader that keeps the raw code bytes (`m314.py` in the session scratch).
+  Then rebuild `opmap` from the bundled `Lib/_opcode_metadata.pyc`: its dict literal compiles to
+  `LOAD_CONST name, LOAD_SMALL_INT value` pairs (238 names, no collisions; `LOAD_CONST` = 82,
+  `LOAD_SMALL_INT` = 94, `RESUME` = 128). Disassemble with 3.14's inline-cache sizes (`LOAD_ATTR`
+  9, `LOAD_GLOBAL` 4, `BINARY_OP` 5, `CALL`/`CALL_KW` 3, `TO_BOOL` 3, `STORE_ATTR` 4, jumps and
+  compares 1). The output reads cleanly end to end, which is the check that the table and cache sizes are right.
+
+### NOT verified / open
+- Nothing was run: the manager's behaviour in practice, its forge writer's output, and whether
+  the game loads what it writes.
+- What re-keyed this install's `TEAMMATE_Template` entry, and how common that is in modded installs.

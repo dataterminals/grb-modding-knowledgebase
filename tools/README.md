@@ -976,3 +976,31 @@ with a mapping regenerated for his own mesh. This tool is the reader half; the w
 ⚠️ **Reads files, not the game.** Sub-millimetre agreement with the shipped meshes is strong evidence
 the decode is right. It is not evidence that the game accepts a mapping *you* write — that is still the
 in-game gate in [`../meta/next-session.md`](../meta/next-session.md). READ-ONLY.
+
+---
+
+## 📦 `prefetch_inspect.py` — what a forge preloads alongside each entry
+
+Every forge carries one **PrefetchingFileInfos** table (entry ID 145): for each entry, the other IDs
+the game loads with it. An item that only exists in a mod needs its own record there. This reads the
+table from any forge, or one record file such as a `grbmod` package's `records/bin/prefetch/*.bin`.
+
+```
+python prefetch_inspect.py "D:/.../Ghost Recon Breakpoint/DataPC.forge"
+python prefetch_inspect.py "D:/.../DataPC.forge" 0x1ACBFE0A150 --install "D:/.../Ghost Recon Breakpoint"
+python prefetch_inspect.py DataPC_patch_01_000001F01C1B0200.bin --install "D:/.../Ghost Recon Breakpoint"
+```
+
+```
+FILE: DataPC.forge   PrefetchingFileInfos 581,208 B
+  50 LZO1X block(s) -> 1,607,232 B; frame ends at 581,208 of 581,208
+  48,705 record(s); table closes exactly: True
+  TP_Top_ScubaDiver (0x1acbfe0a150): 4 item(s)
+    0x000001acbfe0a28f  [010000]  TP_Top_ScubaDiver_LOD1
+    ...
+```
+
+The table is **LZO1X**-compressed, not Oodle, so it needs no game DLL. `--install` indexes every
+forge in the folder so listed IDs print with names. The format and what's still unknown are in the
+module docstring and in [`../reference/grbmod-package-format.md`](../reference/grbmod-package-format.md#prefetch-records).
+READ-ONLY.

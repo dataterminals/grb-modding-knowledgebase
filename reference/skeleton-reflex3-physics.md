@@ -325,7 +325,7 @@ body := 5 × { u8 gate ; if gate == 1: f32 min, f32 max }
 | 0 | `0.2` (1,118); `0.4 → 0.3 → 0.2 → 0.1` down a hair strand; **`5.0` on every backpack body** (47); `0.8` on gun parts | **mass** *(inferred)* | a whole backpack is 5, a zipper pull 0.2, a hair tip 0.1 — the shape of a mass, not of a damping term |
 | 1 | `0` (1,239); **`25`** on backpacks (100); **`20`** on every slide record; `100` twice | **spring constant** *(inferred)* | ATK's `SpringConstant`; every record with slide on has 20 |
 | 2 | `0` (1,314); `0.95` / `0.98` exactly when slide is on; `1.0` on 27 backpack records | **slide damping** *(inferred)* | ATK's `DampingConstant`; only non-zero with slide or spring |
-| 3 | `0` (900); `1.0` (342, backpacks); `0.6` (54, hair strands); `0.8` ponytail; `0.95` / `0.98` with slide | *unresolved* | swing damping or centre of mass — both fit the distribution |
+| 3 | `0` (900); `1.0` (342, backpacks); `0.6` (54, hair strands); `0.8` ponytail; `0.95` / `0.98` with slide | *unresolved* | swing damping or centre of mass — both fit the distribution. A published mod (*SCUBA CoD*, 2026-10) changes only this parameter, setting it from 0 to `0.5` on the hydration-pack hose chain: [`grbmod-package-format.md`](grbmod-package-format.md#the-rig-a-vanilla-hose-with-two-edited-physics-values) |
 | 4 | **`9.8`** (1,352) | **gravity** | ATK's `Gravity` default `9.8f` |
 | 5 | `1.0` (1,352) | gravity factor *(inferred)* | ATK's `GravityFactor` |
 | 6 | `1.0` (1,348); **`0` on seven knife and rifle rigs** and one backpack | wind factor *(inferred)* | wind switched off on small hard items |
