@@ -181,9 +181,9 @@ python data_inspect.py --forge "D:\...\Wildlands\DataPC.forge" Cloth_UNP_ElYayo_
 python data_inspect.py --forge "D:\...\Wildlands\DataPC.forge" Cloth_UNP_ElYayo_Poncho --extract grw
 python motioncloth.py grw\Cloth_UNP_ElYayo_Poncho.data --roundtrip
 ```
-`--forge` works on GRB forges too. `motioncloth.py` and `cloth_inspect.py` read Wildlands cloth;
-`clothmap.py` recognises the Wildlands mapping layout but does not decode it yet. Background:
-the 2026-10-08 entry in [`../meta/research-log.md`](../meta/research-log.md).
+`--forge` works on GRB forges too. `motioncloth.py`, `cloth_inspect.py` and `clothmap.py` read
+Wildlands cloth, and [`grw_mesh.py`](grw_mesh.py) reads Wildlands meshes. Background: the
+2026-10-08 entries in [`../meta/research-log.md`](../meta/research-log.md).
 
 ### Get / build the `.exe`
 - **Download:** grab **`DataInspector.exe`** from
@@ -989,9 +989,66 @@ the module docstring and in [`../docs/11-cloth-and-physics.md`](../docs/11-cloth
 vanilla already does it once. Kropotkine's trench coat runs on a sim cage byte-identical to Blake's,
 with a mapping regenerated for his own mesh. This tool is the reader half; the writer is next.
 
+### Ghost Recon Wildlands cloths (added 2026-10-08)
+Wildlands keeps the same mapping in an older form: one plain-float `SoftBodyVertexMapping` per
+visible vertex, in the slot GRB leaves empty, and no quantized block. `clothmap.py` reads both and
+says which one it found. The Wildlands mesh check reads the mesh with
+[`grw_mesh.py`](grw_mesh.py) (ATK can't read Wildlands) and finds it in the install's forges.
+```
+python data_inspect.py --forge "D:\...\Wildlands\DataPC.forge" Cloth_UNP_ElYayo_Poncho --extract grw
+python clothmap.py grw\Cloth_UNP_ElYayo_Poncho.data --install "D:\...\Wildlands"
+```
+```
+  LOD0  body Sim_CN_Primary_ElYayo_Poncho_LOD0(0x6957BBF7E7)   [Wildlands layout: SoftBodyVertexMapping objects]
+    sim cage 456 verts; render mesh 525 verts, UseVisualSkinning on 85
+    h in [-0.000529, 0.0119] m   weights applied as (1-u-v, u, v)
+    layout: OK
+    rebuilt from the cage vs the real mesh (525 vertices):
+      position  median 0.124 mm   p99 1.96 mm   max 3.40 mm
+```
+A record's three floats are a height and two weights, applied in the order `(1−u−v, u, v)`, which
+is rotated against GRB's. When the cage is named for a different mesh than the one it drives (a
+**rebound** cloth: Wildlands' plastic poncho runs on the ghillie top's cage), `--install` finds the
+wrong mesh and says so; pass the real one with `--mesh`.
+
 ⚠️ **Reads files, not the game.** Sub-millimetre agreement with the shipped meshes is strong evidence
 the decode is right. It is not evidence that the game accepts a mapping *you* write — that is still the
 in-game gate in [`../meta/next-session.md`](../meta/next-session.md). READ-ONLY.
+
+---
+
+## 🦙 `grw_mesh.py` — read a Ghost Recon Wildlands mesh, no ATK needed
+
+ATK can't open Wildlands at all, so this reads a Wildlands render mesh itself: positions, normals,
+UVs, skinning and triangles. It can write an **OBJ** you can drop straight into Blender.
+```
+python grw_mesh.py --forge "D:\...\Wildlands\DataPC.forge" CN_Primary_ElYayo_Poncho_LOD0
+python grw_mesh.py grw\CN_Primary_ElYayo_Poncho_LOD0.data --obj poncho.obj
+```
+```
+MESH: CN_Primary_ElYayo_Poncho_LOD0
+  525 vertices, 911 triangles, stride 32, format byte 0  (clustered)
+  QuantizationFactor 2.0   UVQuantizationFactor 0.994766
+  bounds  x [-0.366, 0.331]  y [-0.257, 0.162]  z [0.802, 1.603]
+  skin weights per vertex sum to [255]
+  index max 524 (of 525 vertices)
+  submeshes 1; bones per submesh 23
+```
+**How it knows the layout.** ATK's own GRB mesh readers fit Wildlands with one `u32` fewer in
+each of `ClusteredMeshData` and `MeshData` (the fields are in the module docstring). Its vertex is GRB's 32-byte garment
+vertex, or 40 bytes with eight bone influences. Careful: the format byte means different things in
+the two games. Wildlands' `1` is 8 influences; GRB's `1` adds a colour channel. Each line of the
+report doubles as a check: weights must sum to 255 and indices must stay inside the vertex count,
+or the report says which assumption broke.
+
+**What it covers.** A census of the whole install parses the structure of all 46,609 distinct
+meshes. Vertices decode for the skinned layouts (garments, characters: strides 32 and 40). Static
+props and world geometry use six other layouts that aren't mapped yet, and the tool says so
+instead of guessing.
+
+**Why it's trustworthy.** The scales were confirmed against independent data. The game's cloth
+stores each visible vertex's UV as floats, and these decode to match them to 1.5e-5. Rebuilding
+the positions from the cloth cage lands within 0.12–0.45 mm (median) on five garments. READ-ONLY.
 
 ---
 

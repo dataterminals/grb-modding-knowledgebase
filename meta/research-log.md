@@ -5404,5 +5404,201 @@ through ctypes. GRB comparisons used the SylDesk GRB install (`H:\SteamLibrary\�
   `motioncloth` (report and `--roundtrip`), `clothmap` and `cloth_inspect` print byte-identical
   output before and after (64 runs). 20 GRB containers through `data_inspect` also print
   identically, apart from the reworded algorithm label.
-- On the extracted GRW ponchos, `motioncloth --roundtrip` and `cloth_inspect` work. `clothmap`
-  detects the populated `VisualVertexMappings` slot and says it does not decode that layout yet.
+- On the extracted GRW ponchos, `motioncloth --roundtrip` and `cloth_inspect` work. ~~`clothmap`
+  detects the populated `VisualVertexMappings` slot and says it does not decode that layout yet.~~
+  It decodes it as of the 2026-10-08 (third) entry.
+
+---
+
+## Entry — 2026-10-08 (second) — How the two worlds are built: one 128 m cell grid, packaged two ways
+
+**Trigger:** the maintainer asked whether Bolivia (GRW) and Auroa (GRB) are implemented the same way.
+**Read-only**, both installs, SylDesk. A research subagent did the survey; its scratch scripts and
+outputs (`regionmap_grb.txt`, `cellpos.json`, `entries_*.json`, …) stayed in the session scratch and
+are not in the repo. The `.wmap`/`.tbf` headers and the quadtree arithmetic below were re-checked
+by hand. **GRB caveat:** the install is modded, but its `_Split` base forges are dated 2025-09-30
+and were treated as Ubisoft's; patch-forge counts may include mod content.
+
+### VERIFIED — the same grid technology
+- **Both worlds are a 128 m leaf-cell grid indexed as a quadtree,** streamed in
+  `GridCellDataBlock` containers. `Cell<N>` is a linear quadtree index: deepest level first, the
+  root last, row-major within a level. The cell payload stores N as a `u32`, and a cell's ID is
+  its family's base ID + N.
+- **The `World` header gives the grid.** GRW: corner (−8192, −8192), 128 leaves per side,
+  8 levels, 21,845 cells, root `Cell21844`, 16.4 km square. GRB: (−16384, −16384), 256 per side,
+  9 levels, 87,381 cells, root `Cell87380`, 32.8 km square (4× the area). 21,845 and 87,381 are
+  exactly full 8- and 9-level quadtrees. The grid formula fitted entity positions in all 217 GRW
+  and 44 GRB sampled leaf cells.
+- **Leaves present:** GRW 16,384 of 16,384. GRB 60,693 of 65,536, of which 71 % are `OrphanCells`
+  (open ocean).
+- **Three streaming layers in both games:**
+  - **Main layer:** per-cell pilot navmesh `PilotResources_N`, particles, ambience.
+  - **Short range** (leaf cells only): prop sets, `AutoGroup_MediumObject`.
+  - **Long range** (coarse levels): `longRange`, `CoverFakeEntity`.
+
+  GRW tells the layers apart only by ID family. GRB names them `_ShortGrid` and `_LongGrid`, and
+  puts dynamic GI (`GIDyn_N`) in the short layer, where GRW keeps its GI probes in the main one.
+
+### VERIFIED — what changed in GRB
+- **Packaging.** GRW has one world forge pair: `DataPC_GRN_WorldMap` (21.35 GB, 63,351 entries) +
+  `_patch_01` (14.67 GB), holding all 20,893 distinct cells, plus four DLC world forges. The DLC
+  forges reuse cell numbers for small overlay layers (`Cell05750_DLC29_DataBlock`). GRB splits by
+  region into seven `DataPC_TGT_WorldMap_<Region>_Split` forges (about 14.7 GB of bases):
+  - **MaungaNui:** 10,445 leaves, 171 km², the main island.
+  - **Darkwood:** north of MaungaNui.
+  - **Windy:** south-west.
+  - **Golem:** far north-east, about 10–14.7 km out. Its content matches the Golem Island raid.
+  - **Egg:** 2.2 km².
+  - **OrphanCells:** the ocean.
+  - **Bootstrap:** no leaf cells; it carries the `World`, the coarse cells, Seasons and the root's
+    content.
+
+  The names are internal codenames.
+- **Meshes and textures moved out of the world.** 60 sampled GRW cells embed 2,351 `Mesh` and 251
+  `TextureMap` resources. 60 GRB cells embed none: their 2,436 `LODSelector`s point at 6,202 meshes
+  in `DataPC_Resources.forge`, and 0 references resolve inside the cell.
+- **The `World` reaches cells differently.** GRW's `World` lists all 28,658 base cell IDs. GRB's
+  lists only Bootstrap's 4,074; every other cell is injected by its region forge.
+- **GRB assembles a cell from several forges ("MultiForge").**
+  - `MultiForgeOriginalTargetInjectionInfo` (86,926; 22 B each): one per cell, sitting beside the
+    cell (86,909 of 86,926). ID = `0x8000000000000000 | (cellID << 20)`, and the payload points
+    back to the cell.
+  - `MultiForgeObjectDataContainer` (12,152): named `MFD_GridCellDataBlock_CellN_DataBlock(0xID)`,
+    each holding one forge's share of a cell's objects.
+  - `ForgeObjectDataInfo`: one per Split forge, indexing it (Windy 241, Darkwood 309).
+  - 2,917 cells exist in 2 to 6 base forges.
+
+  GRW has none of these types. Its `WorldDLCContentData` already uses the derived-ID scheme.
+- **Root cell.** GRW's `Cell21844` is 84 MB decompressed, with `Player_Start` and `Terrain_001`.
+  GRB's root is a 139-byte stub copied into 6 forges. The real content sits in per-forge pieces:
+  Bootstrap's holds `Player_Start`, `Terrain_TGTWorldMap` and about 1,300 terrain-material
+  resources.
+- **World files outside the forges (headers re-checked by hand).**
+  - **`gr.wmap` / `gr_h.wmap`** (GRW): a header `32768, 256, 128, 7`, then raw data.
+    715,784,208 B = 16 + exactly a 32768² BC1 image with 7 mips, i.e. 0.5 m/pixel over the grid.
+  - **`tgt.wmap` / `tgt.wmp2`** (GRB): magic `0xFFFFAB41`, then `1, 2, 65536, 512, 128, 7`, then an
+    offset table of 349,504 (= 16 × 21,844) chunks, compressed with something not identified
+    (Oodle guesses failed). `wmp2` is sparse: 58,875 chunks.
+  - **`.tbf`:** magic `FBT\0`, **v1 in GRW** (`PCgr_terrainlin0/1`), **v2 in GRB**
+    (`PCtgt_terrainlin0/1/2`). Each holds a node table for an exact quadtree, and its first data
+    offset is header + table: GRW 87,381 nodes (9 levels, 8 B records), GRB 349,525 (10 levels,
+    16 B records). `lin1` is the full set; `lin0` and GRB's `lin2` are subsets.
+
+### INFERRED
+- `gr.wmap` is a world map or macro texture (its size and mip count fit an image exactly; not
+  decoded).
+- The terrain quadtree runs one level deeper than the cell grid, which suggests 64 m terrain tiles.
+- MaungaNui as the main island rests on its Erewhon cinematics. Only Golem's name matches an
+  in-game place outright.
+
+### For modders
+- **GRW:** a world edit goes into `DataPC_GRN_WorldMap_patch_01`. Cells are self-contained, so
+  geometry and placement change together. ATK cannot unpack it.
+- **GRB:** geometry and textures go into `DataPC_Resources_patch_01`. Placement goes into the
+  `_patch_01` of the right `_Split` forge, and since a cell's objects can be spread over several
+  forges, the edit has to find the forge that holds the object. Global content lives in
+  Bootstrap's root piece.
+
+### NOT verified / open
+- The `tgt.wmap` codec, the `.tbf` record contents, and the GRB region names' in-game meanings.
+- Nothing was written or launched.
+
+---
+
+## Entry — 2026-10-08 (third) — A Wildlands mesh reader, the mapping proven against five meshes, and a poncho rebound in vanilla
+
+
+**Trigger:** the maintainer asked for a Wildlands mesh reader, to test the first entry's inferred
+`(h, u, v)` reading. **Read-only**, SylDesk. Source of the layout: ATK 1.3.1's `CompiledMesh`,
+`ClusteredMeshData`, `MeshData`, `MeshPrimitive`, `MeshInstancingData`, `Vertex`,
+`PackedS16Vector4` and `PackedUV`, decompiled. New tool: [`../tools/grw_mesh.py`](../tools/grw_mesh.py).
+`clothmap.py` gained the Wildlands branch.
+
+### VERIFIED — a Wildlands mesh is ATK's GRB mesh minus two `u32`s
+- **`CompiledMesh` follows ATK's GRB branch to the byte**, `UVQuantizationFactor` included (ATK
+  reads that field for GRB only): `Data`, a `!= 3` byte, `ClusteredMeshData`, `MeshData`, the
+  instancing list, `PlatformVersion 26`, `SDKVersion 7`, `QuantizationFactor 2.0`,
+  `UVQuantizationFactor 0.9948` (El Yayo poncho).
+- **`ClusteredMeshData` and `MeshData` both lack the `u32` GRB reads before `VertexBufferData`.**
+  In `ClusteredMeshData` that is why the vertex buffer's length sat 4 bytes early against GRB's
+  layout. In `MeshData`, El Yayo's bytes after the shadow primitive are exactly two zero dwords
+  (VB and IB lengths), then the instancing count `1` and its object header. The parser checks
+  every object header it walks into, so a third dword would have failed it.
+- **`MeshInstancingData` is GRB's branch:** 274 B per submesh, with the bone table padded to 256 B.
+- **Vertices:** GRB's garment vertex without the trailing `Col4ub`, 32 B
+  (`Pos3s_Col1s_Norm3ub_Col1ub_Tan4ub_Binorm4ub_Tex2s_Joint4`), or 40 B with eight influences. On
+  the stride-40 plastic poncho, eight weights sum to 255 on all 858 vertices. **The format byte does
+  not carry over:** Wildlands' `1` is the 40-byte `Joint8` layout, GRB's `1` is `Joint4_Col4ub`
+  (36 B).
+- **Scales:** position = `i16 / 32767 × QuantizationFactor`, UV = `i16 / 32767 ×
+  UVQuantizationFactor`, ATK's normalisation. Against the cloth's own float UVs for the same 525
+  vertices, the median error is 1.5e-5 with `/32767` and 3.1e-5 with `/32768`. With the factor, UVs
+  pair cloth visible vertex *i* with mesh vertex *i*. The index buffer is a plain triangle list
+  (every index below the vertex count), and the El Yayo poncho renders as a clean poncho in
+  Blender from the exported OBJ.
+- **Census of the whole install** (every container outside texture, cell, sound, Phoenix and
+  streamed-animation types; each mesh counted once by ClassID + size): **46,609 distinct meshes,
+  62.9 M vertices; the structure parses on all 46,609, with 0 failures.** Format byte / stride /
+  buffer:
+
+  | format | stride | buffer | meshes |
+  | ---: | ---: | --- | ---: |
+  | 8 | 20 | clustered | 17,579 |
+  | 0 | 32 | clustered | 10,654 |
+  | 6 | 24 | clustered | 6,440 |
+  | 2 | 44 | clustered | 5,745 |
+  | 16 | 16 | clustered | 5,181 |
+  | 7 | 28 | `MeshData` | 686 |
+  | 8 | 20 | `MeshData` | 246 |
+  | 9 | 24 | clustered | 36 |
+  | 7 | 28 | clustered | 28 |
+  | 1 | 40 | clustered | 7 |
+  | 6 | 24 | `MeshData` | 6 |
+  | 3 | 52 | clustered | 1 |
+
+  The two skinned layouts (0/32 and 1/40) are the ones `grw_mesh.vertices()` decodes, and every
+  sampled weight set in them (up to 256 vertices per mesh) sums to 255. The other strides are
+  static props and world geometry, with layouts not mapped here; the tool refuses them rather than
+  guess. **One mesh's indices exceed its vertex count:** `CIN_UNI_Support_Heli_LOD0` (70,549
+  vertices, stride 44, more than a 16-bit index reaches). How such a mesh indexes is open; the
+  census did not count how many other meshes pass 65,535 vertices.
+
+### VERIFIED — the Wildlands mapping, against the meshes
+- **The three "Weights" are `(h, u, v)`, applied as `(1−u−v, u, v)`** to the cage triangle `sim[]`,
+  with `P = Σ w_k (x_k + h·n_k)` (GRB's rule, GRB's height). Rebuilt from the cage vs the real mesh:
+
+  | cloth → mesh | verts | median | p90 | max |
+  | --- | ---: | ---: | ---: | ---: |
+  | El Yayo poncho | 525 | 0.124 mm | 0.67 mm | 3.40 mm |
+  | diablada cape (male) | 798 | 0.302 mm | 1.09 mm | 2.73 mm |
+  | diablada cape (female) | 798 | 0.271 mm | 1.07 mm | 2.19 mm |
+  | Carter Reeds coat | 4,211 | 0.445 mm | 2.83 mm | 24.1 mm |
+  | plastic poncho (rebound, below) | 858 | 0.413 mm | 1.94 mm | 8.04 mm |
+
+  On the El Yayo poncho, the alternatives score: GRB's order `(u, v, 1−u−v)` 46.3 mm, ATK's three
+  plain weights 34.7 mm median / 1,225 mm p90, ATK's weights normalised 3.5 mm / 38.9 mm. **Null
+  control:** the winning reconstruction against a shuffled vertex pairing scores **452 mm**.
+- The order is **rotated against GRB's** `(u, v, 1−u−v)`, each relative to its own record's
+  `sim[]`.
+
+### VERIFIED — Wildlands ships a poncho rebind
+- `Cloth_bol_E_PonchoPlastic`'s body is `Sim_Bol_E_GhillieTop_B_LOD0`. **Its 2,680 cage positions
+  are byte-identical to `Cloth_bol_E_GhillieTop_B`'s** (the packages differ elsewhere), and its 858
+  mappings rebuild `bol_E_PonchoPlastic_LOD0` to 0.413 mm. Paired with the ghillie top's own mesh
+  instead, it scores 368 mm. Wildlands ran Sami's operation on a poncho: the same pattern as
+  Kropotkine's trench coat on Blake's cage in GRB (2026-09-18).
+- `clothmap.py --install` finds a mesh by its cage name, so it finds the ghillie top here. It
+  reports the vertex-count mismatch and says to pass the driven mesh with `--mesh`.
+
+### INFERRED
+- **An encoder can be checked against Ubisoft's answers before any launch.** Generate a mapping from
+  (mesh, cage) geometry and compare it with the shipped `SoftBodyVertexMapping`s: five garments, one
+  of them rebound. GRB's quantized form is then a re-encoding with known quantization (clothmap's
+  header) plus the normal/tangent/binormal records Wildlands does not store.
+
+### NOT verified / open
+- The other `MeshData`/`ClusteredMeshData` buffers (`PrimitiveDescData`, the cluster tables), the
+  Mesh wrapper in front of `CompiledMesh` (the parser locates `CompiledMesh` and does not read the
+  wrapper), and meshes embedded in world cells (not in the census).
+- The bytes between `VisualVertexColors` and the `SoftBodyFaceNTRange` run in a GRW cloth, still.
+- Nothing was written or launched.

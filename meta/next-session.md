@@ -293,6 +293,16 @@ the same day.
 > binding already computed. That makes it lane 2A's encoder input *and* a test oracle. **No
 > Reflex3 in any of 7,444 GRW skeletons**, so lane 2B gains nothing. Read-only; nothing written or
 > launched. See the 2026-10-08 research-log entry.
+>
+> **Same day, later: the tools read Wildlands, and the mapping is proven.** `data_inspect.py`
+> decodes LZO containers and reads entries straight from a forge (`--forge`, `--extract`), and the
+> cloth tools follow. **`grw_mesh.py`** reads Wildlands meshes without ATK and writes OBJ.
+> `clothmap.py` decodes the Wildlands mapping (height + weights `(1−u−v, u, v)`) and rebuilds five
+> garments' meshes from their cages to **0.12–0.45 mm** median; a shuffled-pairing null scores
+> 452 mm. **⭐ Wildlands' plastic poncho runs on the ghillie top's cage, byte-identical, with a
+> mapping for the poncho's own mesh:** a vanilla poncho rebind. **Next:** the encoder (mesh + cage →
+> mapping), validated by regenerating these Wildlands mappings from geometry, and then GRB's
+> quantized form. See the 2026-10-08 (third) entry; the (second) entry compares the two worlds.
 
 > **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
 >

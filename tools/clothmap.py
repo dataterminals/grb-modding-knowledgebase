@@ -149,6 +149,81 @@ def read_mapping(buf, pkg_end):
                 records=records, start=o, rec_start=r0, end=end, problems=problems)
 
 
+VVM_REC = 37                       # 12-byte object header + 25-byte SoftBodyVertexMapping
+VVM_HASH = 0x62BA80E1              # CRC32("SoftBodyVertexMapping")
+
+
+def read_vvm(buf, pkg_end):
+    """Decode a Ghost Recon Wildlands LOD's mapping (verified 2026-10-08).
+
+    Wildlands has no quantized block. It fills the VisualVertexMappings slot GRB
+    leaves empty with one object per visible vertex, in vertex order, laid out
+    as ATK's Unity/Syndicate SoftBodyVertexMapping:
+
+        u32 0xF8000000|n, u32 0, u32 0x62BA80E1   object header
+        bool UseVisualSkinning | u16 TriangleIndex | f32 Offset (always 0)
+        u16 sim[3]             the cage triangle TriangleIndex names, in order
+        f32 h, u, v            ATK calls these "Weights"; they are a height
+                               and two weights, applied as (1-u-v, u, v) -
+                               rotated against GRB's (u, v, 1-u-v)
+
+    position P = sum_k w_k * (x_k + h * n_k), the same rule as GRB's."""
+    pp = after_package(buf, pkg_end)
+    count, o = pp["empty_list"], pp["map_start"] - 4
+    s, ni = pp["indices"]
+    tris = struct.unpack_from(f"<{ni}H", buf, s)
+    records, problems = [], []
+    for k in range(count):
+        a, z, h = struct.unpack_from("<III", buf, o)
+        if a & 0xFF000000 != 0xF8000000 or z or h != VVM_HASH:
+            problems.append(f"record {k} has no SoftBodyVertexMapping header")
+            break
+        skin, tri, off = struct.unpack_from("<BHf", buf, o + 12)
+        sim = struct.unpack_from("<3H", buf, o + 19)
+        hgt, u, v = struct.unpack_from("<3f", buf, o + 25)
+        records.append(dict(skin=skin, tri=tri, offset=off, sim=sim, h=hgt, u=u, v=v))
+        o += VVM_REC
+    if any(tuple(tris[3 * r["tri"]:3 * r["tri"] + 3]) != r["sim"] for r in records):
+        problems.append("a TriangleIndex does not name its own cage triangle")
+    if any(r["offset"] for r in records):
+        problems.append("an Offset is not 0")
+    return dict(after=pp, records=records, end=o, problems=problems)
+
+
+def vvm_position(m, i):
+    """Rebuild visible vertex i's position from the cage."""
+    r = m["records"][i]
+    x, n = m["after"]["pos"], m["after"]["nrm"]
+    w = (1 - r["u"] - r["v"], r["u"], r["v"])
+    return tuple(sum(w[k] * (x[r["sim"][k]][a] + r["h"] * n[r["sim"][k]][a]) for k in range(3))
+                 for a in range(3))
+
+
+def compare_vvm_to_mesh(m, verts):
+    """Distances, in mm, between rebuilt and real positions (grw_mesh vertices)."""
+    if len(verts) != len(m["records"]):
+        return dict(error=f"mesh has {len(verts)} vertices, the mapping {len(m['records'])}")
+    ds = sorted(1000 * _len(_sub(vvm_position(m, i), verts[i]["pos"]))
+                for i in range(len(verts)))
+    return dict(n=len(ds), median=ds[len(ds) // 2], p99=ds[int(0.99 * (len(ds) - 1))], max=ds[-1])
+
+
+def _find_grw_mesh(install, name):
+    """A Wildlands mesh by entry name, patch forges first (a patch overrides its base)."""
+    import glob
+    import grw_mesh
+    forges = sorted(glob.glob(os.path.join(install, "*.forge")),
+                    key=lambda p: ("_patch_" not in p, p))
+    forges += sorted(glob.glob(os.path.join(install, "dlc_*", "*.forge")))
+    for fp in forges:
+        if not os.path.isfile(fp):
+            continue
+        import data_inspect as di
+        if any(True for _ in di.forge_lookup(fp, [name])):
+            return grw_mesh.load(forge=fp, name=name)[1]
+    return None
+
+
 def dequantize(m, i):
     """-> {attr: (u, v, h)} and the sim triangle for record i."""
     raw, sim, _ = m["records"][i]
@@ -319,6 +394,45 @@ def _find_mesh(install, name, cache={}):
 
 # ---------------------------------------------------------------- CLI
 
+def report_grw_lod(buf, p, lod, name, mesh_path, install):
+    """One Wildlands LOD: the SoftBodyVertexMapping list, and the mesh check."""
+    m = read_vvm(buf, p.end)
+    recs = m["records"]
+    skin = sum(r["skin"] for r in recs)
+    print(f"\n  LOD{lod}  body {name}   [Wildlands layout: SoftBodyVertexMapping objects]")
+    print(f"    sim cage {len(m['after']['pos'])} verts; render mesh {len(recs)} verts, "
+          f"UseVisualSkinning on {skin}")
+    if recs:
+        hs = [r["h"] for r in recs]
+        print(f"    h in [{min(hs):.4g}, {max(hs):.4g}] m   weights applied as (1-u-v, u, v)")
+    print("    layout: " + ("OK" if not m["problems"] else "; ".join(m["problems"])))
+    verts = None
+    if mesh_path:
+        import grw_mesh
+        payload = grw_mesh.load(path=mesh_path)[1]
+        verts = grw_mesh.vertices(payload, grw_mesh.parse(payload))
+    elif install:
+        mm = re.match(r"[Ss]im_(.+?_LOD\d+)", name)
+        if mm:
+            payload = _find_grw_mesh(install, mm.group(1))
+            if payload is None:
+                print(f"    (render mesh {mm.group(1)} not found by name)")
+            else:
+                import grw_mesh
+                verts = grw_mesh.vertices(payload, grw_mesh.parse(payload))
+    if verts is not None:
+        c = compare_vvm_to_mesh(m, verts)
+        if "error" in c:
+            print(f"    mesh check: {c['error']}")
+            if not mesh_path:
+                print("      the cage is named for the mesh it was BUILT from; a rebound cloth "
+                      "drives another one - pass that mesh with --mesh")
+        else:
+            print(f"    rebuilt from the cage vs the real mesh ({c['n']} vertices):")
+            print(f"      position  median {c['median']:.3f} mm   p99 {c['p99']:.2f} mm   "
+                  f"max {c['max']:.2f} mm")
+
+
 def report(path, mesh_path=None, install=None, only_lod=None):
     buf = mc.load_resource_payload(path)
     pkgs = mc.locate_clothpackages(buf)
@@ -329,13 +443,8 @@ def report(path, mesh_path=None, install=None, only_lod=None):
             continue
         body = p.bodies[0]
         name = mc.body_name(body) or "?"
-        vvm = after_package(buf, p.end)["empty_list"]
-        if vvm:
-            # Ghost Recon Wildlands fills the VisualVertexMappings slot GRB leaves
-            # empty, and has no quantized block (see the 2026-10-08 research-log entry).
-            print(f"\n  LOD{lod}  body {name}")
-            print(f"    {vvm} SoftBodyVertexMapping objects where GRB has 0: this is the "
-                  f"Wildlands mapping layout, which this decoder does not read yet")
+        if after_package(buf, p.end)["empty_list"]:
+            report_grw_lod(buf, p, lod, name, mesh_path, install)
             continue
         m = read_mapping(buf, p.end)
         rc = m["after"]["render_count"]
