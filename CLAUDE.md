@@ -47,3 +47,4 @@ A structured knowledgebase about modding GRB via the Ubisoft *Anvil* engine, its
 - Prefer relative links between docs so navigation works on GitHub and locally.
 - When you learn something new, also append it to `meta/research-log.md` so provenance is never lost.
 - This repo is public and may be read by other modders and their AIs. Write for a stranger picking it up cold on another machine.
+- **The maintainer is pseudonymous here.** Call them "the maintainer", never by name, including in research-log prose ("the maintainer asked…"). Write local paths as `C:\Users\<user>\…`, never with a real Windows username. Commits use the GitHub noreply address only. Before committing, check the added lines of your diff for the maintainer's name or username.
