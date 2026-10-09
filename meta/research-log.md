@@ -5712,6 +5712,122 @@ instructions below were decoded by hand from the bytes.
 ### NOT verified / open
 - **The cheapest in-game test** (it needs the maintainer's go-ahead and a launch): override
   entry 0x800 in a patch forge with the first field repointed to `GRN_GhostRoom`, a world GRB
-  already ships, and see where the game starts.
+  already ships, and see where the game starts. **Run the same day; see the next entry.**
 - The fields of `GameBootstrap` beyond the first, and which code reads the registry.
 - Nothing was written or launched.
+
+---
+
+## Entry — 2026-10-09 (third) — First start-world test: the Ghost Room switch hangs GRB at the splash
+
+**Trigger:** the maintainer chose the start-world test. **This entry records a write to the live
+install and a launch**, on SylDesk, with the maintainer's go-ahead at each step; the install was
+restored afterwards. Install state: Steam rewrote `GRB.exe` and most patch forges on 2026-10-08
+05:35, so `DataPC_patch_01.forge` was Ubisoft's (831,782,912 B, 2 FileSets).
+
+### What was done, in order
+1. **Backup:** `D:\GRB_Backups\2026-10-09_pre-startworld\DataPC_patch_01.forge`, SHA-256
+   `754F960E…8D75`, identical to the live file.
+2. **The edit, built from the live forge.** Entry 0x800 is a **55,020-resource container** (110.6 MB
+   decompressed, 33,288,189 B stored), not one resource. In its `GameBootstrap` record, the first
+   field (files-block byte 50) changed from `TGT_WorldMap` to `GRN_GhostRoom` (6 bytes differ). The
+   other 1,603 occurrences of `TGT_WorldMap`'s ID in the container were left alone. The metadata
+   block was copied verbatim, and the files block was recompressed with `reflex3_write._compress_cfd`
+   (Oodle Mermaid, 32 KB blocks): 32,298,687 B, SHA-256 `4996BE5B…`.
+3. **The stale unpack folder was not repackable.** `Extracted\DataPC_patch_01.forge\` (newest file
+   2026-07-03) lacked 38 live entries, among them the update's `DBUnlockable_25thAnniversary_*` and
+   the gameplay `DBContainerEntry`. It also held 93 files matching no live entry (old mod work:
+   KryptekRaid, HK416D SMR, Azrael drone). A repack would have reverted the update. It was renamed
+   to `DataPC_patch_01.forge.stale-2026-07-03` (68,459 files, intact).
+4. **Fresh ATK unpack** (by the maintainer): 2,409 files ↔ 2,409 live entries, 0 missing, 0 extra,
+   0 duplicates. ATK did **not** overwrite its own `Backups\DataPC_patch_01.forge` (still 2025). The
+   0x800 file was parked as `.bak` (skipped by ATK's repack) and the edit placed under its name.
+5. **ATK repack** (by the maintainer): 830,308,352 B, ATK layout (1 FileSet). **2,408 of 2,409
+   entries byte-identical to the backup**; only entry 2048 changed, and it equals the built
+   container.
+6. **Launch:** GRB sat on its splash window. After about 6 minutes: responding, 864 MB working set
+   (flat), about one core busy, **38 MB read from disk in total and 0 bytes in a 5-second sample**.
+   No log was written (`logs\` holds only a 2025 crash report). Killed with `taskkill /F /T`.
+7. **Restore:** the backup was copied back (SHA-256 `754F960E…`, identical), and the unpack folder's
+   0x800 file returned to vanilla (`16166FA8…`), so folder and forge match again. The test forge is
+   kept as `…\DataPC_patch_01.forge.startworld-ghostroom`.
+
+### VERIFIED
+- With entry 0x800's first field pointing at `GRN_GhostRoom`, GRB **hangs at the splash** before
+  reading more than 38 MB. That is about the size of the 0x800 container plus the exe's first reads.
+
+### INFERRED, and why it is not yet a result
+- Two explanations fit:
+  - **(a)** The field is read at boot and chooses the start world, and GRB's 13,502 B
+    `GRN_GhostRoom` stub cannot be started in.
+  - **(b)** The game rejects our recompressed container whatever it contains. Our Oodle settings
+    produce 32.3 MB where Ubisoft's produce 33.3 MB.
+- Vanilla's own read volume at the splash was not measured, so the 38 MB has no baseline either.
+
+### Next — the control (staged, not run) — **run the same day: it hung too; see the next entry**
+- `control_2048_Game Bootstrap Settings.data` in the backup folder: the same recompression with **no
+  edit**. 32,298,688 B, SHA-256 `8a31f2aa…`, decompressing to the vanilla bytes exactly. It goes
+  through the same cycle: swap it into the fresh folder, ATK repack, launch.
+  - **It boots:** the hang came from the world switch, and (a) holds.
+  - **It hangs too:** our container recipe is the problem, and every container this repo rebuilds
+    (`reflex3_write`, `skeleton_bones`, `clothwrap`) inherits it.
+
+  Measure the read volume either way, as the baseline.
+
+---
+
+## Entry — 2026-10-09 (fourth) — Our container writer froze the game: one header field, `0` instead of `32768`
+
+**Trigger:** the control from the previous entry. **Writes and launches on the live install**,
+SylDesk, with the maintainer's go-ahead at each step. Every run used the same cycle: swap one 0x800
+file into the fresh unpack folder (hash-checked), ATK repack, verify 2,408 of 2,409 entries
+byte-identical to the backup, launch, log `ReadTransferCount` and working set every 5–10 s, kill,
+restore. The backup (`754F960E…`) was restored and verified after each failed run.
+
+### VERIFIED — four launches
+| run | 0x800 file | files-block header | result |
+| --- | --- | --- | --- |
+| 1 (previous entry) | Ghost Room, our recipe | `3, 3, 0, 32768` | froze at splash: 38 MB read, 866 MB, flat |
+| 2 | control: vanilla content, our recipe | `3, 3, 0, 32768` | froze identically: 38 MB at 14 s, then nothing for 2+ min |
+| 3 | vanilla (Ubisoft's container) | `3, 3, 32768, 32768` | main menu: 332 MB by 17 s, settled at 568 MB / ~1.9 GB |
+| 4 | control with the header fixed | `3, 3, 32768, 32768` | main menu, then **into the world**: 331 MB by 24 s, 3.96 GB read |
+
+- **The cause is the files block's first `u16` size field.** Ubisoft writes `32768` in both size
+  fields, in all four CompressedFileData blocks checked (meta and files, in the 0x800 container).
+  `reflex3_write._compress_cfd` and `clothwrap.py`'s writer packed `struct.pack("<hBHH", 3, 3, 0,
+  BLK)`, putting `0` in the first. Runs 2 and 4 differ **only** in that field (decompressed bytes
+  identical to vanilla in both). The per-block checksum was ruled out: Ubisoft's blocks use adler32
+  seeded **0** (3,399 of 3,399), as ours do.
+- **Run 4 is the first time anything this repo's tools wrote has run in game.** It is a 110 MB
+  container rebuilt by `_compress_cfd`, carried through ATK's repack, past the menu and into a
+  loaded world.
+- **The freeze signature:** responding, one core busy, working set flat, reads stopped at
+  ~38 MB, 14 s into the boot. That is before the game reads anything near its normal ~330 MB.
+- **Run 1 is void as a world test.** It froze on the header, so the world question is reopened.
+  The header-fixed Ghost Room container (`ghost-fixed_2048_…`, SHA-256 `1E4BCE25…`) is repacked
+  into the live forge, verified (only entry 2048 differs; first field `GRN_GhostRoom`), and **not
+  yet launched**.
+- **Fixed in the tools:** `reflex3_write.py` (and `skeleton_bones.py`, which writes through it) and
+  `clothwrap.py` now write `32768, 32768`. The control files are kept as evidence in
+  `D:\GRB_Backups\2026-10-09_pre-startworld\`: `control_…` (`0`) and `control-fixed_…` (`32768`).
+
+### INFERRED — July's cloth record, re-read
+- **2026-07-02:** compressed cloth edits written into base `DataPC.forge` "loaded fine" and had no
+  effect. Those containers already carried the `0`. The forge shadow (2026-07-03) explains both:
+  the game reads the WorldMap copy, so the edited container was never decompressed.
+- **2026-07-03:** "a `DataPC_patch_01`-only cloth override **hangs** ~34 % into the post-title load
+  (CPU spinning, Responding-but-stalled)". The patch override forces the read, and the hang
+  matches today's signature. **This is now better explained by the header bug than by an
+  "incomplete override".** The forge shadow can still be true; the rule "a single-patch override
+  hangs the load" is unsupported.
+- **The STEP 1 cloths staged in July** (Bodark pattern, kilt cloths 90001/90002) were written with
+  the `0` header and would have hung too. They must be rebuilt with the fixed writer before STEP 1
+  means anything. On SylDesk they sat in the unpack folder now renamed
+  `DataPC_patch_01.forge.stale-2026-07-03`.
+- 2026-07-02's "RAW blocks crash or hang at load" came from an earlier, lost scratchpad writer.
+  Whether it also wrote the `0` is unknown, so that conclusion is suspect too, but untested.
+
+### NOT verified / open
+- The Ghost Room run with the fixed header: the actual world test.
+- The STEP 1 cloth test, rebuilt with the fixed writer. Lane 2A's gate is open again, cleanly.
+- Why the field matters (presumably a buffer sized from it), and whether the second field is read.

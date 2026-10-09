@@ -52,8 +52,10 @@ byte-identical.
     MaxDistance) read no in-game change, but all are confounded by a FORGE SHADOW - the
     cloth is duplicated across DataPC.forge and a WorldMap base forge, and only the DataPC
     copy was edited. A shadowed cloth must be overridden in BOTH families' patch forges
-    (a single-patch override hangs the load). See docs/11-cloth-and-physics.md and
-    meta/next-session.md. ***
+    (a single-patch override hangs the load - SUSPECT since 2026-10-09: the cloths in
+    that test were written by this tool while its container header carried a 0 that
+    freezes GRB, so the hang is better explained by that bug; retest with the fixed
+    writer). See docs/11-cloth-and-physics.md and meta/next-session.md. ***
 
 Usage:
   python clothwrap.py cloth.data --oodle oo2core_7_win64.dll                    # inspect
@@ -259,7 +261,11 @@ def _build_compressed_cfd(files_content, oodle):
 
     chunks = [files_content[i:i + _BLK] for i in range(0, len(files_content), _BLK)] or [b""]
     stored = [(len(c), _c(c)) for c in chunks]
-    hdr = struct.pack("<Q", _DATA_MAGIC) + struct.pack("<hBHH", 3, 3, 0, _BLK)  # ver=3, algo=3
+    # ver=3, algo=3, then both u16 size fields = 32768, as in every Ubisoft container.
+    # This wrote 0 in the first one until 2026-10-09, when a container with that 0
+    # froze GRB at its splash and the same container with 32768 reached the menu.
+    # Every cloth this tool wrote before then carried the 0 (see the research log).
+    hdr = struct.pack("<Q", _DATA_MAGIC) + struct.pack("<hBHH", 3, 3, _BLK, _BLK)
     hdr += struct.pack("<i", len(stored))
     for un, cc in stored:
         hdr += struct.pack("<ii", un, len(cc))
@@ -342,7 +348,8 @@ def main(argv):
     print("     entry), repack the forge in ATK on a BACKED-UP install, and load GRB.")
     print("     NOTE: most cloths are SHADOWED (same ID in DataPC.forge AND a WorldMap base")
     print("     forge) - to actually override one, place the edit in BOTH families' patch")
-    print("     forges; a single-patch cloth override hangs the load. Whether any cloth")
+    print("     forges. (The old 'single-patch override hangs' rule is suspect: that hang")
+    print("     came from containers this tool wrote with a since-fixed header bug.) Whether any cloth")
     print("     param edit takes effect in-game is unresolved (see meta/next-session.md).")
 
 

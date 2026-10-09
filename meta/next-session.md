@@ -304,6 +304,15 @@ the same day.
 > mapping), validated by regenerating these Wildlands mappings from geometry, and then GRB's
 > quantized form. See the 2026-10-08 (third) entry; the (second) entry compares the two worlds.
 >
+> **🧱 2026-10-09 (later): THE WALL MOVED, and our own writer had been building it.** The first
+> in-game tests of the day froze GRB at its splash. A control proved why: `reflex3_write` and
+> `clothwrap` wrote `0` in a container header field where Ubisoft writes `32768`. With that one
+> constant fixed, a 110 MB container **rebuilt by our tools loaded into a live world**, the first
+> time anything this repo wrote has run in game. **Every container written before the fix carried
+> the bug, July's staged STEP 1 cloths included; rebuild them before testing.** July's "a
+> single-patch cloth override hangs the load" is now better explained by this bug than by the
+> forge shadow. See the 2026-10-09 (fourth) research-log entry.
+>
 > **🗺️ 2026-10-09: what loads `TGT_WorldMap`.** Entry **0x800** `Game Bootstrap Settings`
 > (`GameBootstrap`, in `DataPC` and its patch) names the start world in its first field and keeps a
 > name→World registry. Wildlands' 0x800 has the same shape, pointing at `GRN_WorldMap`. Both exes
@@ -482,6 +491,14 @@ has never been validly tested.
 > only **one** of the two forges holding the cloth, which is the suspected reason they hung.
 
 **Do:** repack **both** patch forges → launch → watch the kilt.
+
+> 🛑 **2026-10-09: DON'T run the staged files as they are.** They were written by `clothwrap.py`
+> before its container header was fixed, so they carry the `0` that froze GRB on 2026-10-09. July's
+> one-forge hang is now better explained by that bug than by the override being incomplete. The
+> SylDesk copies sit in `Extracted\DataPC_patch_01.forge.stale-2026-07-03\`, and the live forges
+> were reset by the 2026-10-08 update, so re-extract both patch forges fresh. Rebuild the two kilt
+> cloths with the fixed `clothwrap.py`. Then STEP 1 is a clean test for the first time. Also
+> retest a **one-forge** override: if it loads, the "complete override" requirement was never real.
 
 > ℹ️ **2026-09-20:** the eleven ghillie cloths modified on 2026-07-01 are *still live* in base
 > `DataPC.forge` on SylG5 (`Backups\DataPC.forge.pre-clothtest-20260701` holds the originals), and

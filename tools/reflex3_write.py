@@ -248,7 +248,10 @@ def generate(spec, addon_bones, body_bones):
 # --------------------------------------------------------------------------- container splice
 def _compress_cfd(content, dll):
     """A CompressedFileData block GRB can load: 32 KB chunks, Oodle Mermaid, per-block
-    adler32 seeded 0 (same recipe as clothwrap.py, proven on cloth containers)."""
+    adler32 seeded 0 (same recipe as clothwrap.py). PROVEN IN GAME 2026-10-09, but
+    only after its header was fixed: a rebuilt 110 MB container loaded into a live
+    world. Until then this wrote 0 in the first size field and froze GRB at its
+    splash; every container it wrote before that date carried the 0."""
     oo = ctypes.WinDLL(dll)
     comp = oo.OodleLZ_Compress
     comp.restype = ctypes.c_longlong
@@ -263,7 +266,10 @@ def _compress_cfd(content, dll):
 
     chunks = [content[i:i + BLK] for i in range(0, len(content), BLK)] or [b""]
     stored = [(len(c), one(c)) for c in chunks]
-    hdr = struct.pack("<Q", MAGIC) + struct.pack("<hBHH", 3, 3, 0, BLK) + struct.pack("<i", len(stored))
+    # Both u16 size fields are 32768 in every Ubisoft container. A 0 in the first
+    # one froze GRB at its splash screen - tested in game 2026-10-09: the same
+    # rebuilt 0x800 container froze with 0 here and reached the menu with 32768.
+    hdr = struct.pack("<Q", MAGIC) + struct.pack("<hBHH", 3, 3, BLK, BLK) + struct.pack("<i", len(stored))
     for un, cc in stored:
         hdr += struct.pack("<ii", un, len(cc))
     body = bytearray()
