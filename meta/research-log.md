@@ -5602,3 +5602,116 @@ and were treated as Ubisoft's; patch-forge counts may include mod content.
   wrapper), and meshes embedded in world cells (not in the census).
 - The bytes between `VisualVertexColors` and the `SoftBodyFaceNTRange` run in a GRW cloth, still.
 - Nothing was written or launched.
+
+---
+
+## Entry — 2026-10-09 — One ID space across both games, and worlds named by data
+
+**Trigger:** the maintainer asked whether Wildlands' map could load in GRB. Read-only, SylDesk,
+index-level reads of both installs (GRB's is modded, so its counts may include mod entries).
+
+### VERIFIED
+- **World forges are named after `World` resources.** Every `World` in both installs sits in
+  `DataPC_<World name>[_<Region>_Split].forge`:
+  - GRW: `GRN_WorldMap` (45517505207), `GRN_GhostRoom` (246945625870), `GRN_TitleScreen`
+    (677625974291).
+  - GRB: `TGT_WorldMap` (1403620829240), in Bootstrap, and **`GRN_GhostRoom` with the same ID as
+    Wildlands', 246945625870**. GRB's copy is a 13,502 B stub; GRW's is 8.5 MB (10.7 MB patched).
+  - This fits the 2026-10-04 reading of GRB.exe: no forge-name literals, names composed by
+    `"%sData%s.%sforge"` from the platform table plus suffix getters *or a world name from data*.
+- **The two games share one ID space.** 169,397 GRW entry IDs and 384,690 GRB ones (sidecars 16
+  and 145 excluded) share 6,202:
+  - **3,396 under the same name:** `TextureMapSpec` 1,496, `TextureMap` 786, `Mesh` 239,
+    `CompiledMip` 222, `Entity` 49, `MaterialTemplate` 24, …, led by the engine defaults
+    (`Default Normal Texture`, `UnitSphere`).
+  - **2,806 under a different name.** Many are visibly one asset renamed: `VEG-Des-AtlasPricklyCactus01_*`
+    → `VEG-Res-…`, `VEG-Des-Grass-PricklyCactusA_LOD0..2` → `VEG-Res-Pickup-PricklyPearCactus_LOD0..2`,
+    `VEG-Ari-Grass-FrailejonA_LOD0` → `VEG-Res-Pickup-RosalesA_LOD0`.
+
+### INFERRED
+- GRB was built on Wildlands' asset database, not beside it. Wildlands content could keep its own
+  IDs in a GRB forge with little collision risk, apart from the 2,806 IDs that mean something else
+  in GRB now.
+- **Which world GRB opens is decided by data.** A port would not have to touch the exe, but nothing
+  here shows what selects `TGT_WorldMap` at start-up. That is the cheapest next question.
+  **Answered in the next entry.**
+
+### What a map port would still need (from the 2026-10-08 entries)
+- **Static meshes.** World geometry is mostly strides 16, 20, 24, 28, 44 and 52; `grw_mesh` does
+  not decode those layouts.
+- **Materials.** GRW materials point at GRW shader templates.
+- **Terrain.** `.tbf` changed from v1 to v2.
+- **The map texture.** `tgt.wmap` uses a codec nobody has identified.
+- **Assembly.** GRB's per-region MultiForge layout, where GRW's world is one forge.
+- **Navmesh.** Per-cell `PilotResources`.
+- **Gameplay.** Missions, factions and DB records would not come along.
+
+---
+
+## Entry — 2026-10-09 (second) — What loads `TGT_WorldMap`: entry 0x800 names it, and the exe carries it too
+
+**Trigger:** the maintainer asked what makes GRB load `TGT_WorldMap`. **Read-only**, SylDesk:
+both installs, `GRB.exe` and `GRW.exe` read as files. No disassembler was installed; the
+instructions below were decoded by hand from the bytes.
+
+### VERIFIED — the data: `Game Bootstrap Settings`, entry 0x800, in both games
+- **Where:** entry **2048 (0x800)**, container and resource named `Game Bootstrap Settings`, type
+  `GameBootstrap` (`0xE5A83560`), in `DataPC.forge` and `DataPC_patch_01.forge`. The GRB copy is
+  37,344 B in both forges; GRW's is 71,736 B. This is the same entry the SCUBA `grbmod` edits
+  (`TagDictionnaries`, 2026-10-07).
+- **Its first field is the start world.** Payload: `u64 ClassID 2048 | u32 0xE5A83560 | 01 00 |
+  u64 World`. The `World` is `TGT_WorldMap` (1403620829240) in GRB and **`GRN_WorldMap`
+  (45517505207) in GRW**. In GRB a count of 12 follows, then `01 00 + u64` handles to other
+  settings entries (the first four: `0x8AE`, `0xBEA`, `0xBE0`, `0x804`); GRW's count is 10.
+- **It also holds a world registry: name → World ID.** Each element is
+  `u32 0xFBB63E47 (World) | object header (0xF80002xx, 0) | u32 0x830B78C0 (LoadInfo) |
+  i32 length | name, NUL | u64 World ID`:
+  - GRB: `TGT_WorldMap` 1403620829240, `GRN_GhostRoom` 246945625870,
+    `TGT_PhotomatonWorld` 0x19C825396DC, **`GRN_TitleScreen` 677625974291** (a Wildlands World
+    GRB does not ship), `PhotomatonWorld` 0x17FB8EF0EBD, `PhotomatonWorld_SPW` 0x1A62CF6041E.
+  - GRW: `GRN_WorldMap`, `GRN_TitleScreen`, `GRN_YoTest`, `Real_Extract_Rebel_PacKatari`, …, and
+    a second registry of `MissionRoot`s that names `GRN_ALPHA` (377957697354).
+  - `LoadInfo` is a generic name + ID pair. GRW's 0x800 uses it for many other lists too,
+    including leftover Assassin's Creed 3 layer names (`AC3_Worlds`, `DebugEntities_AC2_DoNotUse`).
+
+### VERIFIED — the exe: a constructor with the world IDs as constants
+- **`GRB.exe` contains `TGT_WorldMap`'s ID exactly once.** File offset 112,491,861, inside function
+  RVA `0x6fa36e0–0x6fa376a` (bounds from the exception directory). The function stores a vtable
+  at `+0`, a pointer at `+0x10`, initialises five 12-byte members at `+0x18…+0x48`, then:
+  `mov rax, 0x9DC8C3A20F; lea rax, [rax-0x31BD3FC]` (= 677625974291, `GRN_TitleScreen`)
+  → `[rbx+0x58]`; `mov rax, 1403620829240` → `[rbx+0x60]`. Neither `GRN_GhostRoom`'s nor any
+  Wildlands-only ID appears.
+- **`GRW.exe` has the same constructor with one more field:** `GRN_ALPHA` (the `MissionRoot`)
+  → `+0x58`, `GRN_TitleScreen` → `+0x60`, `GRN_WorldMap` → `+0x68`. GRB's is that struct with the
+  `MissionRoot` slot removed, which fits GRB having no forge-level `MissionRoot`.
+- No RTTI: the slot before the vtable points into code padding, so the class has no recoverable
+  name. GRW.exe also keeps forge-filename literals (`DataPC_GRN_GhostRoom.forge`, …); GRB.exe does
+  not (2026-10-04).
+
+### VERIFIED — what else names the world (GRB, every container outside `DataPC_Resources`)
+80,312 references to the two Worlds' IDs or names:
+- **`TGT_WorldMap` by ID:** `PilotNavMeshResource` 62,249, `GIDynResource` 10,486,
+  `QuestManagerCampaign` 3,180, `DBFastTravelEntry` 1,328, an unnamed type `#2780020384` 570,
+  `DBGameArea` 120, `World` 44, `DBGameModeVariation` 14, `GameBootstrap` 4.
+- **`TGT_WorldMap` by name:** `Entity` 2,264, `MultiForgeObjectDataContainer` 18,
+  `GameBootstrap` 2.
+- **`GRN_GhostRoom`:** only `GameBootstrap`, `DBGhostRoom` and its own `World`.
+
+### INFERRED
+- The bootstrap's first field picks the world the game starts in. Its registry supplies the name
+  GRB.exe composes world forge names from (2026-10-04: names come from "a world name from data").
+  The registry names match the forge names exactly, but the read of that name was not traced in
+  code.
+- The exe constructor seeds defaults for the same settings, and the data overrides them on load.
+  This fits GRB's dangling `GRN_TitleScreen`: a Wildlands default nobody cleaned up. It is not
+  traced either.
+- **For a world port:** entry 0x800 is the switch, and it is already a modded entry. But navmesh,
+  GI, quests, fast travel, game areas and game modes all name `TGT_WorldMap` by ID, so swapping
+  the start world would leave them pointing at a world that is no longer loaded.
+
+### NOT verified / open
+- **The cheapest in-game test** (it needs the maintainer's go-ahead and a launch): override
+  entry 0x800 in a patch forge with the first field repointed to `GRN_GhostRoom`, a world GRB
+  already ships, and see where the game starts.
+- The fields of `GameBootstrap` beyond the first, and which code reads the registry.
+- Nothing was written or launched.

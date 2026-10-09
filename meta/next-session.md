@@ -303,6 +303,13 @@ the same day.
 > mapping for the poncho's own mesh:** a vanilla poncho rebind. **Next:** the encoder (mesh + cage →
 > mapping), validated by regenerating these Wildlands mappings from geometry, and then GRB's
 > quantized form. See the 2026-10-08 (third) entry; the (second) entry compares the two worlds.
+>
+> **🗺️ 2026-10-09: what loads `TGT_WorldMap`.** Entry **0x800** `Game Bootstrap Settings`
+> (`GameBootstrap`, in `DataPC` and its patch) names the start world in its first field and keeps a
+> name→World registry. Wildlands' 0x800 has the same shape, pointing at `GRN_WorldMap`. Both exes
+> also hardcode the IDs in one constructor. Cheapest in-game test, when the maintainer wants it:
+> repoint that first field at `GRN_GhostRoom` and see where the game starts. See the 2026-10-09
+> entries.
 
 > **📍 Where this leaves us — read this one if you read nothing else (2026-09-09).**
 >
