@@ -94,6 +94,37 @@ node tested.
   (The zlib wrapper's own bytes differ from Python's `zlib` at levels 1/6/9; any valid stream
   should do, but that is untested in game.)
 
+#### World mapping and height scale, checked against placed entities (2026-10-10, verified)
+Terrain-placed rocks (`ENV-*-ROC-*_TER-*`) sit on the ground. Their `GlobalMatrix` translation
+(`Mat44` at Entity payload +14; x, y, z at floats 12–14) is ground truth for both the height
+scale and the world → node mapping. 270 GRW rocks came from 300 random leaf cells and 98 GRB rocks
+from 250 MaungaNui cells.
+- **Entity frame:** x runs along cell columns and y along cell rows, from the World's corner. The
+  rocks fall inside their own `Cell<N>` square in 270/270 GRW cases (128 m, from −8192) and 91/98 GRB
+  cases (from −16384).
+- **GRW: the terrain spans 16,000 m, centred on the origin (−8000…+8000), not the 16,384 m cell
+  grid.** So a leaf tile is 62.5 m and a sample is 0.48828125 m. Small and rough rocks miss the
+  bilinear terrain height by a **1.2 m median** (75 % within 3 m). With 16,384 m the median is 11.7 m,
+  with consistent per-area errors of up to 100 m. The optimum is flat within ±8 m of extent and ±2 m
+  of offset around exactly 16,000. The header (`16, 2048, 1024`) does not contain 16,000.
+  **Inferred:** 16 sectors × 1,000 m with 2,048 samples each; `Terrain_001` carries an `f32 1000.0`
+  at +339.
+- **GRW height scale ×3000/2^20 is now verified.** Raw height and rock z correlate at r = 0.991
+  over 2 km of elevation. The ×3000 scale leaves a median offset of 3 m; ×2500/×3500 are off by
+  170 m.
+- **GRB: the terrain spans 32,768 m, centred (−16384…+16384)**, matching its header's `32768`.
+  Rocks miss by a **0.53 m median** (73 % within 1.5 m); 32,000 m gives 17.6 m. This also
+  verifies GRB's ×1500/2^20 against the world, independently of the min/max table.
+- **Mapping, both games:** `gx = (x − x0) / extent × samplesAcross`, where samplesAcross is GRW 32,768 or
+  GRB 65,536. Then node col = ⌊gx / 128⌋ and in-node sample = gx − 128·col + 2 (likewise y → row).
+  Nodes are row-major, with y increasing with row index.
+- **Port consequence:** Bolivia's samples are 0.488 m apart against GRB's 0.5 m. Copied 1:1 into a
+  0.5 m grid, Bolivia's 32,768 samples would cover 16,384 m instead of 16,000 m: a 2.4 % stretch
+  that would lift every entity off (or sink it into) sloped ground. Either resample the heights, or
+  give Bolivia's own v2 `.tbf` a header that states 16,000 m, if GRB derives the spacing from the
+  header. That is open, and GRB's third header field `64` would have no integer equivalent
+  (62.5 m tiles).
+
 #### Is the 1500 m range hardcoded in GRB? (checked 2026-10-10, inconclusive but encouraging)
 - A streamed scan of `GRB.exe` (536 MB) finds **no `1500/2^20` constant**. Its two raw byte matches
   (`00 80 BB 3A`) both sit inside instructions (`80 BB 3A …` = `cmp byte ptr [rbx+…]`). There is no
@@ -389,7 +420,9 @@ min/max table.
 2. Which GRW `00` rasters map onto GRB's two, and what the FE raster means. File statistics don't
    decide it (see the table); material names or an in-game A/B test would.
 3. The trailer floats `a ≤ b`.
-4. GRW height scale: confirm `×3000/2^20` against a placed entity's height in a known cell.
+4. ~~GRW height scale~~: verified against 270 terrain-placed rocks (section above). This also
+   found GRW's terrain extent: 16,000 m, not 16,384. Still open: where the engine takes
+   GRW's 16,000 m from, and whether GRB accepts a non-0.5 m spacing in a v2 header.
 5. ~~Terrain material tables in both games~~: found and decoded, and a converter written (sections
    above). Still open: the tint records' meaning (GRW 4, GRB 6), the GRB-only parameters, the
    offset-27 handle, and whether FE really indexes the procedural-set bank.

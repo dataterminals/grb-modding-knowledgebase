@@ -26,9 +26,13 @@ FORMAT (verified against both installs unless marked):
   `u32 len | payload` blocks, then a 40-byte trailer.
 - Heights: 132x132 int32 (128 own samples + a 2-sample apron each side), raster
   order, as int16 tokens: 0x7FFF = restart, two int32 literals follow; else
-  h[i] = 2h[i-1] - h[i-2] + token. Metres = h * heightRange / 2^20 (verified on
-  GRB against its min/max table; inferred for GRW). Heights stay below 2^20 in
-  both games.
+  h[i] = 2h[i-1] - h[i-2] + token. Metres = h * heightRange / 2^20 (verified in
+  both games against terrain-placed rock entities, and on GRB against its min/max
+  table). Heights stay below 2^20 in both games.
+- World mapping (verified against rocks): the terrain is centred on the origin and
+  spans GRW 16,000 m (not the 16,384 m cell grid; 0.48828125 m samples) and GRB
+  32,768 m (0.5 m). gx = (x + extent/2) / extent * samplesAcross; node col =
+  gx // 128; in-node sample = gx - 128*col + 2. Same for y -> row (row-major).
 - Run-length raster: 132x132 u8, literal bytes plus `marker count value`
   (count 1-255). The marker is fixed by the block's slot, not stored.
 - Trailer: f32 a, f32 b (meaning unknown, a <= b), then a 256-bit mask = the set
