@@ -1,0 +1,6142 @@
+{
+ "about": "Learned by grw_materials.py learn from GRW/GRB conversion twins; see meta/notes-materials.md",
+ "twins": 238,
+ "unparsed": 0,
+ "drop_slots": [
+  2
+ ],
+ "slots": {
+  "Diffuse": "213/213 kept",
+  "Normal": "209/209 kept",
+  "Specular": "5/89 kept",
+  "OffsetBump": "0/1 kept",
+  "Mask1": "94/106 kept",
+  "Mask2": "11/11 kept",
+  "Diffuse1": "3/4 kept"
+ },
+ "templates": {
+  "77971378242": {
+   "name": "SHD_Nat_Veg_Leaves_Mask",
+   "n": 8,
+   "targets": [
+    [
+     "1498533388534",
+     "SHD_NAT_Veg_Leaves_Mask",
+     5
+    ],
+    [
+     "1757889206304",
+     "SHD_NAT_Veg_Leaves_Mask_ALPHATEST_NotGPU",
+     3
+    ]
+   ]
+  },
+  "74456416868": {
+   "name": "SHD_Nat_Veg_Basic_AO",
+   "n": 6,
+   "targets": [
+    [
+     "1561874137350",
+     "SHD_NAT_Veg_Basic_AO",
+     6
+    ]
+   ]
+  },
+  "77539566677": {
+   "name": "SHD_Nat_Veg_Grass",
+   "n": 2,
+   "targets": [
+    [
+     "1757889206304",
+     "SHD_NAT_Veg_Leaves_Mask_ALPHATEST_NotGPU",
+     1
+    ],
+    [
+     "1498533388534",
+     "SHD_NAT_Veg_Leaves_Mask",
+     1
+    ]
+   ]
+  },
+  "1107529338323": {
+   "name": "SHD_Basic_Metallic_GlossMask",
+   "n": 36,
+   "targets": [
+    [
+     "1825790666323",
+     "SHD_BAS_DielectricMetallic_v2_TEMP",
+     24
+    ],
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     12
+    ]
+   ]
+  },
+  "276823147996": {
+   "name": "SHD_Weapon_InGame",
+   "n": 38,
+   "targets": [
+    [
+     "1656562692981",
+     "SHD_W_Body_Main",
+     32
+    ],
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     5
+    ],
+    [
+     "1825790666323",
+     "SHD_BAS_DielectricMetallic_v2_TEMP",
+     1
+    ]
+   ]
+  },
+  "42175742799": {
+   "name": "SHD_Basic",
+   "n": 58,
+   "targets": [
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     44
+    ],
+    [
+     "1825790666323",
+     "SHD_BAS_DielectricMetallic_v2_TEMP",
+     13
+    ],
+    [
+     "1755167169276",
+     "SHD_BreakableFence",
+     1
+    ]
+   ]
+  },
+  "42175743540": {
+   "name": "SHD_Detail",
+   "n": 1,
+   "targets": [
+    [
+     "1825790666323",
+     "SHD_BAS_DielectricMetallic_v2_TEMP",
+     1
+    ]
+   ]
+  },
+  "34179593778": {
+   "name": "SHD_Basic_Metallic",
+   "n": 8,
+   "targets": [
+    [
+     "34179593778",
+     "SHD_Basic_Metallic",
+     5
+    ],
+    [
+     "1825790666323",
+     "SHD_BAS_DielectricMetallic_v2_TEMP",
+     1
+    ],
+    [
+     "1755167169276",
+     "SHD_BreakableFence",
+     1
+    ],
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     1
+    ]
+   ]
+  },
+  "173768518260": {
+   "name": "SHD_Basic_AlbedoColor",
+   "n": 4,
+   "targets": [
+    [
+     "1825790666323",
+     "SHD_BAS_DielectricMetallic_v2_TEMP",
+     2
+    ],
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     2
+    ]
+   ]
+  },
+  "173768519736": {
+   "name": "SHD_DetailNm_AlbedoColorMask",
+   "n": 1,
+   "targets": [
+    [
+     "1825790666323",
+     "SHD_BAS_DielectricMetallic_v2_TEMP",
+     1
+    ]
+   ]
+  },
+  "519127172610": {
+   "name": "VEH_Body_WITHCUSTOMNODE",
+   "n": 11,
+   "targets": [
+    [
+     "1456070671961",
+     "TGT_VHC_Body",
+     11
+    ]
+   ]
+  },
+  "588927843247": {
+   "name": "SHD_W_Laser",
+   "n": 1,
+   "targets": [
+    [
+     "588927843247",
+     "SHD_W_Laser",
+     1
+    ]
+   ]
+  },
+  "79468429632": {
+   "name": "VEH_Lights_Glass",
+   "n": 1,
+   "targets": [
+    [
+     "79468429632",
+     "VEH_Lights_Glass",
+     1
+    ]
+   ]
+  },
+  "89393795160": {
+   "name": "VEH_Interior",
+   "n": 1,
+   "targets": [
+    [
+     "89393795160",
+     "VEH_Interior",
+     1
+    ]
+   ]
+  },
+  "255734953067": {
+   "name": "VEH_Lights_Chrome",
+   "n": 1,
+   "targets": [
+    [
+     "255734953067",
+     "VEH_Lights_Chrome",
+     1
+    ]
+   ]
+  },
+  "523296047436": {
+   "name": "VEH_Tyres_4Wheels",
+   "n": 1,
+   "targets": [
+    [
+     "523296047436",
+     "VEH_Tyres_4Wheels",
+     1
+    ]
+   ]
+  },
+  "111317427211": {
+   "name": "SHD_Nat_Veg_Basic_Blend_AO",
+   "n": 1,
+   "targets": [
+    [
+     "1561874137350",
+     "SHD_NAT_Veg_Basic_AO",
+     1
+    ]
+   ]
+  },
+  "988745575254": {
+   "name": "SHD_Translucency-AlbedoColor",
+   "n": 2,
+   "targets": [
+    [
+     "1920397121833",
+     "SHD_NAT_Veg_Leaves_Mask_NoNearClip",
+     1
+    ],
+    [
+     "1498533388670",
+     "SHD_NAT_Veg_Leaves",
+     1
+    ]
+   ]
+  },
+  "294530917746": {
+   "name": "SHD_Nat_Veg_Leaves_Mask_NoTerAlb",
+   "n": 1,
+   "targets": [
+    [
+     "1498533388534",
+     "SHD_NAT_Veg_Leaves_Mask",
+     1
+    ]
+   ]
+  },
+  "243142767540": {
+   "name": "SHD_Detail_AlbedoColor",
+   "n": 3,
+   "targets": [
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     2
+    ],
+    [
+     "1456021154800",
+     "SHD_BAS_Dielectric_Cloth",
+     1
+    ]
+   ]
+  },
+  "306813097118": {
+   "name": "SHD_Weapon_Gunsmith",
+   "n": 41,
+   "targets": [
+    [
+     "1656562692981",
+     "SHD_W_Body_Main",
+     41
+    ]
+   ]
+  },
+  "1240907612746": {
+   "name": "VEH_Tyres_4Wheels_NoPointMud",
+   "n": 1,
+   "targets": [
+    [
+     "523296047436",
+     "VEH_Tyres_4Wheels",
+     1
+    ]
+   ]
+  },
+  "305195535378": {
+   "name": "SHD_Detail_AlbedoColor_VertexNoise",
+   "n": 1,
+   "targets": [
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     1
+    ]
+   ]
+  },
+  "239143648038": {
+   "name": "SHD_Basic_Metallic_AlbedoColorMask",
+   "n": 1,
+   "targets": [
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     1
+    ]
+   ]
+  },
+  "519882200799": {
+   "name": "SHD_IA_Interaction",
+   "n": 2,
+   "targets": [
+    [
+     "519882200799",
+     "SHD_IA_Interaction",
+     2
+    ]
+   ]
+  },
+  "274225732754": {
+   "name": "SHD_Basic_EmissiveAMaskXVertexColor",
+   "n": 1,
+   "targets": [
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     1
+    ]
+   ]
+  },
+  "34198882472": {
+   "name": "SHD_Parallax",
+   "n": 1,
+   "targets": [
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     1
+    ]
+   ]
+  },
+  "94282161012": {
+   "name": "VEH_WindShield",
+   "n": 1,
+   "targets": [
+    [
+     "94282161012",
+     "VEH_WindShield",
+     1
+    ]
+   ]
+  },
+  "553268633063": {
+   "name": "VEH_Burnt",
+   "n": 1,
+   "targets": [
+    [
+     "553268633063",
+     "VEH_Burnt",
+     1
+    ]
+   ]
+  },
+  "533444766385": {
+   "name": "CHR_human_props",
+   "n": 2,
+   "targets": [
+    [
+     "1498533326620",
+     "SHD_BAS_Dielectric",
+     2
+    ]
+   ]
+  },
+  "557440802749": {
+   "name": "SHD_Basic_ParticleColor",
+   "n": 1,
+   "targets": [
+    [
+     "1700322008907",
+     "GFX_SHD_Opaque",
+     1
+    ]
+   ]
+  }
+ },
+ "targets": {
+  "1757889206304": {
+   "name": "SHD_NAT_Veg_Leaves_Mask_ALPHATEST_NotGPU",
+   "n": 4,
+   "order": [
+    "2023854548",
+    "1087304445",
+    "4061125545",
+    "1577450447",
+    "1958286481",
+    "3706476778"
+   ],
+   "params": {
+    "1958286481": {
+     "label": "0: Layer1 Diffuse + Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "4/4",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 4
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "4061125545": {
+     "label": "0: Layer1 Mask",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "4/4",
+     "kind": "tex",
+     "from": [
+      "4061125545"
+     ],
+     "evidence": {
+      "0: Layer1 Mask": 2
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 7,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "4/4",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 3
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "1577450447": {
+     "label": "1: AO Mult",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "4/4",
+     "kind": "const",
+     "hits": "copy 2 / const 4 of 4",
+     "default": "00000000",
+     "default_share": "4/4"
+    },
+    "1087304445": {
+     "label": "TransIndex",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "4/4",
+     "kind": "const",
+     "hits": "copy 2 / const 4 of 4",
+     "default": "00000000",
+     "default_share": "4/4"
+    },
+    "3706476778": {
+     "label": "2: Specular Occlusion 3",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "4/4",
+     "kind": "const",
+     "hits": "copy 4 / const 4 of 4",
+     "default": "00007f43",
+     "default_share": "4/4"
+    }
+   },
+   "slots": {
+    "Diffuse": "4/4 kept",
+    "Normal": "3/3 kept",
+    "Mask1": "2/2 kept"
+   },
+   "drop_slots": []
+  },
+  "1498533388534": {
+   "name": "SHD_NAT_Veg_Leaves_Mask",
+   "n": 7,
+   "order": [
+    "1958286481",
+    "2023854548",
+    "1577450447",
+    "4061125545",
+    "1087304445",
+    "3706476778"
+   ],
+   "params": {
+    "1958286481": {
+     "label": "0: Layer1 Diffuse + Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 7
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 6
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "1577450447": {
+     "label": "1: AO Mult",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "copy",
+     "copied": "6/6",
+     "equal": "5/6",
+     "hits": "copy 5 / const 3 of 7",
+     "default": "0000803f",
+     "default_share": "3/7"
+    },
+    "4061125545": {
+     "label": "0: Layer1 Mask",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "tex",
+     "from": [
+      "4061125545"
+     ],
+     "evidence": {
+      "0: Layer1 Mask": 6
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 7,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "1087304445": {
+     "label": "TransIndex",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "const",
+     "hits": "copy 4 / const 7 of 7",
+     "default": "00000000",
+     "default_share": "7/7"
+    },
+    "3706476778": {
+     "label": "2: Specular Occlusion 3",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "const",
+     "hits": "copy 7 / const 7 of 7",
+     "default": "00007f43",
+     "default_share": "7/7"
+    }
+   },
+   "slots": {
+    "Diffuse": "7/7 kept",
+    "Normal": "6/6 kept",
+    "Mask1": "6/6 kept"
+   },
+   "drop_slots": []
+  },
+  "1561874137350": {
+   "name": "SHD_NAT_Veg_Basic_AO",
+   "n": 7,
+   "order": [
+    "1958286481",
+    "2023854548",
+    "1927369653",
+    "2241311022",
+    "2905510935",
+    "3153901180",
+    "861092996",
+    "1577450447"
+   ],
+   "params": {
+    "1958286481": {
+     "label": "0: Layer1 Diffuse + Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 7
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "1577450447": {
+     "label": "1: AO Mult",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "copy",
+     "copied": "7/7",
+     "equal": "7/7",
+     "hits": "copy 7 / const 5 of 7",
+     "default": "0000803f",
+     "default_share": "5/7"
+    },
+    "3153901180": {
+     "label": "2: Specular Reflectance",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "copy",
+     "copied": "7/7",
+     "equal": "6/7",
+     "hits": "copy 6 / const 4 of 7",
+     "default": "0ad7233d",
+     "default_share": "4/7"
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 7
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "1927369653": {
+     "label": "3: Normal Intensity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "copy",
+     "copied": "7/7",
+     "equal": "7/7",
+     "hits": "copy 7 / const 5 of 7",
+     "default": "0000803f",
+     "default_share": "5/7"
+    },
+    "2241311022": {
+     "label": "2: Specular Occlusion",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "const",
+     "hits": "copy 7 / const 7 of 7",
+     "default": "00007f43",
+     "default_share": "7/7"
+    },
+    "2905510935": {
+     "label": "2: Specular Gloss Mask",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "copy",
+     "copied": "7/7",
+     "equal": "7/7",
+     "hits": "copy 7 / const 7 of 7",
+     "default": "0000803f",
+     "default_share": "7/7"
+    },
+    "861092996": {
+     "label": "4: UV Transform",
+     "dtype": 3308134693,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "7/7",
+     "kind": "copy",
+     "copied": "6/6",
+     "equal": "6/6",
+     "hits": "copy 7 / const 7 of 7",
+     "default": "020000f80000000025212ec50000803f0000803f0000000000000000000000000000000000000000000000000000",
+     "default_share": "7/7"
+    }
+   },
+   "slots": {
+    "Diffuse": "7/7 kept",
+    "Normal": "7/7 kept",
+    "Diffuse1": "1/1 kept"
+   },
+   "drop_slots": []
+  },
+  "1498533326620": {
+   "name": "SHD_BAS_Dielectric",
+   "n": 72,
+   "order": [
+    "2023854548",
+    "1179640656",
+    "3836939195",
+    "942000286",
+    "2328551822",
+    "3894305459",
+    "321423247",
+    "2241311022",
+    "3649223210"
+   ],
+   "params": {
+    "3836939195": {
+     "label": "1: Vertex Color",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "72/72",
+     "kind": "const",
+     "hits": "copy 72 / const 72 of 72",
+     "default": "00000000",
+     "default_share": "72/72"
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "72/72",
+     "kind": "tex",
+     "from": [
+      "2023854548",
+      "360396769",
+      "1281822740"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 62,
+      "0: Layer1_Normal Map": 4,
+      "3:Layer0_Normal": 2
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "3649223210": {
+     "label": "2: Specular Roughness Offset",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "72/72",
+     "kind": "const",
+     "hits": "copy 70 / const 70 of 72",
+     "default": "00000000",
+     "default_share": "70/72"
+    },
+    "1179640656": {
+     "label": "1: Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "72/72",
+     "kind": "const",
+     "hits": "copy 67 / const 67 of 72",
+     "default": "0000803f0000803f0000803f0000803f",
+     "default_share": "67/72"
+    },
+    "2328551822": {
+     "label": "4: V Transform",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "72/72",
+     "kind": "copy",
+     "copied": "52/52",
+     "equal": "50/52",
+     "hits": "copy 70 / const 68 of 72",
+     "default": "0000803f",
+     "default_share": "68/72"
+    },
+    "321423247": {
+     "label": "4: U Transform",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "72/72",
+     "kind": "copy",
+     "copied": "52/52",
+     "equal": "51/52",
+     "hits": "copy 71 / const 70 of 72",
+     "default": "0000803f",
+     "default_share": "70/72"
+    },
+    "3894305459": {
+     "label": "0: Layer1 Albedo Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "72/72",
+     "kind": "tex",
+     "from": [
+      "1958286481",
+      "2829386957",
+      "326223381"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 64,
+      "0: Layer1_Diffuse+Alpha Map": 3,
+      "3:Layer0_Diffuse": 2,
+      "0: Layer1 Diffuse Albedo + Alpha Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "942000286": {
+     "label": "5: Heat",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "72/72",
+     "kind": "copy",
+     "copied": "58/58",
+     "equal": "58/58",
+     "hits": "copy 72 / const 70 of 72",
+     "default": "00000000",
+     "default_share": "70/72"
+    },
+    "2241311022": {
+     "label": "2: Specular Occlusion",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "72/72",
+     "kind": "copy",
+     "copied": "65/65",
+     "equal": "37/65",
+     "hits": "copy 37 / const 25 of 72",
+     "default": "0000c842",
+     "default_share": "25/72"
+    }
+   },
+   "slots": {
+    "Diffuse": "68/68 kept",
+    "Normal": "65/65 kept",
+    "Specular": "0/7 kept",
+    "OffsetBump": "0/1 kept",
+    "Mask1": "1/11 kept",
+    "Diffuse1": "2/2 kept"
+   },
+   "drop_slots": [
+    2,
+    7
+   ]
+  },
+  "1656562692981": {
+   "name": "SHD_W_Body_Main",
+   "n": 73,
+   "order": [
+    "3277444367",
+    "1945676818",
+    "2370302031",
+    "2023854548",
+    "1958286481",
+    "337774818",
+    "3970883835",
+    "1439447567",
+    "2683238443",
+    "2575128146",
+    "2852051383",
+    "4181994227",
+    "3677626374",
+    "2824279732",
+    "107732050",
+    "1845314075",
+    "1834353485",
+    "1432593728",
+    "543450391"
+   ],
+   "params": {
+    "3277444367": {
+     "label": "[Paint2] #On/Off",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 51 / const 55 of 73",
+     "default": "0000803f",
+     "default_share": "55/73"
+    },
+    "2575128146": {
+     "label": "Age",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 43 / const 73 of 73",
+     "default": "00000000",
+     "default_share": "73/73"
+    },
+    "1945676818": {
+     "label": "[Paint] #On/Off",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 72 / const 73 of 73",
+     "default": "0000803f",
+     "default_share": "73/73"
+    },
+    "2370302031": {
+     "label": "[Paint] Gloss",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 0 / const 59 of 73",
+     "default": "9a99193e",
+     "default_share": "59/73"
+    },
+    "337774818": {
+     "label": "CamoTransform",
+     "dtype": 3308134693,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "copy",
+     "copied": "73/73",
+     "equal": "11/73",
+     "hits": "copy 11 / const 10 of 73",
+     "default": "020000f80000000025212ec500004040000040400000000000000000000000000000000000000000000000000000",
+     "default_share": "10/73"
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 73
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "1958286481": {
+     "label": "0: Layer1 Diffuse + Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 73
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "2852051383": {
+     "label": "[Paint2] Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "copy",
+     "copied": "73/73",
+     "equal": "35/73",
+     "hits": "copy 35 / const 35 of 73",
+     "default": "ed7eed3ced7eed3ced7eed3c0000803f",
+     "default_share": "35/73"
+    },
+    "3970883835": {
+     "label": "Camo",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "tex",
+     "from": [
+      "3970883835"
+     ],
+     "evidence": {},
+     "sel": {
+      "managed": 0,
+      "method": 2,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "2683238443": {
+     "label": "[Camo] On Paint1 - Opacity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "copy",
+     "copied": "73/73",
+     "equal": "73/73",
+     "hits": "copy 73 / const 73 of 73",
+     "default": "00000000",
+     "default_share": "73/73"
+    },
+    "1439447567": {
+     "label": "[Paint] SpecReflectance",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 0 / const 62 of 73",
+     "default": "a59f233da59f233da59f233d00000000",
+     "default_share": "62/73"
+    },
+    "4181994227": {
+     "label": "[Paint] Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 0 / const 58 of 73",
+     "default": "bd2aa33cbd2aa33cbd2aa33c00000000",
+     "default_share": "58/73"
+    },
+    "3677626374": {
+     "label": "[Dust]Amount",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 73 / const 73 of 73",
+     "default": "00000000",
+     "default_share": "73/73"
+    },
+    "2824279732": {
+     "label": "[Deposit]Power",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 69 / const 69 of 73",
+     "default": "0000803f",
+     "default_share": "69/73"
+    },
+    "107732050": {
+     "label": "EnvInfluence",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 73 / const 73 of 73",
+     "default": "00000000",
+     "default_share": "73/73"
+    },
+    "1845314075": {
+     "label": "OverheatSetup",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 72 / const 72 of 73",
+     "default": "00000000",
+     "default_share": "72/73"
+    },
+    "1834353485": {
+     "label": "Use Emissive",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 73 / const 73 of 73",
+     "default": "00000000",
+     "default_share": "73/73"
+    },
+    "1432593728": {
+     "label": "[Debug] ReflectanceFixOn",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 73 / const 73 of 73",
+     "default": "00000000",
+     "default_share": "73/73"
+    },
+    "543450391": {
+     "label": "HighlightSwitch",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "73/73",
+     "kind": "const",
+     "hits": "copy 73 / const 73 of 73",
+     "default": "00000000",
+     "default_share": "73/73"
+    }
+   },
+   "slots": {
+    "Diffuse": "73/73 kept",
+    "Normal": "73/73 kept",
+    "Specular": "0/73 kept",
+    "Mask1": "73/73 kept"
+   },
+   "drop_slots": [
+    2
+   ]
+  },
+  "1825790666323": {
+   "name": "SHD_BAS_DielectricMetallic_v2_TEMP",
+   "n": 43,
+   "order": [
+    "546223812",
+    "900407919",
+    "2729283628",
+    "1103195365",
+    "1526978222",
+    "2291454093",
+    "4243229047",
+    "1316379218",
+    "1746902799",
+    "2873817103",
+    "617648938",
+    "3879952569",
+    "4075230394",
+    "3044787766",
+    "846621084",
+    "2271188409",
+    "1475619926",
+    "699930418",
+    "1635924092",
+    "4264651584",
+    "4032037763",
+    "578686697",
+    "1320168657",
+    "1767723577",
+    "1887958686",
+    "1736522631",
+    "4260016797",
+    "1552766462",
+    "819410648",
+    "2184453445",
+    "417219534",
+    "2328088346"
+   ],
+   "params": {
+    "546223812": {
+     "label": "5-Metal Mask - Roughness Mask",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 26 / const 26 of 43",
+     "default": "00000000",
+     "default_share": "26/43"
+    },
+    "900407919": {
+     "label": "2-RoughnessArrayChannel",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 35 / const 35 of 43",
+     "default": "00000000",
+     "default_share": "35/43"
+    },
+    "2729283628": {
+     "label": "5-Metal Mask - Roughness Invert",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 41 / const 41 of 43",
+     "default": "00000000",
+     "default_share": "41/43"
+    },
+    "1103195365": {
+     "label": "0-Albedo Is VertexColor",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 43 / const 43 of 43",
+     "default": "00000000",
+     "default_share": "43/43"
+    },
+    "1526978222": {
+     "label": "4-Paint Mask Normal",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 41 / const 41 of 43",
+     "default": "0000803f",
+     "default_share": "41/43"
+    },
+    "2873817103": {
+     "label": "1-UV World Space",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 43 / const 43 of 43",
+     "default": "00000000",
+     "default_share": "43/43"
+    },
+    "2291454093": {
+     "label": "4-Paint Mask Invert",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 42 / const 42 of 43",
+     "default": "00000000",
+     "default_share": "42/43"
+    },
+    "4243229047": {
+     "label": "3-Custom Color - Switch",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 40 / const 40 of 43",
+     "default": "00000000",
+     "default_share": "40/43"
+    },
+    "1316379218": {
+     "label": "5-Metal Mask Roughness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 17 / const 17 of 43",
+     "default": "00000000",
+     "default_share": "17/43"
+    },
+    "1746902799": {
+     "label": "4-Paint Mask Roughness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 42 / const 42 of 43",
+     "default": "00000000",
+     "default_share": "42/43"
+    },
+    "617648938": {
+     "label": "4-Paint Mask Amount Clamp",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 40 / const 40 of 43",
+     "default": "0000003f",
+     "default_share": "40/43"
+    },
+    "3879952569": {
+     "label": "4-Paint Mask Amount ",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 40 / const 40 of 43",
+     "default": "00000000",
+     "default_share": "40/43"
+    },
+    "4075230394": {
+     "label": "5-Metal Mask Amount",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 14 / const 14 of 43",
+     "default": "0000003f",
+     "default_share": "14/43"
+    },
+    "3044787766": {
+     "label": "5-Metal Mask Smoothness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 26 / const 26 of 43",
+     "default": "0000003f",
+     "default_share": "26/43"
+    },
+    "846621084": {
+     "label": "2-Roughness Array Roughness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 16 / const 16 of 43",
+     "default": "00000000",
+     "default_share": "16/43"
+    },
+    "2271188409": {
+     "label": "2-Roughness Array Map",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 16 / const 16 of 43",
+     "default": "00002041",
+     "default_share": "16/43"
+    },
+    "1475619926": {
+     "label": "5-Metal Mask - Color Switch",
+     "dtype": 0,
+     "ptype": 458752,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 41 / const 41 of 43",
+     "default": "00000000",
+     "default_share": "41/43"
+    },
+    "699930418": {
+     "label": "5-Metal Mask - Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 29 / const 29 of 43",
+     "default": "a5862a3f8ccd213f2b5d143f0000803f",
+     "default_share": "29/43"
+    },
+    "1635924092": {
+     "label": "6-Heat",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 43 / const 43 of 43",
+     "default": "00000000",
+     "default_share": "43/43"
+    },
+    "4264651584": {
+     "label": "4-Paint Mask - Source",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 42 / const 42 of 43",
+     "default": "00000000",
+     "default_share": "42/43"
+    },
+    "4032037763": {
+     "label": "1-Transform U",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 43 / const 43 of 43",
+     "default": "0000803f",
+     "default_share": "43/43"
+    },
+    "578686697": {
+     "label": "0-Albedo/Reflectance + Metallness Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 41
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "1320168657": {
+     "label": "0-Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 43
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "1767723577": {
+     "label": "1-Transform V",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 43 / const 43 of 43",
+     "default": "0000803f",
+     "default_share": "43/43"
+    },
+    "1887958686": {
+     "label": "7-DustLevelSmoothness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 39 / const 39 of 43",
+     "default": "0000803f",
+     "default_share": "39/43"
+    },
+    "1736522631": {
+     "label": "7-DustLevel",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 40 / const 40 of 43",
+     "default": "0000003f",
+     "default_share": "40/43"
+    },
+    "4260016797": {
+     "label": "7-DustAngle",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 40 / const 40 of 43",
+     "default": "0000003f",
+     "default_share": "40/43"
+    },
+    "1552766462": {
+     "label": "7-DustTexNormal",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 42 / const 42 of 43",
+     "default": "0000803f",
+     "default_share": "42/43"
+    },
+    "819410648": {
+     "label": "2-Base Roughness Range",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 43 / const 43 of 43",
+     "default": "0000803f",
+     "default_share": "43/43"
+    },
+    "2184453445": {
+     "label": "4-MaskExp",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 43 / const 43 of 43",
+     "default": "0000803f",
+     "default_share": "43/43"
+    },
+    "417219534": {
+     "label": "2-Base Roughness Position",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 43 / const 43 of 43",
+     "default": "00000000",
+     "default_share": "43/43"
+    },
+    "2328088346": {
+     "label": "0-Color Source",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "43/43",
+     "kind": "const",
+     "hits": "copy 43 / const 43 of 43",
+     "default": "0000803f0000803f0000803f00000000",
+     "default_share": "43/43"
+    }
+   },
+   "slots": {
+    "Diffuse": "37/37 kept",
+    "Normal": "37/37 kept",
+    "Specular": "0/2 kept",
+    "Mask1": "0/2 kept"
+   },
+   "drop_slots": []
+  },
+  "1456070671961": {
+   "name": "TGT_VHC_Body",
+   "n": 11,
+   "order": [
+    "569602940",
+    "2662887379",
+    "2633945482",
+    "2638003133",
+    "2811274530",
+    "3499595188",
+    "1050277016",
+    "1235141646",
+    "2620242318",
+    "613539563",
+    "908357893",
+    "349595736",
+    "1094558218",
+    "2297979110",
+    "372932334",
+    "55717946",
+    "674379334",
+    "2975698259",
+    "33194295",
+    "2584417579",
+    "2424063871",
+    "378545196",
+    "608802070",
+    "3752792603",
+    "1179572572",
+    "3709014876",
+    "3192884315",
+    "3585601252",
+    "50480273",
+    "3976996285",
+    "1946514439",
+    "2640761138",
+    "3502262853",
+    "103924532",
+    "3866505654",
+    "3103774371",
+    "4255668045",
+    "1309211862",
+    "3370825700",
+    "2054869175",
+    "3314371220",
+    "2785762702",
+    "2047314203",
+    "2018083876",
+    "4006647926",
+    "2805801299",
+    "1590899494",
+    "2356315145",
+    "196604420",
+    "2224978008",
+    "1068283843",
+    "2828244310",
+    "3072757490"
+   ],
+   "params": {
+    "569602940": {
+     "label": "1: CamoAsMask",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 10 / const 10 of 11",
+     "default": "00000000",
+     "default_share": "10/11"
+    },
+    "2662887379": {
+     "label": "1: CamoColor1On",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 8 / const 8 of 11",
+     "default": "00000000",
+     "default_share": "8/11"
+    },
+    "2633945482": {
+     "label": "1: CamoColor2On",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 8 / const 8 of 11",
+     "default": "00000000",
+     "default_share": "8/11"
+    },
+    "2638003133": {
+     "label": "1: CamoColor3On",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 8 / const 8 of 11",
+     "default": "00000000",
+     "default_share": "8/11"
+    },
+    "2811274530": {
+     "label": "1: CamoColor3",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000000000000000000000000000",
+     "default_share": "11/11"
+    },
+    "3499595188": {
+     "label": "1: CamoColor2",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000000000000000000000000000",
+     "default_share": "11/11"
+    },
+    "1050277016": {
+     "label": "1: CamoColor0",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 10 / const 10 of 11",
+     "default": "00000000000000000000000000000000",
+     "default_share": "10/11"
+    },
+    "1235141646": {
+     "label": "1: CamoColor1",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 10 / const 10 of 11",
+     "default": "00000000000000000000000000000000",
+     "default_share": "10/11"
+    },
+    "2620242318": {
+     "label": "2: Color 3 On",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 10 / const 10 of 11",
+     "default": "0000803f",
+     "default_share": "10/11"
+    },
+    "613539563": {
+     "label": "2: Color 2 On",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 10 / const 10 of 11",
+     "default": "0000803f",
+     "default_share": "10/11"
+    },
+    "908357893": {
+     "label": "2: Color 1 On",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 10 / const 10 of 11",
+     "default": "0000803f",
+     "default_share": "10/11"
+    },
+    "349595736": {
+     "label": "6: BurnOuterColor",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "a4a3233f9d9c9c3ef9f8f83d0000803f",
+     "default_share": "11/11"
+    },
+    "1094558218": {
+     "label": "MorphFLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "copy",
+     "copied": "11/11",
+     "equal": "11/11",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "2297979110": {
+     "label": "5: Rain tile",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 10 / const 10 of 11",
+     "default": "00004041",
+     "default_share": "10/11"
+    },
+    "372932334": {
+     "label": "1: CamoMetallic",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "55717946": {
+     "label": "Emissive Hot Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "0000803f0fef4f3fc9c9603e00000000",
+     "default_share": "11/11"
+    },
+    "674379334": {
+     "label": "Emissive Cold Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "287f9b3d000000000000000000000000",
+     "default_share": "11/11"
+    },
+    "2975698259": {
+     "label": "7: RoughnessAsEmissive",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "33194295": {
+     "label": "2: Color 4 On",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "2584417579": {
+     "label": "2: Color 0",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 7 / const 7 of 11",
+     "default": "e6a8063de6a8063de6a8063d00000000",
+     "default_share": "7/11"
+    },
+    "2424063871": {
+     "label": "Heat Scale",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "copy",
+     "copied": "11/11",
+     "equal": "11/11",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "378545196": {
+     "label": "7: EmissiveColor",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "0000803f000000000000000000000000",
+     "default_share": "11/11"
+    },
+    "608802070": {
+     "label": "7: EmissiveIntensity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "0000fa44",
+     "default_share": "11/11"
+    },
+    "3752792603": {
+     "label": "Debug: Default Dust Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "9a99993e9a99993e9a99993e00000000",
+     "default_share": "11/11"
+    },
+    "1179572572": {
+     "label": "Debug: DustUseTerrainColor",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "0000803f",
+     "default_share": "11/11"
+    },
+    "3709014876": {
+     "label": "0: CustomNormal",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "tex",
+     "from": [],
+     "evidence": {},
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "3192884315": {
+     "label": "KillMorph",
+     "dtype": 0,
+     "ptype": 458752,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "3585601252": {
+     "label": "0: DiffuseCustom",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "tex",
+     "from": [],
+     "evidence": {},
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 7,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "50480273": {
+     "label": "2: Color 3",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 9 / const 9 of 11",
+     "default": "ed7eed3ced7eed3ced7eed3c00000000",
+     "default_share": "9/11"
+    },
+    "3976996285": {
+     "label": "2: Color 1",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 7 / const 7 of 11",
+     "default": "ed7eed3ced7eed3ced7eed3c00000000",
+     "default_share": "7/11"
+    },
+    "1946514439": {
+     "label": "2: Color 2",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 9 / const 9 of 11",
+     "default": "ed7eed3ced7eed3ced7eed3c00000000",
+     "default_share": "9/11"
+    },
+    "2640761138": {
+     "label": "2: Color 4",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 9 / const 9 of 11",
+     "default": "0000803f000000000000000000000000",
+     "default_share": "9/11"
+    },
+    "3502262853": {
+     "label": "0: Mask2",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "tex",
+     "from": [
+      "4256353894"
+     ],
+     "evidence": {
+      "Mask2": 9
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 8,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "103924532": {
+     "label": "1: CamoOpacity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "3866505654": {
+     "label": "1: CamoCustom",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "tex",
+     "from": [],
+     "evidence": {},
+     "sel": {
+      "managed": 0,
+      "method": 2,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 4
+     }
+    },
+    "3103774371": {
+     "label": "1: CamoTiling",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "0000803f",
+     "default_share": "11/11"
+    },
+    "4255668045": {
+     "label": "6: BurnSmoothness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "0000403f",
+     "default_share": "11/11"
+    },
+    "1309211862": {
+     "label": "3: CustomRough",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 4 / const 4 of 11",
+     "default": "cdcc4c3f",
+     "default_share": "4/11"
+    },
+    "3370825700": {
+     "label": "5: Age",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 10 / const 10 of 11",
+     "default": "00000000",
+     "default_share": "10/11"
+    },
+    "2054869175": {
+     "label": "6: BurnSetup",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "6666663f",
+     "default_share": "11/11"
+    },
+    "3314371220": {
+     "label": "6: BurnLevel",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "2785762702": {
+     "label": "8: SpecOcclusionInAlbedo",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 2 / const 2 of 11",
+     "default": "00000000",
+     "default_share": "2/11"
+    },
+    "2047314203": {
+     "label": "BurnInitPosition",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "copy",
+     "copied": "11/11",
+     "equal": "11/11",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000000000000000000000000000",
+     "default_share": "11/11"
+    },
+    "2018083876": {
+     "label": "4: baseDust",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 7 / const 7 of 11",
+     "default": "cdcc4c3e",
+     "default_share": "7/11"
+    },
+    "4006647926": {
+     "label": "0: CustomNormal True",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 9 / const 9 of 11",
+     "default": "00000000",
+     "default_share": "9/11"
+    },
+    "2805801299": {
+     "label": "8: SpecOcclusionSmoothness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 10 / const 10 of 11",
+     "default": "0000803f",
+     "default_share": "10/11"
+    },
+    "1590899494": {
+     "label": "8: SpecOcclusion",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 2 / const 2 of 11",
+     "default": "cdcc4c3e",
+     "default_share": "2/11"
+    },
+    "2356315145": {
+     "label": "0: DestructionNormal",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "196604420": {
+     "label": "0: DestructionScratches",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "0000803f",
+     "default_share": "11/11"
+    },
+    "2224978008": {
+     "label": "DebugDust",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 11 / const 11 of 11",
+     "default": "00000000",
+     "default_share": "11/11"
+    },
+    "1068283843": {
+     "label": "5: DustAgeSetup",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 8 / const 8 of 11",
+     "default": "0000003f",
+     "default_share": "8/11"
+    },
+    "2828244310": {
+     "label": "5: ScratchAgeSetup",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 6 / const 6 of 11",
+     "default": "cdcc4c3f",
+     "default_share": "6/11"
+    },
+    "3072757490": {
+     "label": "5: DustAgeSetupKill",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "11/11",
+     "kind": "const",
+     "hits": "copy 8 / const 8 of 11",
+     "default": "0000003f",
+     "default_share": "8/11"
+    }
+   },
+   "slots": {
+    "Mask1": "11/11 kept",
+    "Mask2": "11/11 kept"
+   },
+   "drop_slots": []
+  },
+  "588927843247": {
+   "name": "SHD_W_Laser",
+   "n": 1,
+   "order": [
+    "2411612032",
+    "149363144",
+    "3308998785",
+    "483108903",
+    "3605333491",
+    "2091518723",
+    "2057909931",
+    "656717430",
+    "366041718"
+   ],
+   "params": {
+    "2411612032": {
+     "label": "Diffuse Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "2411612032"
+     ],
+     "evidence": {
+      "Diffuse Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "149363144": {
+     "label": "Laser Power",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "0000fa43",
+     "default_share": "1/1"
+    },
+    "3308998785": {
+     "label": "Laser Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "cdcccc3e000000000000000000000000",
+     "default_share": "1/1"
+    },
+    "483108903": {
+     "label": "Heat BOOST",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "00000040",
+     "default_share": "1/1"
+    },
+    "3605333491": {
+     "label": "NV BOOST Alpha",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "00002041",
+     "default_share": "1/1"
+    },
+    "2091518723": {
+     "label": "NV BOOST ",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "00004843",
+     "default_share": "1/1"
+    },
+    "2057909931": {
+     "label": "UVT Switch",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "656717430": {
+     "label": "Use WorldPos to Offset UV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "366041718": {
+     "label": "UVT",
+     "dtype": 3308134693,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "020000f80000000025212ec50000803f0000003f000000000000000000000000cdcccc3d00000000000000000100",
+     "default_share": "1/1"
+    }
+   },
+   "slots": {},
+   "drop_slots": []
+  },
+  "79468429632": {
+   "name": "VEH_Lights_Glass",
+   "n": 1,
+   "order": [
+    "4263246722",
+    "2110654385",
+    "3713420868",
+    "4002242686",
+    "1094558218",
+    "1177815766",
+    "483124341",
+    "194731330",
+    "2792840857",
+    "1866488654",
+    "2409573501",
+    "613424346",
+    "2935346486",
+    "2775707076",
+    "2225127609",
+    "398424777",
+    "2590521670"
+   ],
+   "params": {
+    "4263246722": {
+     "label": "MorphFDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2110654385": {
+     "label": "8: Dirt Tile",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "3713420868": {
+     "label": "8: Dirt Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "9998183ec1c0c03db1b0303d00000000",
+     "default_share": "1/1"
+    },
+    "4002242686": {
+     "label": "2: Specular Gloss",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "cbcccc3d",
+     "default_share": "1/1"
+    },
+    "1094558218": {
+     "label": "MorphFLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1177815766": {
+     "label": "MorphBLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "483124341": {
+     "label": "0: Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "483124341"
+     ],
+     "evidence": {
+      "0: Normal Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "194731330": {
+     "label": "MorphBDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2792840857": {
+     "label": "8: Dirt Value",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1866488654": {
+     "label": "MorphBPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2409573501": {
+     "label": "MorphLPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "613424346": {
+     "label": "Morph1DivL",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2935346486": {
+     "label": "Morph1DivW",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2775707076": {
+     "label": "MorphLFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "2225127609": {
+     "label": "MorphWFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "398424777": {
+     "label": "Morph1DivLFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    },
+    "2590521670": {
+     "label": "Morph1DivWFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    }
+   },
+   "slots": {
+    "Diffuse": "1/1 kept",
+    "Normal": "1/1 kept"
+   },
+   "drop_slots": []
+  },
+  "89393795160": {
+   "name": "VEH_Interior",
+   "n": 1,
+   "order": [
+    "1958286481",
+    "3244113392",
+    "3408316537",
+    "2409573501",
+    "1866488654",
+    "613424346",
+    "2935346486",
+    "2775707076",
+    "2225127609",
+    "398424777",
+    "2590521670",
+    "4263246722",
+    "194731330",
+    "1094558218",
+    "1177815766"
+   ],
+   "params": {
+    "1958286481": {
+     "label": "0: Layer1 Diffuse + Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "3244113392": {
+     "label": "1: Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "3244113392"
+     ],
+     "evidence": {
+      "1: Normal Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "3408316537": {
+     "label": "InteriorLight",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "00000040",
+     "default_share": "1/1"
+    },
+    "2409573501": {
+     "label": "MorphLPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1866488654": {
+     "label": "MorphBPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "613424346": {
+     "label": "Morph1DivL",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2935346486": {
+     "label": "Morph1DivW",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2775707076": {
+     "label": "MorphLFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "2225127609": {
+     "label": "MorphWFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "398424777": {
+     "label": "Morph1DivLFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    },
+    "2590521670": {
+     "label": "Morph1DivWFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    },
+    "4263246722": {
+     "label": "MorphFDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "194731330": {
+     "label": "MorphBDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1094558218": {
+     "label": "MorphFLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1177815766": {
+     "label": "MorphBLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    }
+   },
+   "slots": {
+    "Diffuse": "1/1 kept",
+    "Normal": "1/1 kept"
+   },
+   "drop_slots": []
+  },
+  "255734953067": {
+   "name": "VEH_Lights_Chrome",
+   "n": 1,
+   "order": [
+    "2470490560",
+    "91062833",
+    "3244113392",
+    "169762290",
+    "3819172594",
+    "2260753237",
+    "2705416426",
+    "3952182162",
+    "605645137",
+    "2384892675",
+    "148159129",
+    "3345078657",
+    "3869483084",
+    "3654932673",
+    "459526247",
+    "606033216",
+    "1888731574",
+    "3514759262",
+    "388514039",
+    "1866488654",
+    "2409573501",
+    "613424346",
+    "2935346486",
+    "2775707076",
+    "2225127609",
+    "398424777",
+    "2590521670",
+    "4263246722",
+    "194731330",
+    "1094558218",
+    "1177815766"
+   ],
+   "params": {
+    "2470490560": {
+     "label": "OrangeSpinny",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "91062833": {
+     "label": "1: Diffuse Mask Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "91062833"
+     ],
+     "evidence": {
+      "1: Diffuse Mask Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "3244113392": {
+     "label": "1: Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "3244113392"
+     ],
+     "evidence": {
+      "1: Normal Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "169762290": {
+     "label": "FrontBack",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3819172594": {
+     "label": "Port",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2260753237": {
+     "label": "1: Diffuse Mult",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "9a99993e",
+     "default_share": "1/1"
+    },
+    "2705416426": {
+     "label": "Reverselight",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3952182162": {
+     "label": "Indicator_BrakeRight",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "605645137": {
+     "label": "Indicator_BrakeLeft",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2384892675": {
+     "label": "FogLight",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "148159129": {
+     "label": "Headlight",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3345078657": {
+     "label": "Brakelight",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3869483084": {
+     "label": "SidelightBack",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3654932673": {
+     "label": "IndicatorLeft",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "459526247": {
+     "label": "IndicatorRight",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "606033216": {
+     "label": "HeadlightXenon",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1888731574": {
+     "label": "Starboard",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3514759262": {
+     "label": "SidelightBrake",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "388514039": {
+     "label": "HeadlightLED",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1866488654": {
+     "label": "MorphBPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2409573501": {
+     "label": "MorphLPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "613424346": {
+     "label": "Morph1DivL",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2935346486": {
+     "label": "Morph1DivW",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2775707076": {
+     "label": "MorphLFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "2225127609": {
+     "label": "MorphWFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "398424777": {
+     "label": "Morph1DivLFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    },
+    "2590521670": {
+     "label": "Morph1DivWFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    },
+    "4263246722": {
+     "label": "MorphFDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "194731330": {
+     "label": "MorphBDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1094558218": {
+     "label": "MorphFLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1177815766": {
+     "label": "MorphBLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    }
+   },
+   "slots": {
+    "Diffuse": "1/1 kept",
+    "Normal": "1/1 kept"
+   },
+   "drop_slots": []
+  },
+  "523296047436": {
+   "name": "VEH_Tyres_4Wheels",
+   "n": 2,
+   "order": [
+    "1492606915",
+    "3331574368",
+    "3448383584",
+    "3153901180",
+    "2979330806",
+    "681421644",
+    "3990534646",
+    "2598209888",
+    "2023854548",
+    "2524516885",
+    "64280794",
+    "2898593390",
+    "619285845",
+    "3129809142",
+    "861092996",
+    "1147695199",
+    "1941843029",
+    "152311526",
+    "2417837916",
+    "3877271498",
+    "2038358633",
+    "1417902554"
+   ],
+   "params": {
+    "1492606915": {
+     "label": "TyreInfo4",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000003f0000803f0000000000000000",
+     "default_share": "2/2"
+    },
+    "3331574368": {
+     "label": "TyreInfo3",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000003f0000803f0000000000000000",
+     "default_share": "2/2"
+    },
+    "3448383584": {
+     "label": "WheelOrigin2",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "3153901180": {
+     "label": "2: Specular Reflectance",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "cdcc4c3d",
+     "default_share": "2/2"
+    },
+    "2979330806": {
+     "label": "TyreInfo2",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000003f0000803f0000000000000000",
+     "default_share": "2/2"
+    },
+    "681421644": {
+     "label": "TyreInfo1",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000003f0000803f0000000000000000",
+     "default_share": "2/2"
+    },
+    "3990534646": {
+     "label": "WheelXAxis3",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000803f000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "2598209888": {
+     "label": "WheelXAxis2",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000803f000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 2
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "2524516885": {
+     "label": "Specular Gloss",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "9a99193f",
+     "default_share": "2/2"
+    },
+    "64280794": {
+     "label": "WheelXAxis1",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000803f000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "2898593390": {
+     "label": "Mud_Uv_Transform",
+     "dtype": 3308134693,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 0 / const 2 of 2",
+     "default": "020000f80000000025212ec500004040000040400000000000000000000000000000000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "619285845": {
+     "label": "WheelOrigin4",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "3129809142": {
+     "label": "WheelOrigin3",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "861092996": {
+     "label": "4: UV Transform",
+     "dtype": 3308134693,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 0 / const 2 of 2",
+     "default": "030000f80000000025212ec50000803f0000803f0000000000000000000000000000000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "1147695199": {
+     "label": "TireColor",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "b6e3753db6e3753db6e3753d0000803f",
+     "default_share": "2/2"
+    },
+    "1941843029": {
+     "label": "WheelXAxis4",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000803f000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "152311526": {
+     "label": "WheelNormal1",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000000000000000803f00000000",
+     "default_share": "2/2"
+    },
+    "2417837916": {
+     "label": "WheelNormal2",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000000000000000803f00000000",
+     "default_share": "2/2"
+    },
+    "3877271498": {
+     "label": "WheelNormal3",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000000000000000803f00000000",
+     "default_share": "2/2"
+    },
+    "2038358633": {
+     "label": "WheelNormal4",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000000000000000803f00000000",
+     "default_share": "2/2"
+    },
+    "1417902554": {
+     "label": "WheelOrigin1",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000000000000000000000000000",
+     "default_share": "2/2"
+    }
+   },
+   "slots": {
+    "Normal": "1/1 kept",
+    "Diffuse1": "0/1 kept"
+   },
+   "drop_slots": []
+  },
+  "1920397121833": {
+   "name": "SHD_NAT_Veg_Leaves_Mask_NoNearClip",
+   "n": 1,
+   "order": [
+    "3706476778",
+    "2023854548",
+    "4061125545",
+    "1087304445",
+    "1577450447",
+    "1958286481"
+   ],
+   "params": {
+    "3706476778": {
+     "label": "2: Specular Occlusion 3",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00007f43",
+     "default_share": "1/1"
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "4061125545": {
+     "label": "0: Layer1 Mask",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [],
+     "evidence": {},
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 7,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "1087304445": {
+     "label": "TransIndex",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1577450447": {
+     "label": "1: AO Mult",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1958286481": {
+     "label": "0: Layer1 Diffuse + Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    }
+   },
+   "slots": {
+    "Diffuse": "1/1 kept",
+    "Normal": "1/1 kept",
+    "Mask1": "1/1 kept"
+   },
+   "drop_slots": []
+  },
+  "1498533388670": {
+   "name": "SHD_NAT_Veg_Leaves",
+   "n": 1,
+   "order": [
+    "1958286481",
+    "2023854548",
+    "1087304445",
+    "1577450447"
+   ],
+   "params": {
+    "1958286481": {
+     "label": "0: Layer1 Diffuse + Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "1087304445": {
+     "label": "TransIndex",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 0 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1577450447": {
+     "label": "1: AO Mult",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    }
+   },
+   "slots": {
+    "Diffuse": "1/1 kept",
+    "Normal": "1/1 kept"
+   },
+   "drop_slots": []
+  },
+  "1456021154800": {
+   "name": "SHD_BAS_Dielectric_Cloth",
+   "n": 1,
+   "order": [
+    "2620804089",
+    "2854014289",
+    "1408977784",
+    "2424974589",
+    "1214791580",
+    "915839828",
+    "1936829224",
+    "3103307669",
+    "3505789622",
+    "761548011",
+    "1905148402",
+    "1545451215",
+    "2376530442",
+    "2149436067",
+    "1131954048",
+    "2666014556",
+    "2023854548",
+    "2997068297",
+    "725730312",
+    "1509075294",
+    "1084272076",
+    "730573373",
+    "1067985282",
+    "2559868002",
+    "2895441080"
+   ],
+   "params": {
+    "2620804089": {
+     "label": "8: Vertex Noise Intensity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2854014289": {
+     "label": "8: Vertex Noise Speed",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "1408977784": {
+     "label": "8: Vertex Noise Frequency",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000003f",
+     "default_share": "1/1"
+    },
+    "2424974589": {
+     "label": "8: Wind influence",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1214791580": {
+     "label": "6: Translucensy",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "915839828": {
+     "label": "7: Alpha",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1936829224": {
+     "label": "1: color source",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f0000803f0000803f00000000",
+     "default_share": "1/1"
+    },
+    "3103307669": {
+     "label": "2: Base Layer Roughness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000003f",
+     "default_share": "1/1"
+    },
+    "3505789622": {
+     "label": "2: Detail Roughness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000003f",
+     "default_share": "1/1"
+    },
+    "761548011": {
+     "label": "1: Base layer Albedo",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1905148402": {
+     "label": "5: Base Normal Intensity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "1545451215": {
+     "label": "1: Vtxcolor CustomData Color",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2376530442": {
+     "label": "bias_red_albedo",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2149436067": {
+     "label": "5: Detail Normal Intensity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "cdcc4c3e",
+     "default_share": "1/1"
+    },
+    "1131954048": {
+     "label": "5: Fresnel Offset",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2666014556": {
+     "label": "0: Layer1 Albedo",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "2829386957"
+     ],
+     "evidence": {
+      "0: Layer1_Diffuse+Alpha Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "360396769"
+     ],
+     "evidence": {
+      "0: Layer1_Normal Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "2997068297": {
+     "label": "4: Base Layer U Transform",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "725730312": {
+     "label": "4: Base Layer V Transform",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "1509075294": {
+     "label": "8: Heat",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1084272076": {
+     "label": "2: Roughness Offset",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "730573373": {
+     "label": "5: Detail Scale",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000a040",
+     "default_share": "1/1"
+    },
+    "1067985282": {
+     "label": "5: Detail ID",
+     "dtype": 0,
+     "ptype": 458752,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "03000000",
+     "default_share": "1/1"
+    },
+    "2559868002": {
+     "label": "5: FresnelMultiplier",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000040",
+     "default_share": "1/1"
+    },
+    "2895441080": {
+     "label": "CamoTerrainBlend",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    }
+   },
+   "slots": {
+    "Diffuse": "1/1 kept",
+    "Normal": "1/1 kept"
+   },
+   "drop_slots": []
+  },
+  "1755167169276": {
+   "name": "SHD_BreakableFence",
+   "n": 2,
+   "order": [
+    "1179640656",
+    "2023854548",
+    "942000286",
+    "3894305459",
+    "3836939195",
+    "321423247",
+    "2328551822",
+    "2241311022",
+    "3649223210",
+    "3567134389",
+    "2294141469",
+    "4076494035",
+    "1767837884",
+    "2290767532",
+    "293799702",
+    "1892642461",
+    "3710920572",
+    "125196193"
+   ],
+   "params": {
+    "1179640656": {
+     "label": "1: Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000803f0000803f0000803f0000803f",
+     "default_share": "2/2"
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 2
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "942000286": {
+     "label": "5: Heat",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000",
+     "default_share": "2/2"
+    },
+    "2328551822": {
+     "label": "4: V Transform",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "1/2",
+     "hits": "copy 1 / const 1 of 2",
+     "default": "00000041",
+     "default_share": "1/2"
+    },
+    "3894305459": {
+     "label": "0: Layer1 Albedo Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 2
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "3836939195": {
+     "label": "1: Vertex Color",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000",
+     "default_share": "2/2"
+    },
+    "321423247": {
+     "label": "4: U Transform",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "1/2",
+     "hits": "copy 1 / const 1 of 2",
+     "default": "00000041",
+     "default_share": "1/2"
+    },
+    "2241311022": {
+     "label": "2: Specular Occlusion",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 1 of 2",
+     "default": "00002041",
+     "default_share": "1/2"
+    },
+    "3649223210": {
+     "label": "2: Specular Roughness Offset",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000",
+     "default_share": "2/2"
+    },
+    "3567134389": {
+     "label": "CutTexture",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "tex",
+     "from": [],
+     "evidence": {},
+     "sel": {
+      "managed": 0,
+      "method": 2,
+      "map_type": 11,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 2
+     }
+    },
+    "2294141469": {
+     "label": "Cut",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000",
+     "default_share": "2/2"
+    },
+    "4076494035": {
+     "label": "YCutPosition",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 2",
+     "default": "1d5aa4be",
+     "default_share": "1/2"
+    },
+    "1767837884": {
+     "label": "XCutPosition",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 2",
+     "default": "0ad7233c",
+     "default_share": "1/2"
+    },
+    "2290767532": {
+     "label": "CutColor2",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "2b5d143fcb8c173e67ef9a3c00000000",
+     "default_share": "2/2"
+    },
+    "293799702": {
+     "label": "CutColor1",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "74b93c3f41e12f3f9816203f00000000",
+     "default_share": "2/2"
+    },
+    "1892642461": {
+     "label": "CutEmissivePower",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 2",
+     "default": "0000c843",
+     "default_share": "1/2"
+    },
+    "3710920572": {
+     "label": "CutColorCold",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "c029643fc029643fc029643f00000000",
+     "default_share": "2/2"
+    },
+    "125196193": {
+     "label": "CutScale",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 2",
+     "default": "9a990940",
+     "default_share": "1/2"
+    }
+   },
+   "slots": {
+    "Diffuse": "2/2 kept",
+    "Normal": "2/2 kept",
+    "Specular": "0/1 kept"
+   },
+   "drop_slots": []
+  },
+  "519882200799": {
+   "name": "SHD_IA_Interaction",
+   "n": 2,
+   "order": [
+    "1662049744",
+    "1872120611",
+    "1927369653",
+    "2905510935",
+    "249511159",
+    "3636881512",
+    "47940733",
+    "2241311022",
+    "820610437",
+    "2806696311",
+    "2829386957",
+    "1720231156",
+    "360396769"
+   ],
+   "params": {
+    "1662049744": {
+     "label": "5: Line Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 1 of 2",
+     "default": "fffefe3efffefe3efffefe3e00000000",
+     "default_share": "1/2"
+    },
+    "1872120611": {
+     "label": "5: Line Timer",
+     "dtype": 3974486380,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "020000f8000000006cd9e5ec000000000000003f000000000000803f0000000000000000",
+     "default_share": "2/2"
+    },
+    "3636881512": {
+     "label": "1: Color Mask",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "00000000000000000000000000000000",
+     "default_share": "2/2"
+    },
+    "1927369653": {
+     "label": "3: Normal Intensity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000803f",
+     "default_share": "2/2"
+    },
+    "2905510935": {
+     "label": "2: Specular Gloss Mask",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000803f",
+     "default_share": "2/2"
+    },
+    "249511159": {
+     "label": "2: Specular Gloss Intensity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000803f",
+     "default_share": "2/2"
+    },
+    "47940733": {
+     "label": "0: Layer1_Specular Mask",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "tex",
+     "from": [
+      "47940733"
+     ],
+     "evidence": {
+      "0: Layer1_Specular Mask": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 2,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "2806696311": {
+     "label": "0: Layer1_Mask1 Color",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "tex",
+     "from": [
+      "2806696311"
+     ],
+     "evidence": {},
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 7,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "2241311022": {
+     "label": "2: Specular Occlusion",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000c842",
+     "default_share": "2/2"
+    },
+    "820610437": {
+     "label": "5: Line Switch",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 2 of 2",
+     "default": "0000803f",
+     "default_share": "2/2"
+    },
+    "2829386957": {
+     "label": "0: Layer1_Diffuse+Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "tex",
+     "from": [
+      "2829386957"
+     ],
+     "evidence": {
+      "0: Layer1_Diffuse+Alpha Map": 2
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "1720231156": {
+     "label": "2: Specular Gloss To Ref",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "copy",
+     "copied": "2/2",
+     "equal": "2/2",
+     "hits": "copy 2 / const 1 of 2",
+     "default": "00000000",
+     "default_share": "1/2"
+    },
+    "360396769": {
+     "label": "0: Layer1_Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "2/2",
+     "kind": "tex",
+     "from": [
+      "360396769"
+     ],
+     "evidence": {
+      "0: Layer1_Normal Map": 2
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    }
+   },
+   "slots": {
+    "Diffuse": "2/2 kept",
+    "Normal": "2/2 kept",
+    "Specular": "1/1 kept"
+   },
+   "drop_slots": []
+  },
+  "94282161012": {
+   "name": "VEH_WindShield",
+   "n": 1,
+   "order": [
+    "1958286481",
+    "3972063391",
+    "3776610938",
+    "287381102",
+    "2781775279",
+    "567897417",
+    "340791104",
+    "4063196603",
+    "1866488654",
+    "2409573501",
+    "613424346",
+    "2935346486",
+    "2775707076",
+    "2225127609",
+    "398424777",
+    "2590521670",
+    "4263246722",
+    "194731330",
+    "1094558218",
+    "1177815766",
+    "2325148397",
+    "2017117253",
+    "3336376753"
+   ],
+   "params": {
+    "1958286481": {
+     "label": "0: Layer1 Diffuse + Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "3972063391": {
+     "label": "WindShield Static",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3776610938": {
+     "label": "WindShield Death",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "287381102": {
+     "label": "Alpha",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000003f",
+     "default_share": "1/1"
+    },
+    "2781775279": {
+     "label": "WindShield State",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "567897417": {
+     "label": "Dirt Amount",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "cdcccc3d",
+     "default_share": "1/1"
+    },
+    "340791104": {
+     "label": "Dirt Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "295c8f3d8fc2753dcdcc4c3d00000000",
+     "default_share": "1/1"
+    },
+    "4063196603": {
+     "label": "WindShield Life",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "1866488654": {
+     "label": "MorphBPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2409573501": {
+     "label": "MorphLPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "613424346": {
+     "label": "Morph1DivL",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2935346486": {
+     "label": "Morph1DivW",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2775707076": {
+     "label": "MorphLFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "2225127609": {
+     "label": "MorphWFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "398424777": {
+     "label": "Morph1DivLFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    },
+    "2590521670": {
+     "label": "Morph1DivWFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    },
+    "4263246722": {
+     "label": "MorphFDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "194731330": {
+     "label": "MorphBDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1094558218": {
+     "label": "MorphFLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1177815766": {
+     "label": "MorphBLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2325148397": {
+     "label": "GlassSmashedState",
+     "dtype": 0,
+     "ptype": 458752,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2017117253": {
+     "label": "Windshield Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f0000803f0000803f0000803f",
+     "default_share": "1/1"
+    },
+    "3336376753": {
+     "label": "Windshield Reflectance",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "49f9b13d49f9b13d49f9b13d00000000",
+     "default_share": "1/1"
+    }
+   },
+   "slots": {},
+   "drop_slots": []
+  },
+  "553268633063": {
+   "name": "VEH_Burnt",
+   "n": 1,
+   "order": [
+    "2412672540",
+    "1629286381",
+    "1866488654",
+    "613424346",
+    "2935346486",
+    "2775707076",
+    "2225127609",
+    "398424777",
+    "2590521670",
+    "4263246722",
+    "194731330",
+    "1094558218",
+    "1177815766",
+    "2409573501"
+   ],
+   "params": {
+    "2412672540": {
+     "label": "Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "2412672540"
+     ],
+     "evidence": {
+      "Normal Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "1629286381": {
+     "label": "Diffuse",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "1629286381"
+     ],
+     "evidence": {
+      "Diffuse": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "1866488654": {
+     "label": "MorphBPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "613424346": {
+     "label": "Morph1DivL",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2935346486": {
+     "label": "Morph1DivW",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2775707076": {
+     "label": "MorphLFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "2225127609": {
+     "label": "MorphWFadePos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "c3f5a83e",
+     "default_share": "1/1"
+    },
+    "398424777": {
+     "label": "Morph1DivLFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    },
+    "2590521670": {
+     "label": "Morph1DivWFadeLength",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00004040",
+     "default_share": "1/1"
+    },
+    "4263246722": {
+     "label": "MorphFDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "194731330": {
+     "label": "MorphBDiff",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1094558218": {
+     "label": "MorphFLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1177815766": {
+     "label": "MorphBLV",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "2409573501": {
+     "label": "MorphLPos",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "copy",
+     "copied": "1/1",
+     "equal": "1/1",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    }
+   },
+   "slots": {
+    "Diffuse": "1/1 kept",
+    "Normal": "1/1 kept"
+   },
+   "drop_slots": []
+  },
+  "34179593778": {
+   "name": "SHD_Basic_Metallic",
+   "n": 5,
+   "order": [
+    "1958286481",
+    "3189801934",
+    "2023854548",
+    "942000286",
+    "2905510935",
+    "249511159",
+    "321423247",
+    "2328551822",
+    "2241311022"
+   ],
+   "params": {
+    "2241311022": {
+     "label": "2: Specular Occlusion",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "5/5",
+     "kind": "copy",
+     "copied": "5/5",
+     "equal": "5/5",
+     "hits": "copy 5 / const 5 of 5",
+     "default": "0000c842",
+     "default_share": "5/5"
+    },
+    "2328551822": {
+     "label": "4: V Transform",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "5/5",
+     "kind": "copy",
+     "copied": "5/5",
+     "equal": "5/5",
+     "hits": "copy 5 / const 5 of 5",
+     "default": "0000803f",
+     "default_share": "5/5"
+    },
+    "321423247": {
+     "label": "4: U Transform",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "5/5",
+     "kind": "copy",
+     "copied": "5/5",
+     "equal": "5/5",
+     "hits": "copy 5 / const 5 of 5",
+     "default": "0000803f",
+     "default_share": "5/5"
+    },
+    "249511159": {
+     "label": "2: Specular Gloss Intensity",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "5/5",
+     "kind": "copy",
+     "copied": "5/5",
+     "equal": "5/5",
+     "hits": "copy 5 / const 5 of 5",
+     "default": "0000803f",
+     "default_share": "5/5"
+    },
+    "2905510935": {
+     "label": "2: Specular Gloss Mask",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "5/5",
+     "kind": "copy",
+     "copied": "5/5",
+     "equal": "5/5",
+     "hits": "copy 5 / const 4 of 5",
+     "default": "9a99193f",
+     "default_share": "4/5"
+    },
+    "2023854548": {
+     "label": "0: Layer1 Normal Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "5/5",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 5
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "1958286481": {
+     "label": "0: Layer1 Diffuse + Alpha Map",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "5/5",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 5
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "942000286": {
+     "label": "5: Heat",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "5/5",
+     "kind": "copy",
+     "copied": "5/5",
+     "equal": "5/5",
+     "hits": "copy 5 / const 5 of 5",
+     "default": "00000000",
+     "default_share": "5/5"
+    },
+    "3189801934": {
+     "label": "0: Layer1 Specular Mask",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "5/5",
+     "kind": "tex",
+     "from": [
+      "3189801934"
+     ],
+     "evidence": {
+      "0: Layer1 Specular Mask": 4
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 2,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    }
+   },
+   "slots": {
+    "Diffuse": "5/5 kept",
+    "Normal": "5/5 kept",
+    "Specular": "4/5 kept"
+   },
+   "drop_slots": []
+  },
+  "1700322008907": {
+   "name": "GFX_SHD_Opaque",
+   "n": 1,
+   "order": [
+    "2582193765",
+    "1337741305",
+    "108867106",
+    "799441376",
+    "617650380",
+    "1668469344",
+    "879305229",
+    "3316230418",
+    "3258150968",
+    "2056197806",
+    "685220812",
+    "3270503017",
+    "1137848270",
+    "431632710",
+    "3452535695",
+    "655458796"
+   ],
+   "params": {
+    "2582193765": {
+     "label": "Use vertex anim",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1337741305": {
+     "label": "FX Texture Normal",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "2023854548"
+     ],
+     "evidence": {
+      "0: Layer1 Normal Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 1,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "108867106": {
+     "label": "Albedo Color",
+     "dtype": 0,
+     "ptype": 851968,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f0000803f0000803f00000000",
+     "default_share": "1/1"
+    },
+    "799441376": {
+     "label": "Specular Power",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "ec51b83d",
+     "default_share": "1/1"
+    },
+    "617650380": {
+     "label": "Specular Glossiness",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "ae47613e",
+     "default_share": "1/1"
+    },
+    "1668469344": {
+     "label": "Albedo Texture Power",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "879305229": {
+     "label": "Blend Anim",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3316230418": {
+     "label": "Normal Power",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000a03f",
+     "default_share": "1/1"
+    },
+    "3258150968": {
+     "label": "Alpha Power",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "0000803f",
+     "default_share": "1/1"
+    },
+    "2056197806": {
+     "label": "Emissive Power",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "685220812": {
+     "label": "Translucency Power",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3270503017": {
+     "label": "Translucency index",
+     "dtype": 0,
+     "ptype": 458752,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "1137848270": {
+     "label": "Use Texture As Greyscale",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "431632710": {
+     "label": "Use Terrain Vista Albedo",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    },
+    "3452535695": {
+     "label": "FX Texture Diffuse",
+     "dtype": 2097694221,
+     "ptype": 1245184,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "tex",
+     "from": [
+      "1958286481"
+     ],
+     "evidence": {
+      "0: Layer1 Diffuse + Alpha Map": 1
+     },
+     "sel": {
+      "managed": 0,
+      "method": 0,
+      "map_type": 0,
+      "frame": 0,
+      "tail": "0000000000000000",
+      "tm_global": 1
+     }
+    },
+    "655458796": {
+     "label": "Heat level",
+     "dtype": 0,
+     "ptype": 655360,
+     "unk": "00000000",
+     "present": "1/1",
+     "kind": "const",
+     "hits": "copy 1 / const 1 of 1",
+     "default": "00000000",
+     "default_share": "1/1"
+    }
+   },
+   "slots": {
+    "Diffuse": "1/1 kept",
+    "Normal": "1/1 kept"
+   },
+   "drop_slots": []
+  }
+ },
+ "labels": {
+  "33194295": "2: Color 4 On",
+  "47940733": "0: Layer1_Specular Mask",
+  "50480273": "2: Color 3",
+  "55717946": "Emissive Hot Color",
+  "64280794": "WheelXAxis1",
+  "91062833": "1: Diffuse Mask Map",
+  "103924532": "1: CamoOpacity",
+  "107732050": "EnvInfluence",
+  "108867106": "Albedo Color",
+  "118255444": "2: Gloss is Specular Invert",
+  "122981862": "5: Emissive Use Alpha Mask",
+  "125196193": "CutScale",
+  "128597148": "ZTiling",
+  "134945814": "LeaksColor",
+  "148159129": "Headlight",
+  "149363144": "Laser Power",
+  "151591526": "z_debugResetXform",
+  "152311526": "WheelNormal1",
+  "169762290": "FrontBack",
+  "180284255": "5: Detail Scale V",
+  "182331561": "5: Detail Bump distance",
+  "193544207": "Specular",
+  "194731330": "MorphBDiff",
+  "196604420": "0: DestructionScratches",
+  "249511159": "2: Specular Gloss Intensity",
+  "281780389": "Specular Occlusion",
+  "287381102": "Alpha",
+  "293799702": "CutColor1",
+  "313496757": "0: Layer1 Height Map",
+  "318399194": "9:BloodReflectance_Intensity",
+  "321423247": "4: U Transform",
+  "326223381": "3:Layer0_Diffuse",
+  "337774818": "CamoTransform",
+  "340791104": "Dirt Color",
+  "348563563": "7:Layer1DetailNormal_Metal",
+  "349595736": "6: BurnOuterColor",
+  "360396769": "0: Layer1_Normal Map",
+  "364397641": "1: Albedo Color",
+  "366041718": "UVT",
+  "372932334": "1: CamoMetallic",
+  "378545196": "7: EmissiveColor",
+  "388514039": "HeadlightLED",
+  "389114397": "0: Layer1 Detail Map",
+  "396388603": "2: Alpha Power",
+  "398424777": "Morph1DivLFadeLength",
+  "401257956": "1: Albedo Color VtX",
+  "417219534": "2-Base Roughness Position",
+  "431632710": "Use Terrain Vista Albedo",
+  "459526247": "IndicatorRight",
+  "472969391": "Laser Oscillator",
+  "483108903": "Heat BOOST",
+  "483124341": "0: Normal Map",
+  "486376481": "4: LayerDetails U Transform",
+  "502180525": "6: VertexNoise_Amplitude",
+  "539661093": "4: Layer1 V Transform",
+  "543450391": "HighlightSwitch",
+  "546223812": "5-Metal Mask - Roughness Mask",
+  "565486944": "PaintAgedGloss",
+  "567897417": "Dirt Amount",
+  "569602940": "1: CamoAsMask",
+  "578435568": "5: Detail Albedo Intensity",
+  "578686697": "0-Albedo/Reflectance + Metallness Map",
+  "585701518": "5: Emissive Power",
+  "605645137": "Indicator_BrakeLeft",
+  "606033216": "HeadlightXenon",
+  "608802070": "7: EmissiveIntensity",
+  "613424346": "Morph1DivL",
+  "613539563": "2: Color 2 On",
+  "617648938": "4-Paint Mask Amount Clamp",
+  "617650380": "Specular Glossiness",
+  "619285845": "WheelOrigin4",
+  "655458796": "Heat level",
+  "656717430": "Use WorldPos to Offset UV",
+  "674379334": "Emissive Cold Color",
+  "681421644": "TyreInfo1",
+  "685220812": "Translucency Power",
+  "699930418": "5-Metal Mask - Color",
+  "703680165": "on_off",
+  "725730312": "4: Base Layer V Transform",
+  "730573373": "5: Detail Scale",
+  "761548011": "1: Base layer Albedo",
+  "761719195": "1:MaskG",
+  "766200936": "7:DetailMetal_UV",
+  "799441376": "Specular Power",
+  "819410648": "2-Base Roughness Range",
+  "820610437": "5: Line Switch",
+  "830600039": "0: Layer2_Diffuse+Alpha Map UV2",
+  "846621084": "2-Roughness Array Roughness",
+  "861092996": "4: UV Transform",
+  "879305229": "Blend Anim",
+  "891898029": "9:MetalReflectance_intensity",
+  "900407919": "2-RoughnessArrayChannel",
+  "908357893": "2: Color 1 On",
+  "910304769": "YTiling",
+  "915839828": "7: Alpha",
+  "942000286": "5: Heat",
+  "1030505312": "9:SkinGlossiness",
+  "1050277016": "1: CamoColor0",
+  "1067985282": "5: Detail ID",
+  "1068283843": "5: DustAgeSetup",
+  "1084272076": "2: Roughness Offset",
+  "1086000496": "1:MaskR",
+  "1087304445": "TransIndex",
+  "1094558218": "MorphFLV",
+  "1103195365": "0-Albedo Is VertexColor",
+  "1131954048": "5: Fresnel Offset",
+  "1137848270": "Use Texture As Greyscale",
+  "1147695199": "TireColor",
+  "1177815766": "MorphBLV",
+  "1179572572": "Debug: DustUseTerrainColor",
+  "1179640656": "1: Color",
+  "1181862716": "RustDiffuse",
+  "1214791580": "6: Translucensy",
+  "1235141646": "1: CamoColor1",
+  "1281822740": "3:Layer0_Normal",
+  "1287289048": "8:DetailNormal_Int_Leather",
+  "1309211862": "3: CustomRough",
+  "1316379218": "5-Metal Mask Roughness",
+  "1320168657": "0-Normal Map",
+  "1337741305": "FX Texture Normal",
+  "1346144943": "6: VertexNoise_Frequency",
+  "1384929434": "2: Specular Occlusion intensity",
+  "1389767920": "9:BloodReflectance_Saturation",
+  "1408977784": "8: Vertex Noise Frequency",
+  "1417902554": "WheelOrigin1",
+  "1432593728": "[Debug] ReflectanceFixOn",
+  "1439447567": "[Paint] SpecReflectance",
+  "1475619926": "5-Metal Mask - Color Switch",
+  "1492606915": "TyreInfo4",
+  "1509075294": "8: Heat",
+  "1526978222": "4-Paint Mask Normal",
+  "1545451215": "1: Vtxcolor CustomData Color",
+  "1552766462": "7-DustTexNormal",
+  "1561074964": "1:MaskB",
+  "1577450447": "1: AO Mult",
+  "1590899494": "8: SpecOcclusion",
+  "1591795321": "5: Detail Bump Intensity",
+  "1629286381": "Diffuse",
+  "1635924092": "6-Heat",
+  "1659233553": "0: Layer2_Normal Map",
+  "1662049744": "5: Line Color",
+  "1668469344": "Albedo Texture Power",
+  "1720231156": "2: Specular Gloss To Ref",
+  "1731447768": "5: Emissive VertexC Power",
+  "1736522631": "7-DustLevel",
+  "1746902799": "4-Paint Mask Roughness",
+  "1767723577": "1-Transform V",
+  "1767837884": "XCutPosition",
+  "1793721412": "9:MetalGlossiness",
+  "1807830304": "1: Alpha Power",
+  "1834353485": "Use Emissive",
+  "1841097966": "5: Blend Layer 1/2 Alpha Mask",
+  "1845314075": "OverheatSetup",
+  "1866488654": "MorphBPos",
+  "1872120611": "5: Line Timer",
+  "1879650021": "CanDeform",
+  "1887958686": "7-DustLevelSmoothness",
+  "1888731574": "Starboard",
+  "1892642461": "CutEmissivePower",
+  "1902048284": "3: DetailNormal Intensity",
+  "1905148402": "5: Base Normal Intensity",
+  "1927369653": "3: Normal Intensity",
+  "1936829224": "1: color source",
+  "1941843029": "WheelXAxis4",
+  "1945676818": "[Paint] #On/Off",
+  "1946514439": "2: Color 2",
+  "1958286481": "0: Layer1 Diffuse + Alpha Map",
+  "1972462788": "PaintColor2",
+  "2006158526": "2: Gloss is Specular Color",
+  "2011809458": "1: Diffuse Multiplier",
+  "2017117253": "Windshield Color",
+  "2018083876": "4: baseDust",
+  "2023854548": "0: Layer1 Normal Map",
+  "2025022587": "PaintReflectance",
+  "2038358633": "WheelNormal4",
+  "2047314203": "BurnInitPosition",
+  "2054869175": "6: BurnSetup",
+  "2056197806": "Emissive Power",
+  "2057909931": "UVT Switch",
+  "2062273576": "0: Layer1_Detail Map",
+  "2065650411": "BurnRadius",
+  "2072963827": "2: Gloss is Specular power",
+  "2091518723": "NV BOOST ",
+  "2104905502": "9:BloodDarkening",
+  "2110654385": "8: Dirt Tile",
+  "2149436067": "5: Detail Normal Intensity",
+  "2158948970": "PaintGloss",
+  "2184453445": "4-MaskExp",
+  "2187804229": "MudMaskContrast",
+  "2223389958": "Mask_UV_Transform",
+  "2224978008": "DebugDust",
+  "2225127609": "MorphWFadePos",
+  "2233459232": "4: LayerDetails V Transform",
+  "2241311022": "2: Specular Occlusion",
+  "2260753237": "1: Diffuse Mult",
+  "2266831231": "9:SkinReflectanceIntensity",
+  "2267802248": "Age_NoiseScale",
+  "2271188409": "2-Roughness Array Map",
+  "2290767532": "CutColor2",
+  "2291454093": "4-Paint Mask Invert",
+  "2294141469": "Cut",
+  "2297979110": "5: Rain tile",
+  "2325148397": "GlassSmashedState",
+  "2328088346": "0-Color Source",
+  "2328551822": "4: V Transform",
+  "2349237027": "3: Emissive Curve Invert",
+  "2356315145": "0: DestructionNormal",
+  "2370302031": "[Paint] Gloss",
+  "2376530442": "bias_red_albedo",
+  "2384892675": "FogLight",
+  "2409573501": "MorphLPos",
+  "2411612032": "Diffuse Map",
+  "2412672540": "Normal Map",
+  "2416448443": "9:BloodGlossiness",
+  "2417837916": "WheelNormal2",
+  "2424063871": "Heat Scale",
+  "2424974589": "8: Wind influence",
+  "2435391990": "Mud Amount",
+  "2467834620": "4: Layer2_UV Transform",
+  "2470490560": "OrangeSpinny",
+  "2478291685": "5: Detail Scale U",
+  "2524516885": "Specular Gloss",
+  "2559868002": "5: FresnelMultiplier",
+  "2575128146": "Age",
+  "2582193765": "Use vertex anim",
+  "2584417579": "2: Color 0",
+  "2590521670": "Morph1DivWFadeLength",
+  "2598209888": "WheelXAxis2",
+  "2598808525": "3:Layer0_Mask1",
+  "2604280421": "MudColor",
+  "2620242318": "2: Color 3 On",
+  "2620804089": "8: Vertex Noise Intensity",
+  "2633945482": "1: CamoColor2On",
+  "2638003133": "1: CamoColor3On",
+  "2640761138": "2: Color 4",
+  "2652192485": "PaintColor2_Opacity",
+  "2662887379": "1: CamoColor1On",
+  "2666014556": "0: Layer1 Albedo",
+  "2683238443": "[Camo] On Paint1 - Opacity",
+  "2683510314": "0: Layer1 Diffuse Albedo + Alpha Map",
+  "2705416426": "Reverselight",
+  "2729283628": "5-Metal Mask - Roughness Invert",
+  "2759641979": "Rust_UV_Scale",
+  "2775707076": "MorphLFadePos",
+  "2781775279": "WindShield State",
+  "2785762702": "8: SpecOcclusionInAlbedo",
+  "2791653355": "1: Blend Diffuse/Albedo",
+  "2792840857": "8: Dirt Value",
+  "2801848394": "1:Layer0_BaseHSV",
+  "2805801299": "8: SpecOcclusionSmoothness",
+  "2806696311": "0: Layer1_Mask1 Color",
+  "2811274530": "1: CamoColor3",
+  "2811757088": "PaintColor1_Opacity",
+  "2824279732": "[Deposit]Power",
+  "2825396875": "5: DetailsMapSize",
+  "2828244310": "5: ScratchAgeSetup",
+  "2829386957": "0: Layer1_Diffuse+Alpha Map",
+  "2852051383": "[Paint2] Color",
+  "2854014289": "8: Vertex Noise Speed",
+  "2873817103": "1-UV World Space",
+  "2895441080": "CamoTerrainBlend",
+  "2898593390": "Mud_Uv_Transform",
+  "2905510935": "2: Specular Gloss Mask",
+  "2931320524": "7: TransIndex",
+  "2935346486": "Morph1DivW",
+  "2962907685": "2: Gloss is Specular Color Power",
+  "2975698259": "7: RoughnessAsEmissive",
+  "2979330806": "TyreInfo2",
+  "2997068297": "4: Base Layer U Transform",
+  "3015151933": "8:DetailNormal_Int_Blood",
+  "3044787766": "5-Metal Mask Smoothness",
+  "3072757490": "5: DustAgeSetupKill",
+  "3090778139": "PaintColorLogo_Opacity",
+  "3103307669": "2: Base Layer Roughness",
+  "3103774371": "1: CamoTiling",
+  "3116954916": "4: Layer1 U Transform",
+  "3129809142": "WheelOrigin3",
+  "3153901180": "2: Specular Reflectance",
+  "3168425585": "0: Layer1_Detail Normal Map",
+  "3189801934": "0: Layer1 Specular Mask",
+  "3192884315": "KillMorph",
+  "3197340126": "9:BloodReflectance_hue",
+  "3244113392": "1: Normal Map",
+  "3244826451": "z_debug reflectance",
+  "3258150968": "Alpha Power",
+  "3270503017": "Translucency index",
+  "3277444367": "[Paint2] #On/Off",
+  "3308981648": "Age min",
+  "3308998785": "Laser Color",
+  "3309398637": "9:MetalReflectance_Hue",
+  "3314371220": "6: BurnLevel",
+  "3316230418": "Normal Power",
+  "3331574368": "TyreInfo3",
+  "3336376753": "Windshield Reflectance",
+  "3345078657": "Brakelight",
+  "3370825700": "5: Age",
+  "3384093086": "Mud Mask Amount",
+  "3408316537": "InteriorLight",
+  "3435438155": "8:DetailNormal_Int_Metal",
+  "3448383584": "WheelOrigin2",
+  "3452535695": "FX Texture Diffuse",
+  "3468840179": "BurnAmount",
+  "3480345110": "1: Paint Color",
+  "3482958349": "7:DetailSkinLeather_UV",
+  "3486561849": "5: Blend Mask Factor",
+  "3499595188": "1: CamoColor2",
+  "3500421265": "PaintColorLogo",
+  "3502262853": "0: Mask2",
+  "3505789622": "2: Detail Roughness",
+  "3514759262": "SidelightBrake",
+  "3553433749": "9:MetalReflectance_Saturation",
+  "3561801858": "1: Use Color",
+  "3567134389": "CutTexture",
+  "3585601252": "0: DiffuseCustom",
+  "3605333491": "NV BOOST Alpha",
+  "3622112330": "7:Layer1DetailNormal_Leather",
+  "3635459299": "8:DetailNormal_Int_Cotton",
+  "3636881512": "1: Color Mask",
+  "3649223210": "2: Specular Roughness Offset",
+  "3654932673": "IndicatorLeft",
+  "3677626374": "[Dust]Amount",
+  "3702582077": "PaintColorLogo_Specular",
+  "3706476778": "2: Specular Occlusion 3",
+  "3709014876": "0: CustomNormal",
+  "3710920572": "CutColorCold",
+  "3711702196": "1: Alpha Value",
+  "3713420868": "8: Dirt Color",
+  "3723431606": "3: Parallax Scale",
+  "3740943513": "5: Emissive Curve",
+  "3752792603": "Debug: Default Dust Color",
+  "3776610938": "WindShield Death",
+  "3808859683": "7:Layer1DetailNormal_Cotton",
+  "3819172594": "Port",
+  "3821692532": "7:DetailCloth_UV",
+  "3836939195": "1: Vertex Color",
+  "3866505654": "1: CamoCustom",
+  "3869483084": "SidelightBack",
+  "3877271498": "WheelNormal3",
+  "3879952569": "4-Paint Mask Amount ",
+  "3882010737": "Mud texture influence",
+  "3894305459": "0: Layer1 Albedo Map",
+  "3903698189": "5: Blend VTX Factor",
+  "3952182162": "Indicator_BrakeRight",
+  "3969398142": "PaintColor1",
+  "3970883835": "Camo",
+  "3972063391": "WindShield Static",
+  "3976996285": "2: Color 1",
+  "3990534646": "WheelXAxis3",
+  "4002242686": "2: Specular Gloss",
+  "4006647926": "0: CustomNormal True",
+  "4017688359": "4: Layer1_UV Transform",
+  "4032037763": "1-Transform U",
+  "4052447538": "5: Blend Alpha Mask Intensity",
+  "4061125545": "0: Layer1 Mask",
+  "4063196603": "WindShield Life",
+  "4064718718": "PaintBody",
+  "4075230394": "5-Metal Mask Amount",
+  "4076494035": "YCutPosition",
+  "4181994227": "[Paint] Color",
+  "4240437775": "6: VertexNoise_Speed",
+  "4243229047": "3-Custom Color - Switch",
+  "4255668045": "6: BurnSmoothness",
+  "4256353894": "Mask2",
+  "4260016797": "7-DustAngle",
+  "4263246722": "MorphFDiff",
+  "4264651584": "4-Paint Mask - Source",
+  "4294073549": "z_DBG_NoHSV_mod"
+ }
+}

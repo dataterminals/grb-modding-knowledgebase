@@ -155,9 +155,82 @@ u32 type hash before the ID. They are genuine references, so pass `extra_prefixe
 or review them. Expect more such encodings in other entity types; strict mode exists to surface
 them.
 
+## What Bolivia actually ships: the global reference scan (2026-10-10)
+
+The class tables above count every GRW global object. A world port only needs the global objects
+the world references, so the world payloads were scanned for them.
+
+**Method.** Read-only, memory-capped.
+- Take the effective world containers: 72,257 of them, where `*_patch_01` overrides base by entry
+  ID.
+- Scan every resource payload (40.8 GB decompressed) at all 8 byte alignments for any of the
+  119,097 **global-only** IDs. Those are IDs that live in `DataPC*`/`DataPC_extra*` and in no world
+  forge.
+- Skip `PilotNavMeshResource`, `CompiledMip` and one unnamed bulk type. They are raw data, and an
+  8-byte coincidence there means nothing.
+- Then repeat the scan on the global containers holding each newly found target, up to 6 levels
+  deep (the transitive closure).
+
+> **Verified (scan output):**
+>
+> | Set | Objects | Class a / b1 / b2 / c | Holding containers | Packed size |
+> | --- | --- | --- | --- | --- |
+> | **Direct** (world → global) | **8,651** | 851 / 415 / 1 / 7,384 | **454** | 315 MB |
+> | Transitive closure (6 levels) | 110,965 (93% of all global-only) | 12,433 / 5,574 / 154 / 92,804 | 28,992 | 8.5 GB |
+>
+> - Of the 454 direct holders, **322 are TextureMap containers**. The rest: 39
+>   SoundBanksLoadOnDemand, 19 EntityBuilder, 19 LODSelector, 15 MaterialTemplate, 10 CompiledMip,
+>   9 Mesh, 9 MeshShape, plus a handful of others.
+> - By forge: DataPC 327, DataPC_patch_01 76, DataPC_extra 40, DataPC_extra_patch_01 11.
+> - What does the referencing? The `World` resource accounts for 5,105 of the 8,651 direct
+>   targets. Then Entity 1,618, AtomReplaceSet 829, SplashFX 228, EntityGroup 213, Material 138.
+
+> **Inferred:** the closure over-approximates and is not a usable ship list. It passes through hub
+> objects (the `World` resource, EntityBuilders, LODSelectors), which reference most of the global
+> forge. Ship the **direct set** and close it per type instead:
+> - Follow Mesh → Material → TextureSet → TextureMap, which is needed.
+> - Do not follow EntityBuilder → every archetype it can build.
+>
+> Treat the 8,651 hits as candidates, not proof. They are 8-byte matches in non-bulk payloads, and
+> the median target is hit only twice.
+
+### Prefetch (145) records for what ships
+
+Every container added to a GRB patch forge needs its own `PrefetchingFileInfos` record (see
+[`tools/prefetch_inspect.py`](../tools/prefetch_inspect.py)).
+
+> **Verified:**
+> - **Every container the port would ship already has a donor record in its GRW source forge's
+>   145 table.** That covers 72,255 of 72,255 world containers and 28,992 of 28,992 closure
+>   holders. The format is the same in both games.
+> - Most records are empty. The median size is 4 bytes, `u16 0 | u16 0`.
+> - **World records:**
+>   - 29,786 are plain and non-empty, listing 936,548 items in total. Tails: 580,124 are
+>     `01 00 00`, 355,635 are `02 00 00` and 789 are `04 00 00`.
+>   - **2,445 are grouped** (first u16 ≠ 0). Their layout is still undecoded.
+>   - Records total 19.2 MB.
+> - **Global holder records:** 0 are grouped. 8,684 are non-empty, listing 48,632 items.
+> - **The records cannot be copied verbatim.** In the world records, **134,186 listed items are
+>   class-b1 IDs**, colliding world entries. Class-a items (56,069) and class-c items (745,607)
+>   keep their IDs.
+>   - In a plain record, each item is `u64 ID + 3 bytes`, so `grw_reid.reid()` applies directly
+>     to the u64.
+>   - The 2,445 grouped records need their layout decoded first, or a check that they list no
+>     class-b ID.
+> - **References outside the ship set:**
+>   - World records list 12 items that are neither shipped nor world.
+>   - Global holder records list 1,270 such items. Those come from the closure's hub objects.
+>   - **Inferred:** drop items that point outside the ship set, the same way unshipped textures
+>     become null slots.
+
 ## Open items
-1. The exact set of global objects the world references (a reference scan of the world payloads).
-   The superset above is safe but larger than needed.
+1. ~~The exact set of global objects the world references.~~ Measured above: 8,651 direct.
+   Decided 2026-10-10 for the current route, which transplants Bolivia cells into GRB host
+   cells:
+   - Do not ship `World`'s 5,105 references; GRB keeps its own `World`. Revisit this only if
+     Bolivia becomes its own world.
+   - Ship the direct set, closed per type: Mesh → Material → TextureSet → TextureMap.
+   - Drop record items that point outside the ship set.
 2. Whether GRB tolerates IDs with bit 46 (or bit 62) set. One in-game test.
 3. Typed-handle encodings beyond `8a b0 b8 01 + u64`. Collect them from `skipped` as conversion
    proceeds.
