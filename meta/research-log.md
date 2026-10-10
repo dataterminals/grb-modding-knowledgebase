@@ -6297,3 +6297,208 @@ staged at the time of writing.
 - A material on this template needs a TextureSet: without one the mesh renders magenta, and with a
   synthesized one it renders correctly. The direct slot references at 650 / 719 alone are not
   enough.
+
+## Entry — 2026-10-10 (sixth) — A 3×3 Bolivia block assembles offline; GRW's terrain-blend rocks carry per-instance materials
+
+### What I did
+- Promoted the W-builder to `tools/grw_cell.py` and pointed it at nine GRW cells at once: the 3×3
+  block around Cell02757 (cells 2628–2630, 2756–2758, 2884–2886; the GRW grid is 128 m cells, 128 per
+  row). The block was placed 350 m east of the bivouac, the evenest dry site within 350 m on GRB's own
+  terrain (`--ground-tbf`).
+- The first dry run refused to write: 22 dangling references. The tool now names each one, with the
+  resource that holds it and what it points at.
+
+### VERIFIED (offline, by reading both installs)
+- **20 of the 22 were per-instance material overrides.** GRW rocks re-skinned to blend into the
+  terrain (`ENV-ARS-ROC-*_TER-BRO#` Entities) carry a `MaterialOverrider` component. Its
+  `OverrideDefinition` pairs map the mesh's material (for example `BLE_ENV-GLO-ROC-Small-A`) to a
+  blend material (`BLE_ENV-ARS-ROC-Small-A-TER-BRO#`, shader `SHD_Nat_Rock_Z_TerrainAlbedoBlend`).
+  The same IDs appear again in the Visual's `MeshInstanceMaterialInfo.InstanceMaterial`. The blend
+  materials are stored inside the GRW cell, not in the mesh entries.
+- **Pointer kinds differ inside `MeshInstanceMaterialInfo`.** `MeshMaterial` is a handle
+  (`u8 0 | u64 id`), while `InstanceMaterial` is a ref (`u8 1 | u8 0 | u64 id`).
+- **TextureSet slots have two forms.** The same GRW set (`ENV-GLO-SPE-Rock-RoughD_Set`) writes its
+  slots as `01 02 <id>` in a cell copy and as `01 01 <id>` in the mesh-entry copy. The converter only
+  nulled `01 02` slots, so two unshipped textures leaked through in the mesh-entry copy.
+- GRB cells do carry per-instance materials too. In 7 cells around Cell45147 there are 102 inline
+  Materials and one `InstanceMaterial` that differs from its mesh material and is cell-local. Most
+  GRB Entities there still fail to decode under the current layouts (82), so this survey is thin.
+
+### What changed in the tool
+- Overrides that point at unshipped GRW materials are dropped. An `OverrideDefinition` whose
+  `NewMaterial` isn't shipped is removed, and so is a `MaterialOverrider` left with none (nulling
+  `ResetData`). `InstanceMaterial` falls back to the mesh material. In the block that was 24
+  overrides, 12 components and 35 instance materials.
+- Both slot forms are nulled when their texture isn't shipped.
+- Diffuse and normal maps are picked from the material's TextureSet first. The material's own
+  texture refs are terrain-blend and detail inputs, used only where the set has no map of that kind.
+- Result: **dangling 0, re-ID 8**. The block brings 64 objects, 20 LODSelectors, 70 mesh entries,
+  32 textures and 60 mips (162 new entries, 145 +163 records). Every written container decodes, every
+  new entry has a 145 record, the 145 blocks check, and every object's first piece is within 3 m of
+  GRB ground (108–161 m across the block). Cell02757 alone still assembles (0 dangling).
+
+### INFERRED
+- Dropping the overrides should render those rocks with their plain mesh material instead of the
+  terrain-blended look. Under the clone material path both would look like ordinary rock anyway.
+  Not seen in game.
+- `01 01` versus `01 02` in a TextureSet slot is probably a ref sub-type (load or ownership mode), and
+  the converter keeps whichever one GRW wrote. Untested in GRB.
+
+### Still open
+- The in-game test of W8 (single cell on Auroa ground) and then this block (backed up as `block9` next
+  to the W-builds). The block is a superset, so test W8 first. If W8 loads, the block is the next
+  repack.
+- GRW `wires` (power lines, `grw:0xf36a2fb9`) have no layout and are skipped.
+- Collision (MeshShape Havok 2016.1 → 2018.2), learned materials, terrain.
+
+## Entry — 2026-10-10 (seventh) — MeshShape collision converts: same tree codec, new wrapper; GRB kept GRW's collision materials
+
+### What I did
+- Pulled the Havok blob out of the Ghost Room twin `TPL_Ground_64m` in both games and wrote a tagfile
+  reader. Then measured random `_RT` MeshShapes, 60 and then 300 per game.
+- Promoted the reader to [`tools/havok_tag.py`](../tools/havok_tag.py), with a converter, and wired it
+  into `grw_cell.py --collision`. The format write-up is in
+  [`reference/havok-meshshape.md`](../reference/havok-meshshape.md).
+
+### VERIFIED (offline)
+- **Both games store the same object graph.** That is an `hknpExternMeshShapeData` root, a
+  `hkcdStaticTree` of `Codec3Axis6` nodes and an `hkcdSimdTree` of 2 nodes, at the same DATA
+  offsets. The SIMD tree is an empty sentinel in every sample of both games.
+- **The packaging differs.** GRW (SDK 2016.1) carries its own types. GRB (SDK 2018.2) points at a
+  type compendium (`TCRF` `1bb87a285a374916`, the same on every sample) that I couldn't find on disk.
+  The layout changes are small:
+  - the SIMD-tree array moves from root+88 to root+80;
+  - GRB adds a byte at root+96 (always 1);
+  - SIMD nodes grow from 112 to 128 bytes, with the extra 16 always 0;
+  - the patch offsets follow.
+- **The tree codec is the same.** One decoding rule puts every leaf box around its triangle in 300 of
+  300 GRW and 299 of 299 GRB samples:
+  - bounds: `min = parent.min + h²·extent/226`, `max = parent.max − l²·extent/226`;
+  - the right child sits at this + 2 × (leaves in the left subtree).
+- **The GRB wrapper is exact.** `havok_tag.grb_blob()` re-wraps GRB's own trees byte-identically in
+  299 of 300 samples. The 300th is a shape with no tree at all, which the converter refuses.
+- **GRB has GRW's GRN collision-material library under the same IDs.** This comes from the census:
+  `GRN_Rock` and `Physics_GRN_Rock` sit in 2,069 entries, `GRN_Wood_Weak` in 4,121,
+  `GRN_Metal_Fence` in 2,867, `GRN_Concrete` (`0x11f1a6a5ff`) in 10,020, and so on. GRB embeds copies
+  next to the shapes that use them. That replaces the earlier note that `GRN_Rock` is "unknown in
+  GRB", which came from Cell45147 alone. `0x1523930094` lives in a global `DBContainerEntry` and is
+  referenced, not embedded, from both games' `_RT` entries.
+- **How `_RT` entries are stored and listed.** A GRB `_RT` entry is `[MeshShape (+ CollisionMaterial +
+  PhysicsCollisionMaterial)]` with an empty 145 record (`00000000`). A GRB cell's 145 record lists
+  every `_RT` entry its bodies use, with tail `01 00 00` (16 of 16 in Cell45147, 9 of 9 in
+  Cell45146).
+- **`grw_cell.py --collision` builds pass every offline check.**
+  - Cell02757: 15 InertComponents kept (static prop collision), 6 inline shapes, 4 MeshShape entries,
+    3 materials as GRB's own copies, 1 global, 0 re-pointed.
+  - 3×3 block: 71 InertComponents kept, 15 inline shapes, 15 MeshShape entries (35,166 triangles, 0
+    outside their leaves), 4 GRB copies, 0 re-pointed.
+  - Both builds have 0 dangling references, every container decodes, every new entry has a 145
+    record, and every MeshShape re-encodes under GRB's layout.
+- Fixed a shadowed variable in `strip()` that removed Inert components from child Entities.
+
+### INFERRED
+- GRB's root+96 byte is probably `hkcdSimdTree::m_isCompact`.
+- Since the codec and the item graph match, GRB's Havok should accept GRW's tree in the 2018.2
+  wrapper. Untested in game.
+- The InertComponent conversion rules are inferred in `grw_entities.py`, so the collision builds can
+  fail in game where the plain ones load.
+
+### Builds ready (backed up, hash-verified, in `…\2026-10-10_bolivia-world\`)
+- `w8`: Cell02757 on Auroa ground, no collision (still staged in the unpack folder).
+- `w9c`: Cell02757 with collision.
+- `block9`: the 3×3 block, no collision.
+- `block9c`: the 3×3 block with collision.
+
+Suggested order: w8 → w9c → block9 → block9c. A crash at a collision build then points at physics,
+not placement.
+
+## Entry — 2026-10-10 (eighth) — Bolivia's ground under the block: a reversible `.tbf` height patch
+
+### What I did
+- Wrote [`tools/tbf_patch.py`](../tools/tbf_patch.py) (build / check / apply / revert). It lays GRW's
+  terrain under a transplanted block, moved by the same `(dx, dy, dz)` as the props, feathered into
+  Auroa over a smoothstep band. It builds on `tbf_read.py`'s byte-exact height codec and the v16 node
+  layout in [`notes-terrain-tbf.md`](notes-terrain-tbf.md).
+- Added `grw_cell.py --shift dx,dy,dz`, a rigid move for everything instead of anchoring and seating.
+- Block: GRW rect x 512…896, y −5632…−5248 (Cells 2628–2886). Shift (−5005.068, 11668.535,
+  −734.5) puts its centre 350 m east of the bivouac. That dz minimises the seam: Auroa minus Bolivia
+  along the block border averages −734.5 m, with a 19.5 m standard deviation. Feather 64 m.
+
+### VERIFIED (offline)
+- **The block's own relief.** Its GRW ground spans 813–926 m (112 m range). On GRB's unpatched
+  ground, the same props miss by 8.2 m (median) and up to 41 m.
+- **The patch.** 131 nodes are rewritten: levels 0–9, with 1/1/1/2/4/4/4/9/25/80 per level. The
+  largest height change is 53.4 m. Only each node's height chunk and its min/max entry change. The
+  min/max table is identical in all three GRB files for every touched node, so all three get the new
+  entry. Every rewritten node strictly re-parses, and its heights round-trip.
+- **Props on the patched ground.** 76 prop pieces in the core sit at the same height above the
+  patched ground as above GRW's own ground (median difference 0.000 m, max 0.010 m).
+- **The seam.** The largest 1 m step at the feather's outer edge is 1.21 m. Beyond it, the ground
+  equals vanilla exactly.
+- **apply / revert rehearsal on copies of the three files.**
+  - Apply leaves all three files patched; 132 of 132 node copies read back byte-identical, and every
+    file's min/max entries are updated.
+  - 300 sampled untouched nodes are identical.
+  - Revert restores all three files to a full-SHA match with the vanilla backup.
+- The vanilla `PCtgt_terrainlin0/1/2.tbf` are backed up in
+  `…\2026-10-10_bolivia-world\tbf_vanilla\` with `SHA256SUMS.txt`, matching the install.
+- GRB nodes are packed with no alignment (about 25 % of offsets are divisible by 4), so appended
+  nodes need none.
+
+### INFERRED / UNKNOWN
+- The height chunk is re-zlibbed at Python's default level, not the game's. Any valid stream should
+  decode, but this is untested in game.
+- Unknown: whether GRB derives terrain collision from these heights at run time. If it bakes them
+  elsewhere, the player would walk on the old surface. Also unknown: whether navmesh, GI or cell data
+  assume the old ground. The trailer floats (meaning unknown) are kept as they were.
+
+### Builds ready
+- `block9t`: the 3×3 block with collision, placed with `--shift`.
+- `terrain_block9`: the matching `.tbf` patch.
+
+These go together: block9t without the terrain patch would float or sink by up to 41 m. Suggested
+order after w8 / w9c / block9c: apply `terrain_block9` (with the maintainer's OK; `revert` undoes it
+byte-exactly), then stage `block9t`.
+
+## Entry — 2026-10-10 (ninth) — Sound, navmesh and GI: what ports, what doesn't (offline survey)
+
+### VERIFIED (offline)
+- **Sound ambiences resolve in GRB by ID.** The 3×3 block's 64 transplanted objects carry 21
+  `SoundAmbienceStamperComponent`s (GRB layout from Agent 848 support) and one
+  `SoundPointsComponent`. The stampers reference only **2 distinct ambience IDs** (`0x3e5d4e0e04`,
+  `0x42e0a508af`). Both exist in GRB under the same IDs, in its global `Game Bootstrap Settings` entry
+  (census). So the transplanted ambience stamps point at live GRB objects. Whether they sound like
+  Bolivia (wind, altiplano) or like whatever GRB repurposed the IDs for can only be heard in game.
+- **The navmesh lives inside each cell, in both games.** It is one `PilotNavMeshResource`
+  (CRC32-named) per cell DataBlock: GRW `PilotResources_02757` (702,540 B), GRB
+  `PilotResources_45147` (1,296,094 B). Our transplants never bring it, because it is a cell
+  resource, not an activated object. The host keeps Auroa's navmesh, so AI in the block paths on
+  Auroa's original layout.
+  - Both payloads share a header shape: `u8 1 | u32 a | u32 b | u32 cell number | u32 c | …`. GRW
+    has a = 2, b = 295, cell 2757, c = 4; GRB has a = 6, b = 336, cell 45147, c = 1.
+  - Both hold world-space `f32` coordinates (GRB's payload has 120 values in its own cell's x range).
+- **GI does not carry over.** GRW cells carry `GIProbes_<cell>` (type `#2285005914`, 131,320 B in
+  Cell02757). GRB's cells carry no resource of that type (none in Cell45147 or Cell45146); GRB's GI is
+  `GIDynResource` elsewhere (census, entry "(second)").
+
+### INFERRED
+- **Navmesh.** The `a` field (2 vs 6) is probably a Pilot format version. Porting navmesh means
+  decoding the Pilot format and transforming its coordinates by the block's shift: a
+  reverse-engineering project of its own. Without it, AI won't use Bolivia's paths, but nothing
+  should crash, since the host's own navmesh is untouched.
+- **GI.** GRW's probe format has no GRB counterpart and GRB's GI is baked by Ubisoft's tools. The
+  block should be lit by Auroa's GI for that spot. Expect plausible but not Bolivian lighting, and
+  possibly light leaks inside GRW interiors.
+
+### Where the port stands, layer by layer
+| Layer | State |
+| --- | --- |
+| Meshes, textures, materials | in game (W3, W6b) |
+| Whole cell (entities, groups, LODs) | in game (W7: loads; objects visible) |
+| Placement on ground | offline (W8, block9) |
+| Collision | offline (`havok_tag`, w9c / block9c) |
+| Terrain heights | offline (`tbf_patch`, terrain_block9 + block9t; apply needs the maintainer's OK) |
+| Sound ambiences | offline, by reference |
+| Navmesh | not ported (format decode needed) |
+| GI | not portable as such |
+| Terrain surface (colour, materials) | not attempted; route A/B in `notes-terrain-tbf.md` |

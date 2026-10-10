@@ -1115,6 +1115,113 @@ forge in the folder so listed IDs print with names. The format and what's still 
 module docstring and in [`../reference/grbmod-package-format.md`](../reference/grbmod-package-format.md#prefetch-records).
 READ-ONLY.
 
+## 🧱 `grw_cell.py` — transplant whole Wildlands cells into a Breakpoint cell
+
+The assembler behind the 2026-10-10 world tests (W5–W8 in
+[`../meta/research-log.md`](../meta/research-log.md)), promoted from scratch scripts. It brings the
+objects a GRW cell's GridCell activates, plus everything they reach, converts them, and writes files
+for the host world's `_patch_01` unpack folder.
+
+```
+python grw_cell.py port Cell02757_DataBlock --host Cell45147_DataBlock \
+    --patch-forge "<backup>/DataPC_TGT_WorldMap_MaungaNui_Split_patch_01.forge" \
+    --anchor=-4651.07,6228.54,233.67 --offset=-30.4,48.6 \
+    [--ground grid.npy --ground-origin=-4801,6078 --ground-step 0.5] [--census DIR] -o out_dir
+```
+
+It applies every rule learned in game: physics stripped and `ResetData` nulled; **no inline meshes in
+GRB cells** (each mesh becomes an entry carrying its materials); a **TextureSet on every material**
+(synthesized when GRW had none); rigid group placement from content, not group origins; AutoGroup props
+seated on a ground grid (`tbf_read.Heightfield`); GridCell activation-boundary insert; re-ID of every
+shipped ClassID found in GRB (entry index, plus the full inner-ID census with `--census`); and 145
+records (the host's tree record gains the new mesh dependencies). It refuses to write if any shipped
+reference doesn't resolve, and it names each dangling target and the resource that holds it.
+`--patch-forge` must be the **vanilla** patch forge; it numbers the output files. Materials default to
+the W6b-proven clone path; `--materials learned` uses `grw_materials.convert_pair` (not yet tested in
+game). Read-only on both installs; writes only `-o`.
+
+Several cells at once work: pass them all, and `--ground-tbf` samples GRB's own terrain under every
+object. A 3×3 block around Cell02757 (cells 2628–2630, 2756–2758, 2884–2886) assembles with 0 dangling
+references. It brings 64 objects, 70 mesh entries, 32 textures and 60 mips, with 8 re-IDs. This is
+offline only; it has not been tried in game yet. The block added three rules:
+- **Per-instance material overrides are dropped.** GRW rocks that blend into the terrain carry a
+  `MaterialOverrider` and `MeshInstanceMaterialInfo.InstanceMaterial` refs to `BLE_*_TER-*#` materials
+  stored in the GRW cell. Those overrides are removed, and `InstanceMaterial` falls back to the mesh's
+  own material.
+- **TextureSet slots come in two forms.** A slot is `01 01 <id>` in mesh-entry copies of a set and
+  `01 02 <id>` in cell copies. Either form is nulled when its texture isn't shipped.
+- **Diffuse and normal maps come from the material's TextureSet first.** Textures named in the material
+  itself (terrain-blend and detail inputs) are used only where the set has none.
+
+GRW power-line `wires` entities are skipped because there is no layout for them yet.
+
+`--collision` (needs `--census`) keeps static collision. The RigidBody, Inert and MergedPhysics
+components stay, and destructibles still go. Primitive shapes go inline into the host. MeshShapes
+become their own `_RT`-style entries with the Havok blob converted by `havok_tag.py`, and each one is
+listed in the host's 145 record. Collision materials keep their GRW IDs, because GRB has the GRN
+library under the same IDs: each entry embeds GRB's own copy of the material it uses. Cell02757 keeps
+15 InertComponents, 6 inline shapes and 4 MeshShape entries. The 3×3 block keeps 71, 15 and 15
+(35,166 collision triangles, every one inside its tree leaf). This has not been tried in game yet.
+
+`--shift dx,dy,dz` replaces `--anchor` and seating with one rigid move for everything. Pair it with
+`tbf_patch.py`, which lays GRW's ground in under the block with the same shift; props then keep their
+exact height above their own terrain.
+
+## ⛰️ `tbf_patch.py` — lay Wildlands terrain into Breakpoint's, as a reversible patch
+
+It moves GRW's ground under a transplanted block by the same `(dx, dy, dz)` as its props, and feathers
+it into Auroa over a smoothstep band.
+- **Only heights change.** Every node the region touches, at all 10 levels, gets a re-encoded height
+  chunk and a recomputed min/max entry. Its material, FE and 00 rasters, BC1 colour, BC7 map and
+  trailer stay byte for byte.
+- **Nothing else is touched.** Nodes outside the band are left alone.
+
+```
+python tbf_patch.py build --src-rect 512,-5632,896,-5248 --shift -5005.068,11668.535,-734.5 --feather 64 -o patch_dir
+python tbf_patch.py check patch_dir
+python tbf_patch.py apply  patch_dir --backup-dir <folder with the vanilla PCtgt_terrainlin*.tbf>   # mutates GRB
+python tbf_patch.py revert patch_dir --backup-dir <same>
+```
+
+`build` and `check` are read-only.
+
+`apply` appends the new nodes to the file holding each node, then rewrites that node's 8-byte offset
+entry and the min/max entries in all three files. It refuses to run unless the install is exactly the
+vanilla state the patch was built on, and the backup folder holds files with the same SHA-256.
+
+`revert` truncates the files back, restores the entries, and proves a full-file SHA match with the
+backups.
+
+For the 3×3 Bolivia block, the patch rewrites 131 nodes (80 at the leaf level) in 8 MB. The largest
+height change is 53 m. Offline checks:
+- **Props:** 76 prop pieces sit at the same height above the patched ground as above GRW's own,
+  within 0.010 m.
+- **Edges:** outside the band, the ground is bit-identical to vanilla.
+- **Rehearsal:** apply and revert were rehearsed on copies of the 6 GB files. Every node read back
+  exactly, and revert restored them byte-identical.
+- **Not yet known:** whether GRB builds terrain collision from these heights. That needs a game test.
+
+## 🧊 `havok_tag.py` — read Havok tagfiles, convert Wildlands MeshShape collision to Breakpoint's
+
+A MeshShape's collision tree is a Havok binary tagfile: SDK 2016.1 in GRW, carrying its own types,
+and SDK 2018.2 in GRB, pointing at a type compendium (`TCRF`). The tree codec is the same in both.
+The SDK changes are only layout: the SIMD-tree root moves up by 8 bytes, GRB adds a flag byte,
+SIMD nodes grow to 128 bytes, and the patch offsets move. Details are in
+[`../reference/havok-meshshape.md`](../reference/havok-meshshape.md).
+
+```
+python havok_tag.py inspect <blob.tag> ...       # sections, SDK, items (type names when the file has them), patches
+python havok_tag.py convert <grw.tag> -o <grb.tag>
+```
+
+As a library: `parse(blob)`, `static_tree(blob)` → (domain, nodes, count), `leaf_boxes(domain, nodes)`
+→ {triangle: boxes}, `grb_blob(...)` and `convert(grw_blob)`.
+- **Verified:** `grb_blob()` re-wraps 299 of 300 GRB samples byte-identically. The 300th has no tree
+  at all.
+- **Verified:** all 300 GRW samples convert, and in both games every leaf box holds its triangle
+  under the same decoding rule.
+- Writes only `-o`.
+
 ## ✍️ `prefetch_write.py` — give new or overriding entries their prefetch records
 
 **Every entry you add to a GRB patch forge needs a record in that forge's own 145 table.** All of

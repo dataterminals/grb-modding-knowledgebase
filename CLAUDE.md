@@ -35,6 +35,7 @@ A structured knowledgebase about modding GRB via the Ubisoft *Anvil* engine, its
 | Resource **type ids** (`Extension` = CRC32 of name) & `.data` compression | `reference/resource-type-ids.md`, `docs/02-forge-file-format.md` |
 | Naming patterns (`FTP_`, `WG_`, `LOD0`, `Mip0`, `77777`) | `docs/08-naming-conventions.md` |
 | **Cloth / `.cloth` / MotionCloth** (capes, coats, straps) | `docs/11-cloth-and-physics.md`, `reference/cloth-section-types.md` |
+| **Collision** (MeshShape Havok blobs, GRW→GRB conversion, collision materials) | `reference/havok-meshshape.md`, `tools/havok_tag.py` |
 | A real worked mod | `examples/case-study-usp-tactical.md` |
 | What's proven vs. guessed, open questions | `meta/research-log.md` |
 

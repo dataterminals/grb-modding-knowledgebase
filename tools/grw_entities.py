@@ -16,6 +16,8 @@ them by converting each Wildlands twin and comparing the result with Breakpoint'
         [--strip-physics]   leave out RigidBody, Inert, MergedPhysics and GameplayDestructible components
         [--strip-physics-at MeshShape,...]   only for Entities whose physics reaches one of these shape types
                             (through ReferenceListShape children), or whose body shape is not found
+        [--material-remap OLD=NEW,...]   re-point references to OLD at NEW (IDs hex or decimal), e.g. a GRW
+                            CollisionMaterial at a GRB-native one; counts per resource go into converted.json
         [--types A,B,...]   convert only these resource types (e.g. BoxShape,CapsuleShape,ConvexVerticesShape)
                             Writes <ClassID>_<type>_<name>.payload per resource and an index, converted.json
                             Dropped components are listed in out_dir/dropped_components.json; an Entity whose
@@ -27,7 +29,8 @@ through data_inspect). Caps its own memory (--max-mb, default 1500) and streams 
 
 As a library:  decode(payload, "grw"|"grb") -> Obj tree;  encode(obj, game) -> bytes;
                convert(grw_payload, drop_grw_only=False, strip_physics=False, manifest=None,
-                       strip_physics_at=None, shape_of=None)   (raises NeedLayout / Unsupported)
+                       strip_physics_at=None, shape_of=None, remap=None, remapped=None)
+                   (raises NeedLayout / Unsupported)
 
 SERIALIZATION (both games; see meta/notes-entities.md)
   object      u64 ClassID | u32 type hash | u8 IsManaged (ManagedObject types) | fields
@@ -1206,13 +1209,36 @@ CONVERTERS = {"ConvexVerticesShape": lambda o: o, "BoxShape": lambda o: o, "Caps
               "AreaLight": conv_light}
 
 
+def _remap_refs(v, remap, hits):
+    """Point every by-ID pointer whose target is a key of `remap` at remap[target] instead; count each in `hits`.
+    Pointer and reference-type bytes are kept, and so are links to anonymous objects."""
+    if isinstance(v, Obj):
+        for x in v.f.values():
+            _remap_refs(x, remap, hits)
+    elif isinstance(v, Ptr):
+        if v.obj is not None:
+            _remap_refs(v.obj, remap, hits)
+        elif v.id in remap and not is_anon(v.id):
+            hits[v.id] = hits.get(v.id, 0) + 1
+            v.id = remap[v.id]
+    elif isinstance(v, (list, tuple)):
+        for x in v:
+            _remap_refs(x, remap, hits)
+    elif isinstance(v, dict):
+        for x in v.values():
+            _remap_refs(x, remap, hits)
+
+
 def convert(payload_grw, drop_grw_only=False, strip_physics=False, manifest=None, strip_physics_at=None,
-            shape_of=None):
+            shape_of=None, remap=None, remapped=None):
     """Wildlands payload of a supported type -> Breakpoint payload. drop_grw_only: leave out GRW_ONLY components
     instead of refusing the Entity. strip_physics: leave out PHYSICS components. strip_physics_at (a set of shape
     type names, e.g. {"MeshShape"}) with shape_of(id) -> (type, child IDs) | None: leave out an Entity's PHYSICS
     components only when one of them reaches such a shape (or a body shape is not found). Each dropped component is
-    appended to `manifest` (a list) if given; an Entity whose ResetData names one gets a null ResetData."""
+    appended to `manifest` (a list) if given; an Entity whose ResetData names one gets a null ResetData.
+    remap ({old ID: new ID}): re-point references, e.g. a shape's Material at a GRB-native CollisionMaterial; the
+    count per old ID is added to `remapped` (a dict) if given. A resource whose own ClassID is an old ID is still
+    converted as is."""
     global _dropped, _drop_types, _strip_at
     o = decode(payload_grw, "grw")
     fn = CONVERTERS.get(o.name)
@@ -1223,7 +1249,14 @@ def convert(payload_grw, drop_grw_only=False, strip_physics=False, manifest=None
     _strip_at = (set(strip_physics_at), shape_of) if strip_physics_at and not strip_physics else None
     _dropped = [] if _drop_types or _strip_at else None
     try:
-        out = encode(fn(o), "grb")
+        tree = fn(o)
+        if remap:
+            hits = {}
+            _remap_refs(tree, remap, hits)
+            if remapped is not None:
+                for k, n in hits.items():
+                    remapped[k] = remapped.get(k, 0) + n
+        out = encode(tree, "grb")
         dropped = _dropped or []
     finally:
         _dropped = None; _drop_types = {}; _strip_at = None
@@ -1514,6 +1547,11 @@ def main(argv):
     ghost = opt("--grb-ghostroom")
     only_types = set(filter(None, opt("--types", "").split(",")))
     strip_at = set(filter(None, opt("--strip-physics-at", "").split(",")))
+    try:
+        remap = {int(a, 0): int(b, 0) for a, b in (kv.split("=") for kv in
+                                                    filter(None, opt("--material-remap", "").split(",")))}
+    except ValueError:
+        raise SystemExit("--material-remap takes OLD=NEW[,OLD=NEW...], IDs in hex (0x...) or decimal")
     drop, strip = "--drop-grw-only" in argv, "--strip-physics" in argv
     for f in ("--drop-grw-only", "--strip-physics"):
         if f in argv:
@@ -1556,11 +1594,11 @@ def main(argv):
                 t = _TYPE_IDS.get(r.type_id)
                 if t is None or (only_types and t not in only_types):
                     continue
-                dropped = []
+                dropped, hits = [], {}
                 cid = di.class_id(r)
                 try:
                     data = convert(r.payload, drop_grw_only=drop, strip_physics=strip, manifest=dropped,
-                                   strip_physics_at=strip_at, shape_of=shape_of)
+                                   strip_physics_at=strip_at, shape_of=shape_of, remap=remap, remapped=hits)
                 except (NeedLayout, Unsupported) as e:
                     print(f"  skip {t} {r.name}: {e}")
                     index.append({"class_id": cid, "class_id_hex": f"{cid:#x}", "type": t, "name": r.name,
@@ -1576,11 +1614,17 @@ def main(argv):
                 open(fn, "wb").write(data)
                 index.append({"class_id": cid, "class_id_hex": f"{cid:#x}", "type": t, "name": r.name,
                               "entry": hit[3], "file": os.path.basename(fn), "bytes": len(data)})
+                if hits:
+                    index[-1]["remapped_refs"] = {f"{k:#x}->{remap[k]:#x}": n for k, n in hits.items()}
                 print(f"  wrote {fn} ({len(data):,} B)")
         import json
         json.dump(index, open(os.path.join(out_dir, "converted.json"), "w"), indent=1)
         print(f"  index of {sum('file' in x for x in index)} converted / {sum('skipped' in x for x in index)} skipped"
               f" resources in {os.path.join(out_dir, 'converted.json')}")
+        for k, v in remap.items():
+            n = sum(x.get("remapped_refs", {}).get(f"{k:#x}->{v:#x}", 0) for x in index)
+            print(f"  --material-remap {k:#x} -> {v:#x}: {n} reference(s) re-pointed"
+                  + ("" if n else " (none found: check the old ID)"))
         if manifest:
             mf = os.path.join(out_dir, "dropped_components.json")
             json.dump(manifest, open(mf, "w"), indent=1)

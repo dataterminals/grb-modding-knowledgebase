@@ -761,6 +761,66 @@ exactly under the GRB layout: ConvexVerticesShape 11, ReferenceListShape 6, Mesh
 > **Unverified:** whether GRB has `0x11f1a6a5ff`, `GRN_Rock` and `Physics_GRN_Rock`. None of
 > them is in Cell45147. Where GRB has the ID, the shapes can keep their references unchanged.
 
+**The GRN collision-material library.** GRW cells embed copies of the materials their shapes
+use. A sweep of 9,108 GRW cell DataBlocks (every 7th entry of the `DataPC_GRN_WorldMap*`
+forges, two offsets) found 71 CollisionMaterials and PhysicsCollisionMaterials. Each
+CollisionMaterial points at a `Physics_…` material in the `0x2bf3c9c4xx`–`0x2bf3c9caxx` block.
+
+| CollisionMaterial | ID | Seen in cells |
+| --- | --- | --- |
+| GRN_Rock | `0x11f1a6a643` | 967 |
+| GRN_Metal_Pipe | `0x1523930099` | 1,189 |
+| GRN_Wood_Weak | `0x1b133a5165` | 308 (first sweep) |
+| GRN_Metal_Fence | `0x152393009a` | 240 (first sweep) |
+| GRN_Dirt | `0x11f1a6a5ad` | 81 (first sweep) |
+| TPL_Default | `0x738d22e44` (GRW) | 241 (first sweep) |
+
+- GRB's `GRN_Wood_Solid` (`0x11f1a6a63a`) never appeared in the GRW sweep, and neither did
+  `0x11f1a6a5ff` or `0x1523930094`.
+- These three aren't embedded in the `_RT` entries either: those hold only their MeshShape. So
+  they live somewhere not yet found.
+- The two games' TPL_Default IDs differ: GRW `0x738d22e44`, GRB `0x103976b93b`.
+
+> **Update (2026-10-10, research-log "(seventh)"; the full GRB ClassID census, inner resources
+> included):** GRB *does* have the GRN library under GRW's IDs. `GRN_Rock` and `Physics_GRN_Rock`
+> are in 2,069 GRB entries, embedded next to the shapes that use them. `0x11f1a6a5ff` is
+> `GRN_Concrete` (10,020 entries). `0x1523930094` lives in a global `DBContainerEntry`. The "unknown
+> in GRB" and "not yet found" statements here and below came from Cell45147 and the `_RT` samples
+> alone. `grw_cell.py --collision` now keeps the materials' IDs and embeds GRB's own copies; see
+> [`../reference/havok-meshshape.md`](../reference/havok-meshshape.md).
+
+**Collision subset of a transplant (Cell02757, `--drop-grw-only --strip-physics-at MeshShape`):**
+12 Entities keep a RigidBodyComponent, and their bodies need only 11 shapes: 8
+ConvexVerticesShapes (the WallOldStones parts) and 3 BoxShapes (road plates, sign plates). No
+ReferenceListShape or CapsuleShape is left in the closure. Those shapes reference three
+materials:
+
+- `GRN_Wood_Solid` (GRB has it);
+- `0x1523930094` (GRB's own shapes use it);
+- `GRN_Rock`, on all 8 wall shapes, unknown in GRB.
+
+For the W9 collision test, GRN_Rock is remapped to `0x1523930094`. That's an **inferred
+choice**: a hard surface GRB's own shapes use, rather than GRN_Wood_Solid. With that, every
+material the transplanted bodies reach is one GRB has or uses.
+
+> **Verified (GRW Cell02757; found by the cell-builder work, re-checked here):** none of those 12
+> bodies would ever collide. Their Entities are all **destruction debris**:
+> - None is among the 13 objects in the cell's GridCellDataBlock activation list.
+> - Each one sits in the `Parts` array of a cGameplayDestructibleComponent: the sign group's
+>   (2 road-plate parts, 2 sign plates), the End-StoneWall barrier's (4 wall parts) and the
+>   2 m crash barrier's (4 wall parts).
+> - Those owners' destructibles reach MeshShapes, so `--strip-physics-at MeshShape` removes
+>   them, and nothing is left that could spawn the debris.
+>
+> Every object the cell does activate reaches a MeshShape: the barriers through their `_RT`
+> MeshShapes, the AutoGroups through their merged ReferenceListShapes. So a transplanted
+> cell's props only get real collision once MeshShapes work in GRB: the Havok 2016.1 → 2018.2
+> tagfile question under [Physics shapes](#physics-shapes-and-collision-materials).
+
+> **Verified:** reference-type bytes. Our converted shapes write Material references to
+> materials outside the entry with reference type 0, as GRB's own shapes do (16 of 16 in
+> Cell45147). Out-of-entry ReferenceListShape children carry type 1 in both.
+
 ## What blocks the rest
 
 Component types with no layout. Each world sample that doesn't convert is counted once, under
@@ -810,8 +870,16 @@ python grw_entities.py convert <GRW entry name|id> ... -o out_dir            # c
     [--drop-grw-only]    leave out GRW-only gameplay components instead of refusing the Entity
     [--strip-physics]    leave out RigidBody, Inert, MergedPhysics and GameplayDestructible components
     [--strip-physics-at MeshShape,...]   ... only on Entities whose physics reaches these shape types
+    [--material-remap OLD=NEW,...]       re-point references to OLD at NEW (hex or decimal IDs)
     [--types A,B,...]    convert only these resource types, e.g. BoxShape,CapsuleShape,ConvexVerticesShape
 ```
+
+`--material-remap` rewrites the target ID of every by-ID pointer to OLD. Pointer and
+reference-type bytes stay as they are, and links to anonymous objects are never touched. A
+resource whose own ClassID is OLD is still converted. Each resource's count goes into
+`converted.json` as `remapped_refs`. On Cell02757, `0x11f1a6a643=0x1523930094` re-points 11
+Material references (10 ConvexVertices, 1 MeshShape triangle material). The payloads change
+only in those IDs' 8 bytes.
 
 `convert` names each output `<ClassID>_<type>_<name>.payload` (decimal ClassID). It also writes
 `converted.json`, an index with one record per resource: `class_id`, `class_id_hex`, `type`,
