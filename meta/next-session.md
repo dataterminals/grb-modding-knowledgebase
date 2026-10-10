@@ -313,6 +313,12 @@ the same day.
 > single-patch cloth override hangs the load" is now better explained by this bug than by the
 > forge shadow. See the 2026-10-09 (fourth) research-log entry.
 >
+> **🗺️ 2026-10-10: the start-world switch, tested.** Entry 0x800's first field set to
+> `GRN_GhostRoom` (header-fixed container): GRB's boot load stalls at **34 %**, before the main
+> menu. With `TGT_WorldMap` in the same field, it reaches the menu and loads Auroa. So the field
+> drives the boot world; the Ghost Room is a stub with nothing to load. Next for the map question:
+> a world that *can* load. See the 2026-10-10 entry.
+>
 > **🗺️ 2026-10-09: what loads `TGT_WorldMap`.** Entry **0x800** `Game Bootstrap Settings`
 > (`GameBootstrap`, in `DataPC` and its patch) names the start world in its first field and keeps a
 > name→World registry. Wildlands' 0x800 has the same shape, pointing at `GRN_WorldMap`. Both exes

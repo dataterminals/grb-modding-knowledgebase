@@ -5828,6 +5828,49 @@ restore. The backup (`754F960E…`) was restored and verified after each failed 
   Whether it also wrote the `0` is unknown, so that conclusion is suspect too, but untested.
 
 ### NOT verified / open
-- The Ghost Room run with the fixed header: the actual world test.
+- ~~The Ghost Room run with the fixed header: the actual world test.~~ **Run 2026-10-10; see the
+  next entry.**
 - The STEP 1 cloth test, rebuilt with the fixed writer. Lane 2A's gate is open again, cleanly.
 - Why the field matters (presumably a buffer sized from it), and whether the second field is read.
+
+---
+
+## Entry — 2026-10-10 — The start-world field works: pointed at the Ghost Room, GRB's boot load stalls at 34 %
+
+**Trigger:** the world test the previous two entries set up. **A launch on a modified live
+install**, SylDesk, with the maintainer's go-ahead. The forge was the header-fixed Ghost Room repack
+from 2026-10-09: verified the morning of the test, with only entry 2048 differing from the backup
+and its first field `GRN_GhostRoom`. Nothing had changed overnight (`GRB.exe` still dated
+2026-10-08).
+
+### VERIFIED
+- **Launch path:** Steam started `GRB.exe`, which exited after 2 s while `UbisoftGameLauncher`
+  started. A second `GRB.exe` (pid 23280) followed at 09:08:00. The first process is a hand-off,
+  not a crash, and loggers must follow the second.
+- **It does not reach the main menu.** The boot load stalls at **34 %** on the loading screen. From
+  09:08:56: 611–613 MB read, then **0 reads**, working set flat at ~2.0 GB, about 1.2 cores busy,
+  responding. It was killed at 09:14 and the vanilla backup restored (SHA-256 `754F960E…`
+  identical), with the unpack folder's 0x800 file back to vanilla. The test forge is kept as
+  `…\DataPC_patch_01.forge.startworld-ghostroom-fixed`.
+- **The comparison is one field.** The fixed control (2026-10-09, same recompression, same
+  header, `TGT_WorldMap` in the field) reached the main menu at ~569 MB / 1.9 GB and loaded into
+  the world (3.96 GB read). This run differs only in the six bytes of that field, and stalls before
+  the menu.
+
+### INFERRED
+- **Entry 0x800's first field names the world GRB loads during boot, before the main menu.** The
+  menu itself waits for it. The Ghost Room stalls the load because GRB's `GRN_GhostRoom` is a
+  13,502 B stub World with a 229 KB forge, so there is nothing to stream. "The field selects the
+  start world" fits every observation, but a world that loads would prove it; none did.
+- **The 34 % stall matches July's** (2026-07-03: "~34 % into the post-title load, 1.98 GB, CPU
+  spinning, Responding-but-stalled"). The likely reading: 34 % is where the boot load streams
+  world-dependent data, and anything unreadable there spins rather than crashing. That covers a
+  `0`-header cloth in July and a world with no content now.
+- **For the Bolivia question:** the switch is data, not code. A start world GRB *can* load would
+  need real content: converted cells, terrain and a populated World. A stub is not enough.
+
+### NOT verified / open
+- A positive test: point the field at a world that exists and loads. The registry's
+  `TGT_PhotomatonWorld`, `PhotomatonWorld` and `PhotomatonWorld_SPW` have no forge-level `World`
+  entry in GRB; whether they live inside a container was not checked.
+- Whether the loading screen showed anything Ghost-Room-specific (not observed).
