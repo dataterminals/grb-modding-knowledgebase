@@ -23,14 +23,21 @@ record count is the forge's entry count minus the two sidecars):
     wrapper := u64 magic 0x1004FA9957FBAA33        (CompressedFileData's magic)
                u16 version 3 | u8 algorithm 0 (LZO1X) | u16 0x8000 | u16 0
                { u8 more=1 | u32 comp | u32 uncomp | u32 check | comp bytes }*
-               u8 0
     table   := u32 n | n x { u64 ID | u32 size | u32 offset } | u32 data_size | data
     record  := u16 0 | u16 k | k x { u64 ID | 3 bytes }       (at data[offset], size bytes)
 
-A block whose comp equals uncomp is stored raw. `check` is not zlib's adler32 of
-either side; it is read and not verified here. The 3-byte tail is `01 00 00` on
-every gear record looked at and `04 00 00` on the weapon parts in OrphanCells'
-cell record - its meaning is not established.
+Blocks hold <= 32768 decompressed bytes. `check` = Adler-32 seeded 0 (not 1) over the
+block's compressed bytes - ATK's `lzo_adler32`; verified on all 740 blocks of four
+vanilla forges (2026-10-10). Vanilla frames end on the last block's last byte: there
+is no closing `u8 0` (an earlier note said there was), and no vanilla block is stored
+raw. `unwrap()` still accepts both, treating comp == uncomp as raw. The 3-byte tail is
+`01 00 00` on every gear record looked at and `04 00 00` on the weapon parts in
+OrphanCells' cell record - its meaning is not established. Not every record starts
+`u16 0`: in MaungaNui_Split_patch_01, 893 of 1402 do (and are exactly 4 + 11k bytes); the
+other 509 start with 1..7+ and are longer (Cell45147_DataBlock: `01 00 01 00 …`, 5099 B,
+with ID-like u64s inside). That first u16 looks like a group count, but the grouped layout
+is not decoded, so `record_items()` misreads those records. `prefetch_write.py` copies
+records verbatim and does not need to parse them.
 
 This is a different frame from the .data containers' (Oodle, block table up
 front): the per-block `more` byte is what read_cfd() does not parse.

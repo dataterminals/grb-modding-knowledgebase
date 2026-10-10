@@ -1052,6 +1052,43 @@ the positions from the cloth cage lands within 0.12–0.45 mm (median) on five g
 
 ---
 
+## 🌎 `grw2grb.py` — convert Wildlands meshes and textures into GRB's formats
+
+The first piece of the Bolivia port. Both games ship 6,202 of the same entry IDs, so the same asset
+exists in both formats. Every rule in this tool was worked out from those pairs. It checks itself the
+same way: convert the Wildlands copy, compare it with GRB's own file.
+```
+python grw2grb.py selftest
+python grw2grb.py mesh    ENV-ARI-ALT-LAN-CIV-SantaMuerteBig-A_LOD0 --drop-uv1 -o out
+python grw2grb.py texture ENV-SPE-Religious-SantaMuerte-A-BonesDecals_DiffuseMap --with-mips -o out
+```
+```
+Mesh        1315 shared entries: re-baked 819, same length 343, identical 153
+TextureMap  1378 shared entries: same length 735, re-baked 424, identical 219
+PASS - 'identical' means byte-for-byte GRB; the rest differ in content Ubisoft re-baked
+```
+**What "identical" proves.** 153 meshes and 219 textures come out byte-for-byte equal to GRB's
+files. The others differ only where Ubisoft re-exported the asset (new vertex counts, re-encoded
+pixels, a re-assigned category), never in a field the converter writes wrong.
+
+**What it converts.**
+- **Meshes:** header fields renumbered and inserted; vertex and index data copied as they are.
+  `--drop-uv1` handles Wildlands' 28-byte two-UV layout, which has no byte-identical GRB twin.
+- **TextureMaps:** a header field dropped, a size field added, pixel-format numbers shifted.
+- **Top mips** (`--with-mips`): copied unchanged; the pixel data is identical in both games.
+
+Each output is a GRB container named `1_-_<name>.data`, ready for an ATK unpack folder.
+
+**What it doesn't (yet).** Materials are re-templated, not converted. GRB moved Wildlands materials
+onto new shaders and kept the same textures; the library's `transplant_material` clones a real GRB
+material and points its texture slots at the Wildlands textures. Terrain, entities, collision and
+navmesh are next (see `meta/research-log.md`, 2026-10-10).
+
+It caps its own memory (2 GB by default, `--max-mb` to change) so a bad input can't take the machine
+down. READ-ONLY on both installs; install paths from `--grw`/`--grb` or `GRW_INSTALL`/`GRB_INSTALL`.
+
+---
+
 ## 📦 `prefetch_inspect.py` — what a forge preloads alongside each entry
 
 Every forge carries one **PrefetchingFileInfos** table (entry ID 145): for each entry, the other IDs
@@ -1077,3 +1114,24 @@ The table is **LZO1X**-compressed, not Oodle, so it needs no game DLL. `--instal
 forge in the folder so listed IDs print with names. The format and what's still unknown are in the
 module docstring and in [`../reference/grbmod-package-format.md`](../reference/grbmod-package-format.md#prefetch-records).
 READ-ONLY.
+
+## ✍️ `prefetch_write.py` — give new or overriding entries their prefetch records
+
+**Every entry you add to a GRB patch forge needs a record in that forge's own 145 table.** All of
+Ubisoft's patch entries have one. A world-cell override without one crashed GRB on the save load,
+and the same override with the base record copied in loaded and played (2026-10-10, W2a/W2b in
+[`../meta/research-log.md`](../meta/research-log.md)). ATK 1.3.1 repacks the stale 145 it
+unpacked, so it never adds them.
+
+```
+python prefetch_write.py <forge or .PrefetchInfo> <donor forge> <ID> [<ID> ...] -o out.PrefetchInfo
+```
+
+As a library, `add_records()` copies donor records and `add_raw(wrapped, {ID: bytes})` adds hand-built
+ones. `make_record([(ID, TAIL_TEMPLATE | TAIL_TEXTURE), ...])` builds the vanilla Mesh pattern, and
+`make_record([])` the empty record TextureMaps and CompiledMips carry. Existing records stay byte for
+byte. New rows are inserted in ID order, and the table is wrapped like Ubisoft's: 32 KB LZO1X blocks
+from a small built-in encoder, each block's check Adler-32 seeded 0 over the compressed bytes.
+Every block is round-tripped through `prefetch_inspect`'s decoder before anything is written. Drop
+the output file over the unpacked `<N>_-_PrefetchingFileInfos.PrefetchInfo` (back it up first) and
+repack with ATK as usual. Writes only the `-o` file.

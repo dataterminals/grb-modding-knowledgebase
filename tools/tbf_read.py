@@ -7,7 +7,11 @@ Wildlands (`PCgr_terrainlin0/1.tbf`, file v1, node v14) and Breakpoint
     python tbf_read.py info  <file.tbf>
     python tbf_read.py node  <install_dir> <level> <row> <col> [--world gr|tgt] [--png out.png]
     python tbf_read.py selftest [--grw <Wildlands dir>] [--grb <Breakpoint dir>] [--n 200]
+    python tbf_read.py ground <install_dir> x y [x y ...] [--world gr|tgt]   # metres at world (x, y)
+    python tbf_read.py grid   <install_dir> cx cy size out.npy [--step 0.5] [--world gr|tgt]
 
+`ground` and `grid` use the Heightfield class (world -> node mapping and height
+scale verified against terrain-placed rocks; see the class docstring).
 `node` finds the node in whichever `<prefix>_terrainlin*.tbf` holds it, prints
 every block, and with --png writes a contact sheet of its layers (needs Pillow
 and numpy; GRB's colour/parameter textures also need the game's
@@ -193,6 +197,79 @@ def find_files(install_dir, world=None):
     if len(prefixes) > 1:
         raise SystemExit(f"several worlds here ({', '.join(sorted(prefixes))}); pass --world")
     return [Tbf(p) for p in files]
+
+
+# ---------------------------------------------------------------- ground height
+
+# Terrain width in metres per .tbf version. GRB (v2) states it in header `a` (32768); GRW (v1)
+# does not, and 16,000 m was measured against 270 terrain-placed rocks (notes-terrain-tbf.md,
+# "World mapping and height scale").
+EXTENT_V1 = 16000.0
+
+
+class Heightfield:
+    """Ground height in metres at world (x, y): bilinear on the leaf level of a world's .tbf set.
+
+    The terrain is a square `extent` metres wide centred on the world origin; x runs along node
+    columns and y along node rows. gx = (x + extent/2) / extent * samplesAcross, leaf node
+    col = gx // 128, in-node sample = gx - 128*col + 2 (the node grid is 132 wide: 2-sample
+    apron), likewise y. Verified against terrain-placed rocks: GRB median miss 0.53 m (98 rocks),
+    GRW 1.2 m (270). Only the zlib height chunk of each node is read; no Oodle needed.
+
+        ground = Heightfield(find_files(r"...\\Ghost Recon Breakpoint", world="tgt"))
+        z = ground.z(-4651.0, 6228.0)
+    """
+
+    def __init__(self, tbfs):
+        self.files = list(tbfs)
+        t = self.files[0]
+        self.extent = float(t.a) if t.version >= 2 else EXTENT_V1
+        self.leaf = t.levels - 1
+        self.tiles = 2 ** self.leaf
+        self.across = self.tiles * 128
+        self.scale = t.height_range / 2 ** 20
+        self._nodes = {}
+
+    def node(self, row, col):
+        """The 132 x 132 raw heights of one leaf node (row-major), cached."""
+        if (row, col) not in self._nodes:
+            i = self.files[0].index(self.leaf, row, col)
+            t = next((t for t in self.files if t.has(i)), None)
+            if t is None:
+                raise KeyError(f"leaf node ({row}, {col}) is in none of the .tbf files")
+            d = t.node_bytes(i)
+            magic, ver, flag, zlen = struct.unpack_from("<HHBI", d, 0)
+            if magic != FEED or flag != 1:
+                raise ValueError(f"node ({row}, {col}): frame {magic:#x} flag {flag}")
+            self._nodes[(row, col)] = decode_heights(zlib.decompress(d[9:9 + zlen]))
+        return self._nodes[(row, col)]
+
+    def grid_coords(self, x, y):
+        f = self.across / self.extent
+        return (x + self.extent / 2) * f, (y + self.extent / 2) * f
+
+    def z(self, x, y):
+        gx, gy = self.grid_coords(x, y)
+        if not (0 <= gx < self.across and 0 <= gy < self.across):
+            raise ValueError(f"({x}, {y}) is outside the {self.extent:.0f} m terrain")
+        c, r = int(gx // 128), int(gy // 128)
+        h = self.node(r, c)
+        lx, ly = gx - 128 * c + 2, gy - 128 * r + 2
+        x0, y0 = int(lx), int(ly)
+        fx, fy = lx - x0, ly - y0
+        k = y0 * 132 + x0
+        v = (h[k] * (1 - fx) * (1 - fy) + h[k + 1] * fx * (1 - fy)
+             + h[k + 132] * (1 - fx) * fy + h[k + 133] * fx * fy)
+        return v * self.scale
+
+    def grid(self, cx, cy, size, step=0.5):
+        """Heights (metres, float32 numpy array [row = y, col = x]) of a size x size metre square
+        centred on (cx, cy), sampled every `step` metres from (cx - size/2, cy - size/2)."""
+        import numpy as np
+        n = int(round(size / step)) + 1
+        xs = cx - size / 2 + step * np.arange(n)
+        ys = cy - size / 2 + step * np.arange(n)
+        return np.array([[self.z(x, y) for x in xs] for y in ys], dtype=np.float32), xs, ys
 
 
 # ---------------------------------------------------------------- nodes
@@ -390,8 +467,33 @@ def main():
     p.add_argument("--world", help="world prefix after 'PC', e.g. gr or tgt"); p.add_argument("--png")
     p = sub.add_parser("selftest"); p.add_argument("--grw"); p.add_argument("--grb")
     p.add_argument("--n", type=int, default=200); p.add_argument("--seed", type=int, default=1)
+    p = sub.add_parser("ground", help="ground height (m) at world x y [x y ...]")
+    p.add_argument("install_dir"); p.add_argument("xy", type=float, nargs="+")
+    p.add_argument("--world", help="world prefix after 'PC', e.g. gr or tgt")
+    p = sub.add_parser("grid", help="ground heights of a square as a float32 .npy [row = y, col = x]")
+    p.add_argument("install_dir"); p.add_argument("cx", type=float); p.add_argument("cy", type=float)
+    p.add_argument("size", type=float); p.add_argument("out")
+    p.add_argument("--step", type=float, default=0.5); p.add_argument("--world")
     a = ap.parse_args()
-    {"info": cmd_info, "node": cmd_node, "selftest": cmd_selftest}[a.cmd](a)
+    {"info": cmd_info, "node": cmd_node, "selftest": cmd_selftest, "ground": cmd_ground,
+     "grid": cmd_grid}[a.cmd](a)
+
+
+def cmd_ground(a):
+    if len(a.xy) % 2:
+        raise SystemExit("give x y pairs")
+    hf = Heightfield(find_files(a.install_dir, a.world))
+    for x, y in zip(a.xy[0::2], a.xy[1::2]):
+        print(f"{x:.2f} {y:.2f} -> {hf.z(x, y):.3f} m")
+
+
+def cmd_grid(a):
+    import numpy as np
+    hf = Heightfield(find_files(a.install_dir, a.world))
+    g, xs, ys = hf.grid(a.cx, a.cy, a.size, a.step)
+    np.save(a.out, g)
+    print(f"{a.out}: {g.shape[0]} x {g.shape[1]} float32, x {xs[0]:.2f}..{xs[-1]:.2f}, "
+          f"y {ys[0]:.2f}..{ys[-1]:.2f} (row = y, col = x), {g.min():.2f}..{g.max():.2f} m")
 
 
 if __name__ == "__main__":

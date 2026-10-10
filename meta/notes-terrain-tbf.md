@@ -125,6 +125,30 @@ from 250 MaungaNui cells.
   header. That is open, and GRB's third header field `64` would have no integer equivalent
   (62.5 m tiles).
 
+#### Ground-height sampler: `tbf_read.Heightfield` (2026-10-10)
+
+`Heightfield(find_files(install, world)).z(x, y)` returns metres at world (x, y). It samples the
+leaf level bilinearly, using the mapping and scale above, and reads only each leaf node's zlib
+height chunk. `tbf_read.py ground` takes points; `tbf_read.py grid` writes a `.npy` square.
+
+> **Verified (GRW):** the class reproduces the rock check exactly: 174 small/rough
+> terrain-placed rocks, median |dz| 1.20 m.
+
+> **Verified (GRB, Sunken Clipper Bay bivouac, Auroa):** a 300 m grid centred on (−4651, 6228)
+> covers 36 leaf nodes and spans 48.9–264.6 m.
+>
+> The check compared Ubisoft's 124 entities within 200 m, read from the *base*
+> `MaungaNui_Split` forge and its 9 cells around Cell45147:
+> - 80 sit within ±0.5 m of the terrain: the bivouac's cinematic anchors, its garage and the
+>   field booklet. The main anchor is 0.18 m below the sampled ground.
+> - 11 small camp props sit 0.5–1.5 m below it.
+> - Every entity more than 0.5 m above the ground is a volume, trigger, obstacle or bridge part.
+>
+> Median |dz| over all 124 is 0.18 m.
+
+The base forge was used on purpose. The patch copy of Cell45147 was the port's test host cell,
+and its transplanted objects floated.
+
 #### Is the 1500 m range hardcoded in GRB? (checked 2026-10-10, inconclusive but encouraging)
 - A streamed scan of `GRB.exe` (536 MB) finds **no `1500/2^20` constant**. Its two raw byte matches
   (`00 80 BB 3A`) both sit inside instructions (`80 BB 3A …` = `cmp byte ptr [rbx+…]`). There is no

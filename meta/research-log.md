@@ -5874,3 +5874,426 @@ and its first field `GRN_GhostRoom`. Nothing had changed overnight (`GRB.exe` st
   `TGT_PhotomatonWorld`, `PhotomatonWorld` and `PhotomatonWorld_SPW` have no forge-level `World`
   entry in GRB; whether they live inside a container was not checked.
 - Whether the loading screen showed anything Ghost-Room-specific (not observed).
+- ⚠️ **Corrected the same day (next entry):** GRB's `GRN_GhostRoom` is not a stub. Its forge holds
+  a small, real world, so "nothing to stream" does not explain the stall.
+
+---
+
+## Entry — 2026-10-10 (second) — Porting Bolivia: every asset layer measured, and a mesh converter that reproduces GRB's own bytes
+
+**Trigger:** the maintainer set the goal "see if we can port Bolivia from GRW into GRB". **Read-only
+on both installs** until the staged test at the end, SylDesk. Scratch scripts stayed in the session
+scratch. Method: the two games share 6,202 entry IDs, so the same asset exists in both serializations.
+Every format rule below was derived from those pairs and then checked by converting the Wildlands copy
+and comparing it with GRB's.
+
+### Correction — GRB's Ghost Room is a real world, and it looks like the main-menu scene
+- `DataPC_GRN_GhostRoom.forge` (229 KB) holds 10 entries: the `World` (container 13,502 B; the
+  `World` payload alone is 10,728 B), a `Season`, a `MeshShape`, and four cells (`Cell00119`,
+  `Cell00120`, `Cell00136`, `Cell00340`). These hold 59 entities, lights, `Player_Start`, the menu
+  particle FX `GFX_UI_Menu-Swamp/Forest/Dust/Ashes`, a `BGFTUESpawner`, `Placeholder_Avatar_*` and
+  keylight/rebound rigs named CHR/FAC/LOA/SKI/GAS/MEN. The `_dx11`/`_vulkan` forges add the compiled
+  shader `SHD_UI_GhostRoom_Emissive`.
+- The only geometry is one mesh, `ENV-TPL-GhostRoom_LOD0` (in `DataPC_Resources.forge`; a ±45 m
+  emissive shell), drawn through LODSelector `ENV-TPL-GhostRoom` and entity `TPL-GhostRoom_001`
+  in `Cell00119`.
+- Its World, Season and cell IDs equal Wildlands' Ghost Room's (e.g. `Cell00120` 252563259930).
+- **Inferred:** this is the scene behind GRB's main menu and character screens (the FX and light rig
+  names). The previous entry's "13 KB stub" reading was the container size, not the world. The
+  34 % stall is therefore unexplained. One candidate is the start world and the menu world being the
+  same world.
+
+### VERIFIED — what Bolivia is made of
+`DataPC_GRN_WorldMap.forge` + `_patch_01`: 63,351 + 31,025 entries, 4,407,097 + 4,255,451
+resources, 36.2 + 26.5 GB decompressed, **106 types, 0 decode errors, every walk complete**.
+- **By bytes:** `PilotNavMeshResource` (navmesh) 17.5 GB, `CompiledMip` 9.2, `EntityGroup` 8.3,
+  `Mesh` 6.3, `#2285005914` 3.7 (23,040, about one per cell; inferred baked GI, since GRB's twin
+  carries `GIDynResource` instead), `TextureMap` 3.0, `BulkMesh` 2.4, `Entity` 2.0, `SplashFX` 1.9,
+  `MeshShape` 1.8, `BulkActionPack` 1.6, `MaterialTemplate` 1.35 (counts summed over both forges,
+  so patched assets count twice).
+- **Absent from the two GRB world forges sampled** (Bootstrap, Windy): `BulkMesh`, the `Bulk*`
+  animation packs, `ShadowRigidBody`, the `Cinematic*` and `AtomReplace*` families. `Mesh`,
+  `TextureMap` and `CompiledMip` are absent too, but only because GRB keeps them in
+  `DataPC_Resources` (2026-10-08).
+
+### VERIFIED — textures port almost as-is
+- **`CompiledMip` (pixel data) is byte-identical** in the three shared samples small enough to diff
+  (262,174 to 1,048,606 B).
+- `TextureMap`: one u32 moves (GRW has an extra u32 near offset 42; GRB adds one near the end of the
+  header). `TextureMapSpec`: one GRW-only u32, plus an enum byte that reads 9 in GRW and 10 in GRB
+  in three places.
+- **A `TextureMap` converter, validated on the 1,378 shared textures:** **219 byte-identical**, 169
+  more that differ only in `UserCategory`, 391 only in pixel data or `UserCategory`, 424 re-encoded
+  by Ubisoft at a different size. The remainder differ in re-baked top-mip IDs, pixel data and flags. The rules:
+  - Drop the GRW-only `Category` u32 after `MapType` (payload offset 45).
+  - In the inline `CompiledTextureMap` object (type `0x13237FE9`; per ATK's GRB reader 12 × u32
+    `PlatformVersion … Alignment`, then the pixel blob), GRB inserts a u32 = `4 + L` before the blob's
+    `i32 L`. That is the same skip-size pattern as the mesh rules. Fields can follow the blob.
+  - **Pixel formats 0–8 keep their number; 9 and up shift by one** (GRB inserted a format at 9).
+    Seen: 9 → 10 in 709 same-size textures, 10 → 11, 11 → 12, 14 → 15, 19 → 20. The remap applies
+    in the header (offset 25) and inside the `CompiledTextureMap`.
+- **`TextureSet`: same format.** 305 of 717 shared sets are byte-identical. The rest differ in a
+  reference's kind byte (`01 01 <id>` vs `01 02 <id>`). GRB itself uses both kinds (614 and 735 of
+  its references, all to top-level entries), so it is a per-reference choice and sets cross over
+  unchanged.
+- **Ubisoft's own template remap, from 400 material pairs of shared meshes:** `SHD_Basic` →
+  `SHD_BAS_DielectricMetallic_v2_TEMP` (273) or `SHD_BAS_Dielectric` (158); `SHD_Basic_Metallic*`
+  and `SHD_Blend_*` → `SHD_BAS_DielectricMetallic_v2_TEMP`; `SHD_Nat_Veg_*` → `SHD_NAT_Veg_*`;
+  `SHD_Weapon_*` → `SHD_W_Body_Main`; `VEH_Body*` → `TGT_VHC_Body`. **GRB's material for a shared
+  prop points at the same TextureMap IDs as its Wildlands twin**: Ubisoft kept the textures and
+  swapped the templates, and the GRB templates use the diffuse and normal maps (GRW specular maps
+  drop out). Both target templates are top-level entries in `DataPC.forge`, and their compiled
+  shaders are in `DataPC_vulkan`/`dx11`.
+
+### VERIFIED — meshes convert mechanically (1,315 shared meshes)
+- **Rules:**
+  - Drop the GRW-only u32 at payload offset 13.
+  - Renumber the vertex format and copy the vertex and index buffers.
+  - `ClusteredMeshData` and `MeshData` each gain a u32 holding the byte size of the length-prefixed
+    blobs that follow (`3008 = 2000 + 960 + 36 + 3 × 4`).
+  - Tail: GRW `8 bools | 2 GRW-only bools | i32 DecalType | 3 bools | 2 × i32 | i32 UserCategory`
+    (29 B); GRB `8 bools | i32 DecalType | 3 bools | 3 × i32 | u8 | i32 UserCategory` (32 B).
+- **Result: 153 meshes convert byte-for-byte identical to GRB's file.** Every other difference
+  falls inside vertex/index data, extents or `UserCategory`, all of which Ubisoft re-baked. About
+  860 meshes have different vertex counts in GRB. No systematic difference is left.
+- **Format map, where the layout is the same:** GRW 0 → GRB 0 (32 B), 2 → 4 (44), 6 → 10 (24),
+  8 → 12 (20), 9 → 13 (24), and inferred 1 → 2 (40, Joint8). **Not GRW 7 → GRB 11:** both are
+  28 B, but GRB 11 is `pos | normal | color | color | uv | uv` (no tangent; bytes 12–15 are not
+  unit vectors), while GRW 7 is `pos | normal | tangent | color | uv | uv`.
+- **Static vertex position = `xyz × w / 32767`, with `|w|` = QuantizationFactor.** The sign of `w`
+  flips per vertex and xyz flips with it, so the sign is free to carry the bitangent handedness
+  (inferred). `UnitSphere` stores `(−5604, 0, −15396, −2)` in GRW and `(5604, 0, 15396, 2)` in
+  GRB: the same point. (`grw_mesh.py`'s skinned decode is unaffected.)
+- **Draw-primitive descriptor (36 B):** `vec3 center | vec3 half | u32 stride | u8 1 + u24 index
+  count | u32 start index`. `VertexOffsetPerDrawPrim` is in 4-byte units (vertex index × stride / 4).
+
+### VERIFIED — materials are keyed by name
+- ATK's GRB `Material` reader ends with `i32 n` × `{u32 nameHash, DynamicProperty}`, so parameters
+  are looked up by name, not by position. GRB packs a mesh's `Material`s and `MaterialTemplate`
+  inside the mesh's own container.
+- About 150 GRW templates (entry level) against 124 in GRB. **27 share a name** (`SHD_Basic`,
+  `SHD_Basic_Metallic`, `SHD_ProxyLOD`, the `VEH_*`, `CHR_*` and weapon-scope ones). GRB's compiled
+  shaders are `CompiledMaterialTemplateContainer`s named like their template (123 of 124), in
+  `DataPC_dx11/vulkan` and the per-world `_dx11/_vulkan` forges. GRW embeds compiled shaders in the
+  template (1.35 GB).
+- **Inferred:** Wildlands materials move by remapping about 150 templates onto GRB's (by name and
+  category) and carrying the parameters across by name hash. Reusing GRW's compiled shaders is
+  not plausible.
+
+### VERIFIED — terrain is the same technology, one version apart
+- `.tbf` header: `FBT\0 | u32 version | u32 | u32 | u32 | f32 | u32 nodes`. GRW `1, 16, 2048, 1024,
+  3000.0, 87381`; GRB `2, 32768, 65536, 64, 1500.0, 349525`. GRW has one table of u64 offsets per
+  node. GRB has 699,050 entries, exactly two tables of 349,525.
+- **Every node payload in both games is `ED FE | u16 version | 01 | u32 length | zlib chunks`**, with
+  version **14 in GRW and 16 in GRB**. A GRW node decompresses to roughly 120 KB in about six
+  chunks, among them 33,808-byte and 8,452-byte ones.
+- **Inferred:** 33,808 = a 130 × 130 u16 heightmap (128 + 2 border) + 8 bytes, which makes both
+  games 64 m tiles at 0.5 m per sample. The trees differ by one level because GRB's map is twice
+  as wide, so Bolivia's level L lands on GRB's level L + 1 with an index offset.
+- The world-colour maps (`gr.wmap` raw BC1, `tgt.wmap` unknown codec) are unchanged from
+  2026-10-08.
+- **Node anatomy, from exact node spans** (node table offsets sorted; GRW 87,381 distinct offsets,
+  median span 66,886 B; GRB 348,433, median 7,192 B):
+  - **GRW v14:** frame, then a header zlib chunk (34,854–38,538 B out, starting `ff 7f`). Then **a
+    20-byte table of five u32 chunk sizes**: the last four equal the next chunks' compressed
+    lengths exactly (`19683, 3403, 1247, 8238` on node 0). Then zlib rasters of 33,808 / 8,452 /
+    8,452 / 33,808 B, a length-prefixed run-length layer (`ff <count> <value>` runs of small values,
+    inferred material indices), a 33,808 B layer that is mostly `ff`, and a trailing raw block.
+  - **GRB v16:** frame and header chunk, then **no size table**: a length-prefixed run-length layer
+    follows straight away. The second half of GRB's node table also holds values that are not file
+    offsets. So v14 → v16 reorganized the node, it did not just renumber it. Not decoded further.
+
+### Staged — Phase A: the Santa Muerte statue in GRB's menu scene (not yet run)
+- **Subject:** `ENV-ARI-ALT-LAN-CIV-SantaMuerteBig-A_LOD0` (276140946872), a 30.6 m robed figure
+  on a steel lattice tower, in GRW format 7. Converted to GRB format 10 by dropping each vertex's
+  second UV set (stride 28 → 24; strides in the clustered header and descriptors, vertex offsets
+  ×6/7). All four submeshes use GRB's `TPL_Ghostroom` material, so the statue renders with the
+  menu room's own emissive shader. Decoded back as GRB format 10: 7,980 vertices, 0 non-unit
+  normals or tangents, every index in range, and the bounding box equals the header's. A rendered
+  silhouette shows the statue intact.
+- **Files** (also in `D:\GRB_Backups\2026-10-10_bolivia-phaseA\`, next to a verified backup of the
+  vanilla forge, SHA-256 `70ED54BE…F473`):
+  - `1_-_ENV-ARI-ALT-LAN-CIV-SantaMuerteBig-A_LOD0.data` (153,909 B, `085BA095…`): the converted
+    mesh plus byte-identical copies of `TPL_Ghostroom` and `SHD_UI_GhostRoom_Emissive`.
+  - `Cell00119_DataBlock.data` (733 B, `0C330ADC…`): GRB's cell with the LODSelector's LOD0 and the
+    entity's mesh reference retargeted to the statue, and the LOD0 distance raised from 20 to
+    5000 m. Same sizes, same metadata block.
+
+### Staged — Phase B: the same statue with its own Bolivia textures (not yet run)
+- The statue Mesh keeps its own material IDs. Its four materials are clones of GRB's
+  `BAS_GEN_MetalRustA`, Ubisoft's own conversion of the statue's first material
+  (`BLE_ENV-GEN-MetalBareSteel-A_MetalRustBase-A`), on `SHD_BAS_DielectricMetallic_v2_TEMP`. In
+  each clone the ClassID, the TextureSet reference and the diffuse/normal slots (payload 650 / 719)
+  are pointed at the statue's textures. The decal material gets `Default Normal Texture` (id 9,
+  identical in both games), and the bolts keep their null TextureSet.
+- Package: the mesh container (mesh, 4 materials, the template, 4 TextureSets), 7 converted
+  TextureMaps, the 10 top-mip `CompiledMip`s they reference (copied unchanged), and the same
+  `Cell00119` as Phase A. 19 files, 13,593,191 B, in
+  `D:\GRB_Backups\2026-10-10_bolivia-phaseA\phase_b\`.
+- **Known compromises:** the bolts' and decals' alpha test is not carried over (the skeleton is
+  opaque), and the blend material shows only its rust layer.
+
+### Tool — `tools/grw2grb.py`
+- The mesh and texture rules above, the container builder (32768/32768 header), the format-7
+  UV drop, `transplant_material`, and a `selftest` that re-runs the comparison over both installs
+  (memory-capped at 2 GB). Selftest result: Mesh 153 identical / 343 same length / 819 re-baked;
+  TextureMap 219 / 735 / 424; 0 conversion errors. Its `mesh` and `texture` commands reproduce the
+  Phase B files byte for byte.
+
+### NOT verified / open
+- Phase A in game: does GRB draw a converted Wildlands mesh, and does a mesh in a new Ghost Room
+  forge entry resolve by ID? Phase B adds textures and materials on top. **Run the same day; see
+  the next entry.**
+
+---
+
+## Entry — 2026-10-10 (third) — In game: the Ghost Room is not the menu scene, and a statue in Auroa crashed the load
+
+**Trigger:** the staged Phase A/B tests. **Writes to the live install and five launches**, SylDesk,
+with the maintainer repacking in ATK each time. Every forge was backed up first (SHA-256 verified),
+and every repack was compared with its backup entry by entry before launch. Both forges touched
+are vanilla again at the end (verified).
+
+### VERIFIED — GRB accepts hand-built containers as new forge entries
+- Each repack matched the staged files byte for byte. All untouched entries were identical, and
+  every new entry was keyed by its first resource's ClassID: Ghost Room 18 new entries; MaungaNui
+  patch 19 new + 1 overriding a base-forge cell.
+- **GRB booted and loaded the world normally three times** with modified Ghost Room forges (A, A2,
+  A3). The read curve matched vanilla (~570 MB / 1.9 GB at the menu, ~3.9 GB in the world). A
+  missing prefetch record for a new entry did not matter.
+- Windows' last-access times show `DataPC_GRN_GhostRoom.forge` and its `_dx11` forge read at boot,
+  with the menu.
+
+### VERIFIED — the menus are not built from the Ghost Room's cells
+- The statue was placed at the room origin (A), 8 m behind the character placeholder (A2), and
+  centred on it (A3). A3 also moved the five `GRN_Ghostroom_MEN_*` light entities 1000 m up.
+  **Nothing changed** on the main menu, Identity, Customize or Loadout: no statue, and the
+  character's lighting was identical to before. The menus' dark studio comes from somewhere else.
+- `DBGhostRoom` (gameplay DB, `DataPC_patch_01`) is a table of UI slots pointing at the Ghost
+  Room's `Placeholder_*` entities. `TGT_PhotomatonWorld` has no forge; "Photomaton" appears only
+  in an item-icon texture name.
+
+### VERIFIED — the Auroa test crashed while the save loaded
+- **W1:** the Phase B statue replaced the tent at Sunken Clipper Bay bivouac (MaungaNui
+  `Cell45147`, prop set `ENV-GLO-PROPSET_Bivouac-Props_B_004`). The tent's LODSelector LOD0 and
+  the prop set's direct mesh reference point at the statue, with a 5000 m LOD0 reach. The cell went
+  into `MaungaNui_Split_patch_01` (it has no patch copy in vanilla), with the original metadata
+  block kept (4 of its 381 rows carry a dependency index).
+- GRB reached the menu normally, then **crashed while loading the save** at that bivouac (crash
+  handler files at 12:09:15, with reads at ~1.9 GB). `graphicstatedump.txt` holds no state.
+- **Ruled out:** the vertex layout. The tent is also format 10 / 24 B / 4 draw prims / 4
+  submeshes, and GRB's own tent confirms `VertexOffsetPerDrawPrim` = vertex index × 6 and a
+  descriptor stride of 24, as written.
+- **Candidates:**
+  - (1) overriding a whole cell in a patch forge without updating the patch's MultiForge
+    bookkeeping;
+  - (2) the statue's IDs present in two forges at once (the Ghost Room still held A3);
+  - (3) content: materials (one null TextureSet), textures, or the 5000 m reach.
+- **Next:** control **W2a** puts Ubisoft's untouched `Cell45147` bytes into the patch forge, with
+  no statue and the Ghost Room restored. A crash there means (1).
+- Entity, EntityGroup, LODSelector, collision and light layouts. The Ghost Room twins differ by
+  inserted and removed fields, mixed with content changes. Not yet separated.
+- Terrain node v14 → v16 contents, GI, navmesh, `BulkMesh`, and GRB's 34 % stall when booting a
+  non-Auroa world.
+
+## Entry — 2026-10-10 (fourth) — A Wildlands statue renders in Breakpoint's world: a cell override needs its own prefetch record
+
+**Trigger:** the W2a control from the previous entry. **Writes to the live install and three
+launches** (W2a, W2b, W3), SylDesk, with the maintainer repacking `MaungaNui_Split_patch_01` in ATK
+1.3.1 each time. The vanilla patch forge stays backed up (SHA-256 `20BA95E3…8638`), and every
+repack was compared with it entry by entry before launch. At the time of writing the install holds
+**W3**, and the Ghost Room forge is vanilla.
+
+### VERIFIED — the packaging crashed W1, not the statue
+- **W2a** = Ubisoft's untouched `Cell45147_DataBlock` bytes as a new patch entry, with no statue
+  and the Ghost Room restored. **It crashed the same way as W1** (menu fine, then the save load
+  died at ~1.9 GB read). With zero content changes, candidate (1) family wins: the override's
+  packaging.
+- **What Ubisoft ships with a cell override:** nothing but the cell. 571 cell numbers appear in
+  the vanilla patch only as their `GridCellDataBlock`. The patch has no
+  `MultiForgeOriginalTargetInjectionInfo`, although the base has exactly one per cell (23,990 of
+  each).
+- **The difference is the prefetch table:** all 607 of Ubisoft's cell overrides have a record in
+  the *patch's* own `PrefetchingFileInfos` (145), and each one is byte-identical to the base
+  record. The only patch entries without a record are the sidecars 16 and 145. ATK 1.3.1 repacks
+  the stale 145 it unpacked, so our cell had none. (Its base record is 5,099 B.)
+- **W2b** = W2a plus `Cell45147`'s base record added to the patch 145 (and nothing else).
+  **It loaded and played:** 5.2 GB streamed, all menus and the bivouac fine. So **a world-cell
+  override in a patch forge needs its own 145 record in that forge.** This corrects the previous
+  entry's "a missing prefetch record for a new entry did not matter": the Ghost Room's new entries
+  were simply never loaded.
+
+### VERIFIED — W3: GRW geometry and textures render in a GRB world cell
+- **Contents:** W1's cell edit (tent LODSelector LOD0 and the prop set's direct mesh reference →
+  statue, LOD0 reach 5000 m), plus the statue mesh, 7 TextureMaps and 10 CompiledMips as new
+  entries. The 145 table got 19 new records: the cell (its base record with the tent mesh ID at
+  offset 1557 swapped for the statue's), the statue mesh (template + its 7 textures, vanilla Mesh
+  pattern), and empty records for every TextureMap and mip (as vanilla's are).
+- **Container cleanup** before W3: the Phase B statue container carried an inline copy of GRB's
+  global template `SHD_BAS_DielectricMetallic_v2_TEMP` under its global ID (dropped; vanilla
+  meshes list the template in their 145 record instead). `ENV-GEN-MetalBareSteel-A_Set` pointed at
+  three GRW-only textures (dropped; the blend material now uses `ENV-GEN-MetalRustBase-A_Set`).
+  The MetalRust set's specular slot pointed at a GRW-only texture (nulled). A scan of every
+  ClassID in the 19 entries against GRB's index found only the intended `Cell45147` collision.
+- **Result:** no crash (~4.5 GB streamed). The maintainer saw the statue on the **bivouac menu's
+  background, where the tent stood**: beige canvas-textured beams in an X pattern, i.e. Wildlands
+  `FabricCanvasDirt` diffuse + normal maps on Wildlands geometry, drawn by a GRB shader template.
+  This is the first Wildlands asset seen rendering inside Breakpoint.
+
+### VERIFIED — prefetch (145) format, now writable
+- **Block check = Adler-32 seeded 0 over the compressed bytes** (ATK's `lzo_adler32`). It holds on
+  all 740 blocks of `MaungaNui_Split`, its patch, `DataPC_patch_01` and `DataPC_GRN_GhostRoom`.
+  Vanilla frames end on the last block's last byte: **there is no closing `u8 0`**, contrary to
+  the 2026-10-07 note. No vanilla block is stored raw, and blocks hold ≤ 32,768 decompressed bytes.
+- ATK 1.3.1's own 145 writer differs from Ubisoft's: one LZO1X-999 block holding the whole table,
+  the table length where Ubisoft writes 0x8000, and no closing byte.
+- **Record patterns:** a GRB Mesh lists its MaterialTemplates (tail `01 00 00`) and TextureMaps
+  (`02 00 00`). TextureMaps and CompiledMips have empty 4-byte records. A cell record lists its
+  direct dependencies: `Cell45147` names the tent mesh, not the tent's textures. **GRW uses the
+  identical record format.** The GRW statue record = 2 templates + 9 textures, same tails, so
+  Bolivia's own records can be ported with a re-ID.
+- About a third of records (509 of 1,402 in the MaungaNui patch, cells among them) start with a
+  non-zero u16 and use a grouped layout that is not decoded yet. Copying them verbatim works (W2b).
+- New tool [`../tools/prefetch_write.py`](../tools/prefetch_write.py): adds records (donor copies
+  or hand-built) without touching existing ones, and wraps the table like Ubisoft does (32 KB
+  LZO1X blocks from its own literal + M3-match encoder, round-tripped through `prefetch_inspect`).
+
+### VERIFIED — what ATK 1.3.1 writes into a forge index (decompiled `ForgeEntry` / `FileSet`)
+- The 192-byte info record: `LengthOnDisk | UMACHash u64 | EngineVersion | Extension |
+  RevisionNumberData | RevisionNumberAttributes | next | prev | Parent | TimeStamp | Name[128] |
+  SCCStatusData | MetaFileKey u64 | SCCStatusAttributes | IsHidden`.
+- ATK rebuilds **every** entry on repack: `IsHidden = 1`, both SCC fields `2`, `UMACHash` = CRC64 of
+  the file *name*, `TimeStamp` = now, one fileset. The last entry's `next` = entry count instead
+  of −1: `WriteToFile27` tests `if (i == Entries.Length)`, which can never be true. Ubisoft's
+  forges carry `4 / 4 / 0`, a second empty fileset reserving the next index range, and −1 on the
+  last entry.
+- W2b and W3 ran with all of that, so none of it blocks a world patch forge.
+
+### INFERRED
+- `LODSelector 1640144874229` has per-cell copies in 148 world containers. Our edited copy
+  displayed in W3, but if the engine keys objects by ClassID, an edit under a shared ClassID could
+  be shadowed by a neighbour's copy elsewhere. Giving edited objects a fresh ClassID (built as
+  W4, not needed here, shelved) is the robust rule for the port.
+- W3 changed two things at once: the prefetch records and the container cleanup. W2b shows the
+  records alone stop the crash for unchanged content. Whether the cleanup was also needed is
+  untested.
+
+### NOT verified / open
+- How much of the statue renders: so far it has been seen only from the menu camera, and not yet
+  in the open world. Its bone decals and metal parts are unchecked. The tent's collision shapes are
+  still in place.
+- The grouped 145 record layout. The meaning of the 3-byte tails beyond 01 (template) and
+  02 (texture).
+- **For the port:** every entry shipped into a GRB patch forge needs a 145 record there. GRW's
+  records convert with the re-ID, and `prefetch_write.py` builds the table.
+
+## Entry — 2026-10-10 (fifth) — A whole Bolivia cell into a GRB cell: GRB cells carry no inline meshes
+
+**Trigger:** one statue proves the assets, not Bolivia, so the next unit is a whole GRW world cell.
+**Writes to the live install, one launch so far (W5)**. Backups as before. A W5b rebuild is
+staged at the time of writing.
+
+### VERIFIED — the cell and its conversion (offline)
+- **Cell choice:** GRW's own 145 tables list each cell's direct mesh dependencies, so cells
+  holding the Santa Muerte statue can be found without decompressing anything. 6 cells name it,
+  and **`Cell02757_DataBlock`** (`DataPC_GRN_WorldMap_patch_01`) is the smallest: a roadside with
+  the statue, wooden electric poles, stone-wall crash barriers and an "Uma Marca / Libertad"
+  direction sign.
+- **Entity layer:** `grw_entities.py convert --drop-grw-only` (Agent 848 support's tool) converts
+  all of it once PropsPropertiesComponent is mapped: 20 Entities, 4 EntityGroups (3 of them
+  AutoGroups), 20 LODSelectors and the GridCell. The imposter (PropsImposterProperties) is dropped:
+  GRW writes uninitialized memory into bytes 512–3072 of it.
+- **Meshes:** all 43 (21 external entries + 22 cell-local) go through `grw2grb.convert_mesh`, with
+  0 failures. 42 are direct and 1 uses `drop_uv1` (the statue's format 7).
+- **GRW's GridCell** activates `Objects[:NumberOfObjectsToActivate]`: 9 of 13 here (the 4 groups +
+  5 barriers). The destructible walls' debris pieces are not activated; their destructible spawns
+  them.
+- **Transplant (W5):** the activated objects were converted and stripped of physics
+  (RigidBody, Inert, MergedPhysics, GameplayDestructible). `ResetData` was nulled wherever a
+  component was removed, because its DescBuffer still names the removed component IDs; null is a
+  form GRB itself uses. One horizontal shift kept the cell's layout beside the bivouac, with each
+  top-level object snapped to bivouac ground. The objects were then added to `Cell45147` and
+  inserted into its GridCell at the activation boundary (114 of 124 → 123 of 133). New entries:
+  meshes, textures, mips. Materials are the W3-style clone of `BAS_GEN_MetalRustA`, with
+  diffuse/normal picked from the GRW TextureSet by texture name. 7 IDs that collide with GRB were
+  re-ID'd (the electric-pole textures and a template normal map that GRB reuses for different
+  objects).
+- **Checks before launch:** no reference resolves to an unshipped GRW object (prefix-free scan), no
+  shipped ID collides, every container round-trips, and the entity payloads decode and re-encode
+  identically.
+
+### VERIFIED — prefetch records are trees
+- Layout: `u16 nHeads | nHeads × 11-byte head | u16 k | k items`. An item is `u64 ID + 3-byte
+  tail {u8 kind, u8 has_children, u8}`, and when `has_children == 1` it is followed by `u16 m` and m
+  child items, recursively. Plain records are simply nHeads = 0.
+- It parses 66,336 / 67,336 MaungaNui base records, 1,140 / 1,421 of its patch, 30,945 / 31,023 of
+  GRW's `WorldMap_patch_01`, and every record in `DataPC_patch_01` / `Resources_patch_01`. The
+  failures have a tail middle byte of 2 (a second child kind, open).
+- Tail kinds seen in cell records: Mesh / MeshShape / MultiForge injection info `01`, TextureMap
+  `02` (sometimes `01`), LODSelector / Skeleton `04`. A cell's own
+  `MultiForgeOriginalTargetInjectionInfo` (a derived ID) is its first item.
+
+### VERIFIED — W5 hung GRB, and GRB cells never hold a Mesh inline
+- **W5 result:** the menu was normal. Loading the save stopped at ~1.81 GB read with **zero CPU from
+  then on, not responding, and no crash files**, i.e. a hang (every thread waiting), not a crash.
+- **The structural difference:** a whole-map census (every 40th cell) found **0 of 321 GRB
+  MaungaNui cells holding a Mesh**, against 257 of 600 GRW cells (162 also hold TextureMaps). GRB
+  moved every mesh out of the cells into its own entry. W5 had put 9 cell-local meshes inline.
+- Container metadata dependency lists are not it: only 4 rows in 401 GRB cells carry one (all in
+  `Cell45147`, all pointing at its own GridCell), so new rows with `k = 0` are normal.
+- **W5b** (staged): every cell-local mesh becomes its own entry, carrying its Materials and
+  TextureSets the way GRW's external mesh containers do. Each is listed in the host cell's 145
+  record and gets a Mesh record. The host gains only LODSelector 8, Entity 5 and EntityGroup 4.
+
+### INFERRED
+- The hang is the mesh streamer waiting for IDs that exist only inside a cell container, never as
+  forge entries. W5b tests that.
+- **Rule for the port:** converted cells may carry Entities, EntityGroups, LODSelectors, lights and
+  the GRB-native cell data. Meshes and textures always ship as entries.
+
+### VERIFIED — W5b and W6: groups crash, Entities render (magenta)
+- **W5b** (meshes promoted): **no hang, but a crash** on the cell load at ~1.92 GB
+  (`graphicstatedump.txt` written). Promoting the meshes fixed the hang.
+- **W6** = W5b without the 4 converted EntityGroups (just the 5 crash-barrier Entities, their 3
+  LODSelectors, 9 mesh entries, 4 textures, 8 mips). **It loads and plays.** The maintainer
+  found the **Bolivia stone walls standing beside the bivouac with the right geometry**:
+  wall bodies and the crumbled stones along the top. So the crash is in the **converted
+  EntityGroups**: the sign group and AutoGroups 10890/10891/11147. No EntityGroup twin validates the
+  GRB encoding yet (handed to Agent 848 support).
+- **The walls render magenta**, the engine's missing-texture colour. Every W6 wall material had a
+  **null TextureSet** (12 of 12), while **158 of 158 GRB materials** sampled on
+  `SHD_BAS_DielectricMetallic_v2_TEMP` reference one. GRW's blend (`BLE_`) materials reference
+  their textures directly, with no set. Pixel formats are normal (10, one 2).
+- **W6b** (staged): each material without a set gets a synthesized one. It uses the W3 statue's
+  `FabricCanvasDirt_Set` layout (which rendered), with diffuse and normal in slots 1–2, the rest
+  null, ClassID = material ID | 1<<45, carried in the mesh container.
+
+- **W6b result: the walls render fully textured.** Bolivian dry-stone walls with their Wildlands
+  diffuse and normal maps, standing in Auroa's jungle (screenshot by the maintainer). This is the
+  first complete Bolivia object path verified end to end in game: a GRW cell's Entities and
+  LODSelectors converted, its meshes, textures and mips converted to entries, materials on GRB's
+  template with a TextureSet, re-ID, transplant into a GRB cell, GridCell registration, prefetch
+  records, ATK repack.
+
+### VERIFIED — W7: the whole cell loads (EntityGroup crash fixed)
+- Agent 848 support found the group crash: GRB's `SoundAmbienceStamperComponent` is 57 bytes
+  (`comp(3) | SmallArray<inline {Handle Ambience | 16 B}>`), and the converter wrote GRW's 25.
+  Verified on all 172 GRB instances. Only the 3 AutoGroups carry it, which matches the bisect.
+  2,289 GRB EntityGroups decode and re-encode byte-identically.
+- **W7** (all 9 activated objects, groups regenerated with the fix) **loads and plays** (10+ min,
+  10.9 GB streamed). The maintainer saw the **"Libertad" direction sign standing in Breakpoint**,
+  floating because every object was snapped to the bivouac's height.
+- **The statue and poles were not visible:** their AutoGroups landed ~860 m in the air. AutoGroups
+  keep their own origin at z = 0 while their children sit at world height (~860 m in Bolivia), and
+  the snap used the group origin. Fixed for W8: groups move rigidly, with the height shift taken from
+  their content (children) only.
+- **A real ID gap:** the build's collision check covered only GRB **entry** IDs. The full GRB
+  ClassID census (entries + inner objects, 1,053,400 IDs; GRW agent work) shows W7 shipped the
+  electric pole's Material `68310988285` and TextureSet `68310988260` under IDs Ubisoft uses
+  inside `DataPC_Resources`. W8 re-IDs every shipped ClassID found in the census outside the forges
+  our tests wrote (9 in this cell).
+
+### VERIFIED (by W6 → W6b)
+- A material on this template needs a TextureSet: without one the mesh renders magenta, and with a
+  synthesized one it renders correctly. The direct slot references at 650 / 719 alone are not
+  enough.
