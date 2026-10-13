@@ -7,7 +7,7 @@ The provenance and verification ledger for this knowledgebase. **This is the mos
 ## Entry — 2026-06-30 — Initial establishment
 
 ### Environment snapshot
-- **Machine:** Windows 11 Pro researcher workstation (user `sylvi`, GitHub `dataterminals`).
+- **Machine:** Windows 11 Pro researcher workstation (user `<user>`, GitHub `dataterminals`).
 - **Game:** GRB install at `H:\SteamLibrary\steamapps\common\Ghost Recon Breakpoint` (Steam). Forges patched to current as of this date (`DataPC_Resources_patch_01.forge` dated 2026-01-15).
 - **ATK:** `AnvilToolkit_Release_v1.3.1` from `C:\Users\user\Downloads\AnvilToolkit_Release_v1.3.1-16-1-3-1-1753733025.zip` (only copy on machine; not installed/extracted elsewhere). Extracted to a scratchpad for inspection.
 - **Mod corpus:** `…\Ghost Recon Breakpoint\Extracted\GRBMods\` — 150+ community mod working folders.
@@ -66,7 +66,7 @@ The provenance and verification ledger for this knowledgebase. **This is the mos
 ### What I did
 - Decompiled `AnvilToolkit.dll` v1.3.1 with **`ilspycmd`** (`ilspycmd -p -o <dir> AnvilToolkit.dll`; .NET 8 SDK, ilspycmd already installed at `C:\Users\user\.dotnet\tools`). 1119 classes; full project source dumped to scratchpad.
 - Read the forge container code (`ForgeFile`, `ForgeEntry`, `DataFile`) and the entire `MotionCloth` namespace.
-- Incorporated community feedback from **SamiPuma (Tier 1 Imports)** relayed via the user, plus reception from Ms. Deni.
+- Incorporated community feedback from **SamiPuma (Tier 1 Imports)** relayed via the user, plus the maintainer's own notes on its reception.
 
 ### VERIFIED (new — promoted from inferred)
 - **Forge header (v27) layout** confirmed from `ForgeFile.Serialize27/Deserialize27`: `scimitar\0`, uint32 version (GRB=27; Origins/Odyssey=28; Mirage/Valhalla=29; Ezio/AC1=25), int64 HeaderSize=1050, constants, EntriesCount, FileSetCount, FirstFileSetOffset=1094. Entries split into **FileSets of ≤5000**. Details in [`docs/02-forge-file-format.md`](../docs/02-forge-file-format.md).
@@ -88,7 +88,7 @@ The provenance and verification ledger for this knowledgebase. **This is the mos
 - Empirically validate XML-tuned `ClothProperties` in-game.
 
 ### Reception (community)
-Repo was shared in Tier 1 Imports. Ms. Deni highlighted the USP "perfect mod" case study and the "three-forge model"; SamiPuma flagged the split-not-required nuance (now incorporated) and asked specifically about `.cloth` files — which became this session's focus.
+Repo was shared in Tier 1 Imports. The maintainer, posting there, highlighted the USP "perfect mod" case study and the "three-forge model"; SamiPuma flagged the split-not-required nuance (now incorporated) and asked specifically about `.cloth` files — which became this session's focus.
 
 ---
 
@@ -494,7 +494,7 @@ Third correction in this thread. Compounding lesson: a null in-game result can m
 ## Entry — 2026-07-02 — In-game cloth-gravity tests; forge *append*-edits are NOT launch-safe (ATK repack required); real-mod corpus survey begun
 
 ### Environment
-- Same researcher workstation as 2026-06-30 (H:\ Steam install, user `sylvi`, GitHub `dataterminals`). Disk was critically low (~4.5 GB free); freed to ~14 GB before forge work. Repo pulled up-to-date (was 21 commits behind — the cloth-wrap research had advanced on another machine).
+- Same researcher workstation as 2026-06-30 (H:\ Steam install, user `<user>`, GitHub `dataterminals`). Disk was critically low (~4.5 GB free); freed to ~14 GB before forge work. Repo pulled up-to-date (was 21 commits behind — the cloth-wrap research had advanced on another machine).
 
 ### What we did
 - Resumed the project and ran the **first substantial in-game cloth tests**, driving edits through a custom *append-repoint* forge writer (scratchpad `forge_stage.py`) + `clothwrap.py` gravity edits — then, on the tester's advice, **pivoted to the standard ATK repack workflow**.
@@ -856,7 +856,7 @@ hashes), [`meta/next-session.md`](next-session.md).
 
 ### What I did
 Raven asked in `#shit-talk` (17:18 ET) — of the earlier Reflex3 finding — "yes but it must inherit
-those physics from something," and Sylvia asked what the next step up the hierarchy is. Answered it
+those physics from something," and the maintainer asked what the next step up the hierarchy is. Answered it
 **empirically instead of by inference**: since Anvil stores cross-resource references as bare
 little-endian `uint64` ClassIDs, whatever assigns a skeleton must contain that skeleton's ID
 verbatim. Decompressed **every resource in `DataPC.forge`, `DataPC_extra.forge` and both patches —
@@ -1206,7 +1206,7 @@ Not a game-file session. Documented the **funding and distribution system** behi
 the mod corpus, because folder names in [`examples/mod-catalog.md`](../examples/mod-catalog.md)
 (`CFLIONNESS_*`, `acostabisonbattlebelt_*`, `AKM_KYPK`, `Kalashnikova_SR1`, `SA58`) are crowdfund
 output and nothing here explained what that meant. Read *Tier 1 Imports* (guild `1302392670181916722`)
-through the Discord bridge as `@blkdnm`: `#announcements` end to end (94 messages, 2024-12-03 →
+through the Discord bridge on the maintainer's account: `#announcements` end to end (94 messages, 2024-12-03 →
 2026-08-19), `#crowdfund-projects`, the 11 readable `*-confirmed` channels, `#kingslayer-polls`, and
 guild search on "buy-in" / "crowdfund project" / "unconfirmed". New doc:
 [`reference/crowdfund-history.md`](../reference/crowdfund-history.md).
@@ -1297,7 +1297,7 @@ Follow-up to the 2026-08-23 crowdfund work. Eight catalogue entries had `"name":
 crowdfund post was deleted and `#crowdfund-projects` is invisible from a member account. **Five of
 the eight are now named**, plus a sixth in System 1, plus two name corrections to entries that were
 never flagged as doubtful. Everything below is from *Tier 1 Imports* (`1302392670181916722`) and
-*The Bivouac* (`981599102523539466`) through the bridge as `@blkdnm`. Updated:
+*The Bivouac* (`981599102523539466`) through the bridge on the maintainer's account. Updated:
 [`reference/crowdfund-history.md`](../reference/crowdfund-history.md).
 
 ### VERIFIED (new)
@@ -2175,7 +2175,7 @@ been touched**, and the repack is deliberately still manual.
 ### Environment snapshot
 - **Blender:** 5.2.1 LTS, `D:\SteamLibrary\steamapps\common\Blender` (Steam), bundled Python 3.13.13. Both 5.0 and 5.2 are installed; 5.2 is the one in use.
 - **NEW — live control.** The official **Blender Lab MCP** add-on is now installed (`bl_ext.lab_blender_org.mcp`, from the `https://lab.blender.org/` extension repository), alongside this repo's own `grb_blender_addon`. The connector's Claude-side server was already running; only the Blender-side add-on was missing, which is why `localhost:9876` was closed. An assistant can now inspect and drive a *running* Blender session, not just the headless CLI. `grb_blender_addon` registers 4 operators (`analyze`, `transfer_weights`, `select_unweighted`, `export_glb`) and 3 panels.
-- **ATK:** 1.3.1 at `D:\Anvil Toolkit`. `ilspycmd` available at `C:\Users\sylvi\.dotnet\tools\ilspycmd`.
+- **ATK:** 1.3.1 at `D:\Anvil Toolkit`. `ilspycmd` available at `C:\Users\<user>\.dotnet\tools\ilspycmd`.
 - `grbblend.py doctor` and `selftest` both pass on this machine (7/7).
 
 ### Experiment 1 — the headless GLB round trip
@@ -2780,7 +2780,7 @@ Two machines, not one, and the KB had been treating the difference as rot.
 
 ### VERIFIED — the drive letters are per-machine, and both sets of docs are right
 
-Confirmed by Sylvia: this project is worked from **two** computers.
+Confirmed by the maintainer: this project is worked from **two** computers.
 
 | Machine | Layout |
 | --- | --- |
@@ -2792,7 +2792,7 @@ So [`next-session.md`](next-session.md)'s 2026-08-31 banner (*"everything is on 
 SylDesk**. Neither is stale. What they lack is a machine name — a future session should add
 one rather than "fixing" the drive letters, which would just break them for the other machine.
 
-> **This corrects a claim made earlier today**, before Sylvia clarified: that the D: paths were
+> **This corrects a claim made earlier today**, before the maintainer clarified: that the D: paths were
 > drift to be cleaned up. They are not.
 
 ### VERIFIED — but the tooling *was* genuinely broken on one machine
@@ -2852,7 +2852,7 @@ across sessions on one machine.
 
 ## Entry — 2026-09-16 — Found GRB's gameplay/AI database: 50,098 records in one forge entry, and decoded what "Fear the Radio" does
 
-**Trigger:** Sylvia asked what else could be done to NPC behaviour, given two AI mods already
+**Trigger:** the maintainer asked what else could be done to NPC behaviour, given two AI mods already
 installed (a forge-integrated Spartan port, and "Fear the Radio"). This knowledgebase had
 **nothing** on gameplay logic — 13 docs, all about art. It does now.
 
@@ -4727,7 +4727,7 @@ It separated the figures that belong to the game from the ones that belonged to 
 ## Entry — 2026-09-22 — Crowdfund #61 caught live, the write-up catches up with the panel, and the first post removals are observed
 
 ### What I did
-Sylvia flagged a new crowdfund. Read it off the board through the bridge, added it to both the panel
+The maintainer flagged a new crowdfund. Read it off the board through the bridge, added it to both the panel
 and the write-up, and found the two had drifted: a 09-10 panel refresh had added #59 and #60 and
 Rangers Lead The Way's destination without touching this repo. Folded that in, re-read the board
 with a reactor expansion, and recorded three posts that have come down since 08-30.
@@ -4928,7 +4928,7 @@ merge a third line to carry.
 
 ## Entry — 2026-10-04 — How GRB.exe finds forges: patch slots are a wildcard, any number, and a higher number wins
 
-**Trigger:** Sylvia asked whether a modder could ship a whole user-made forge — their own patch —
+**Trigger:** the maintainer asked whether a modder could ship a whole user-made forge — their own patch —
 instead of repacking mods into the shipped `_patch_01` forges. That turns on how the game decides
 which forge files to mount, which docs/06 had listed as open since June. **Read-only on the game:**
 nothing was written to the install, nothing was launched, nothing was repacked. Machine: **SylG5**
@@ -5051,7 +5051,7 @@ independent adversarial verifier.
 ### NOT verified / open
 - Any in-game test. The cheapest one is a tiny `DataPC_Resources_patch_02.forge` holding one
   visible texture override, with the GMF copied from `Resources_patch_01` and a matching 145,
-  watched with Process Monitor. It needs Sylvia's go-ahead. Do it after the update question is
+  watched with Process Monitor. It needs the maintainer's go-ahead. Do it after the update question is
   settled, since the update changes the version values the MetaFile has to match.
 - Where CodeCL/DataCL/SoundCL sit in the GMF, and which value the engine compares.
 - The order the sets are opened in (tie-breaks), the `dlc_*` gating, and the trigger of the "A
@@ -5070,7 +5070,7 @@ the exception directory for function bounds and the original IAT for imports.
 
 ## Entry — 2026-10-07 — A `grbmod` package read end to end: new items by merge ops, an edited Reflex3 blob, and the prefetch table decoded
 
-**Trigger:** Sylvia downloaded *SCUBA CoD 1.0.0* by fox77x
+**Trigger:** the maintainer downloaded *SCUBA CoD 1.0.0* by fox77x
 ([Nexus 2164](https://www.nexusmods.com/ghostreconbreakpoint/mods/2164), zip
 `SCUBA CoD 1.0.0 2164 1 2026-10-05T16-18Z mPuXwwD40.zip`, 191,510,252 B, files dated 2026-10-03)
 and asked what could be learned from it. **Read-only:** the zip was unpacked to a scratch folder;
@@ -5205,7 +5205,7 @@ the 0.5 back to 0 and compare.
 
 ## Entry — 2026-10-07 (second) — GRB Mod Manager 1.15.7 read: it repacks by itself, re-applies merges, and looks `entry` up strictly by ID
 
-**Trigger:** Sylvia downloaded the manager that reads `grbmod`:
+**Trigger:** the maintainer downloaded the manager that reads `grbmod`:
 `GRB Mod Manager 1.15.7 1602 1.15.7 2026-10-06T02-30Z ps6mMMAE2.zip` (117,246,111 B, Nexus 1602).
 **Read, not run:** unpacked to scratch, nothing executed, the bundled `python.exe` included.
 Write-up: [`../reference/grbmod-package-format.md`](../reference/grbmod-package-format.md#how-grb-mod-manager-1157-applies-it).

@@ -370,7 +370,7 @@ the same day.
 | **2A — Cloth→mesh rebind** | **⭐ UNBLOCKED on paper 2026-09-18** — was parked since 2026-07-09 | The wrap is **decoded** (`clothmap.py`) and vanilla ships a rebind (Kropotkine's trench coat on Blake's cage). Next: an encoder, validated against vanilla without the game. STEP 1 (does a modified cloth load?) still gates shipping. ⛔ The ATK-side route is `MotionCloth`, **not** `SoftBody` (2026-09-08) |
 | **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14**; read side complete 2026-09-16 | Same goal, different mechanism. Has a format, a corpus, vanilla exemplars, the exact record that assigns a rig, and mod precedents |
 | **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-30; **caught up 2026-09-22** with #59–#61 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo |
-| **4 — Gameplay / AI database** | **active 2026-09-16**; first write test **staged 2026-09-23** | How enemies see, hear, call for backup and cheat — `DBContainerEntry` records, binary-patched. Sylvia's own second track, not a detour from lane 2 |
+| **4 — Gameplay / AI database** | **active 2026-09-16**; first write test **staged 2026-09-23** | How enemies see, hear, call for backup and cheat — `DBContainerEntry` records, binary-patched. The maintainer's own second track, not a detour from lane 2 |
 
 Lane 1 is not a detour — it turns the only real primary documentation GRB modding has into
 something durable, and it produced independent corroboration of the 64-bit ID model from a
@@ -915,7 +915,7 @@ two drifted apart this time.** Update both in the same session, or write the deb
 `DBContainerEntry_0X104634F921.data` — **61,426** records in the base container, 61,446 in this
 install's patch. Written up in [`docs/14-ai-and-npc-behaviour.md`](../docs/14-ai-and-npc-behaviour.md),
 catalogued in [`reference/ai-db-records.md`](../reference/ai-db-records.md), read with
-[`tools/db_inspect.py`](../tools/db_inspect.py). It exists because Sylvia plays with AI overhaul
+[`tools/db_inspect.py`](../tools/db_inspect.py). It exists because the maintainer plays with AI overhaul
 mods installed (a forge-integrated Spartan port and Fear the Radio) and asked what else could be
 changed. It is a second track in its own right, not a detour from lane 2.
 
