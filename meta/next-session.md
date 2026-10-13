@@ -775,7 +775,15 @@ modder to ask about which of their own crowdfunds. Neither list asks anyone to g
 a file, which is why they survive the refusal in lead 4. Read it before opening any conversation
 about this in the server.
 
-**Panel and repo are in sync as of 2026-09-22.** They had diverged: a 2026-09-10 session put #59 Spiritus
+**Panel and repo are in sync as of 2026-10-13.** That pass re-read the board (the same eight posts,
+no new crowdfund in three weeks), recorded Pastaslov's public release and Flash Point's vote, and
+fixed a NUL byte in the panel's `index.html` that had put `�b0` after every dashed pill in place of
+`°`. **Running `refresh.py` on SylDesk** needs `--port 38788` and `BRIDGE_TOKEN` set from the
+sidecar's own `%APPDATA%\vesktop-claude-bridge\token`. The script's Python sees a different
+`%APPDATA%`, so it reads a stale config pointing at port 8788 and a token the sidecar rejects (401). That is the case
+the script's `token()` comment warns about.
+
+**Before that, they were in sync as of 2026-09-22.** They had diverged: a 2026-09-10 session put #59 Spiritus
 Invictus, #60 JSOC and Rangers Lead The Way's destination on the panel without touching this repo, and
 the 09-22 pass — triggered by #61 The Great Pasta Heist going up — folded all of it back in. Both now
 carry #59–#61, destinations for Rangers Lead The Way and GWOT Classics (both → supporters, from their
@@ -874,9 +882,10 @@ two drifted apart this time.** Update both in the same session, or write the deb
    message snapshots, so a deleted post's verbatim text survives in whoever forwarded it. Method and
    the six known forwards are in §7. It named nothing new this time; it is the only route to a
    deleted post's exact wording if one is ever needed.
-9. **Pastaslov's destination, and three unread tallies.** #51 closed with nothing public; #53 and
-   #54 have destinations from their creators' release threads but no vote figures. The A9 shape
-   (ask for the numbers, three lines) is the route for the tallies; Modder K is the person for #51.
+9. **Four unread tallies.** ~~Pastaslov's destination~~ closed 2026-10-13: public, from its
+   creator's own `#mod-releases` posts of 10-02. #51, #53 and #54 all have destinations from release
+   threads but no vote figures, and #56 Flash Point's vote was run on 2026-10-11 with nothing
+   readable yet. The A9 shape (ask for the numbers, four lines) is the route.
 
 ### Don't repeat
 

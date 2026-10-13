@@ -48,9 +48,10 @@ Both are bounded, and neither asks anyone to share a file, a channel, or a mod.
 
 - **All 37 System 2 crowdfunds are named.** Only **#7** is unnamed, and it is System 1.
 - **11 crowdfunds have full vote + delivery data** — see §5. Do not re-ask those.
-- **Turnout is known for 40 of 61 and destination for 49** (2026-09-22). **Do not re-ask either.** The
-  three that closed since 08-30 — #51 Pastaslov, #53 Rangers Lead The Way, #54 GWOT Classics — have no
-  tally yet; that is the A9 shape again, three lines.
+- **Turnout is known for 40 of 61 and destination for 50** (2026-10-13). **Do not re-ask either.** Four
+  crowdfunds have closed or voted since 08-30 with no tally here: #51 Pastaslov, #53 Rangers Lead The
+  Way, #54 GWOT Classics, and #56 Flash Point (vote run 2026-10-11). That is the A9 shape again, four
+  lines.
 - **Supporter counts are known for 41.** Do not ask.
 - **Only #7 is unnamed**, and it is absent from the moderator's list as well.
 - **Sign-up counts for closed crowdfunds are gone permanently.** No lookup recovers a deleted
@@ -70,7 +71,7 @@ Ordered by what they settle per second of someone's time. Each is a *look and te
 | **A4** | Either of the above, targeted | Two specific answers: what was the project **by Modder D announced 2024-11-23** (`1309770589795520592`), and what was **Modder B's "new weapon" announced 2024-12-12** (`1316621603978874991`) | The last two unnamed crowdfunds in the catalogue | ~1 min if A2/A3 are already open |
 | **A5** | The crowdfund **category** (`1310270708303138816`) | The `*-confirmed` channel names, and whether the `*-unconfirmed` channels sit in the **same** category or a different one | A second independent check on every System 2 name, plus a structural fact the write-up currently infers from 11 visible channels | ~1 min |
 | **A6** | Their own memory | Did the **March 2025 leak** cause the move to the reaction-role system? | §2 flags this as **inferred** — the leak and the changeover are adjacent in time and theme and *no message states a cause*. One sentence from anyone who was staff then closes it either way | ~1 min |
-| **A7** | Their own memory | What takes a crowdfund post **off the board** — the release, the vote, or a periodic tidy? | **Half-answered 2026-09-22:** Rangers Lead The Way, GWOT Classics and Pastaslov all came down as their projects closed, so removal is rolling, not a one-off purge. But CYBERSAMI is ten weeks past its stated end and still up, so the trigger is not a date. One sentence settles it | ~1 min |
+| **A7** | Their own memory | What takes a crowdfund post **off the board** — the release, the vote, or a periodic tidy? | **Half-answered 2026-09-22:** Rangers Lead The Way, GWOT Classics and Pastaslov all came down as their projects closed, so removal is rolling, not a one-off purge. But CYBERSAMI is ten weeks past its stated end and still up, so the trigger is not a date. **Narrowed 2026-10-13:** Pastaslov's post came down before its public release (10-02), so the release is not it either. One sentence settles it | ~1 min |
 | **A8** | — | Nothing to look at: a **request**. Sign-up counts die with the post, so if posts stay up — or if `tools/refresh.py` is simply left running on a schedule — the numbers stop being lost from here on | The one gap that closes itself. Costs nobody anything and grants nobody anything. **Seen working 2026-09-22:** three posts came down between reads, and their last counts survive only because the script had run on 08-30 and 09-10 | — |
 | ~~**A9**~~ | ~~Each `*-confirmed` channel~~ | ~~The release-vote poll result~~ | ✅ **DONE 2026-08-30** — a moderator supplied all 40, plus membership counts nobody thought to ask for. This row is kept because it is the one that worked, and because the *shape* of it — a bounded lookup, two numbers, no access — is the template | — |
 
@@ -92,7 +93,7 @@ made what.
 | **#6 ≡ #8** | Modder E | Is the GZW assortment one crowdfund or two? The moderator recalls two but flagged it as memory |
 | **#4 vs #12** | Modder B, or any long-standing member | The moderator's *"Shadow Company Heavies as Wolves"* suggests #4 and #12 are one project, where this file had guessed #10 and #12 |
 | **Delivery counts** | any creator, about their own | Still 11 of 61 — the one column nothing has widened, because a drop leaves no trace and nobody tallies them |
-| **#51 Pastaslov's destination**, and the tallies for #51, #53 and #54 | Modder K for #51; a moderator, in the A9 shape, for the three tallies | All three closed after the 08-30 data drop. Rangers Lead The Way and GWOT Classics have a destination from their creators' own release threads; Pastaslov has nothing public as of 2026-09-22 |
+| **The tallies for #51, #53, #54 and #56** | a moderator, in the A9 shape | All four closed or voted after the 08-30 data drop. Each of the first three has a destination from its creator's own release thread: Rangers Lead The Way and GWOT Classics to supporters, Pastaslov public (10-02). Flash Point's vote was run on 2026-10-11 and has no destination yet. ~~#51's destination~~ closed 2026-10-13 |
 
 The table below is now a *who-made-what* reference rather than an ask list.
 
@@ -104,9 +105,9 @@ The table below is now a *who-made-what* reference rather than an ask list.
 | **Modder A** | #9, #11 | quiet since spring | #38 is already measured, so this is a short conversation |
 | **Modder G** | #13, #20 | around recently | — |
 | **Modder I** | #17, #24 | occasionally | Both destinations known; turnout only |
-| **Modder K** | #22, #41, #51 | active | #22 and #41 have votes. **#51 Pastaslov closed with no public destination** — the one live question for them. #61 The Great Pasta Heist is live |
+| **Modder K** | #22, #41, #51 | active | #22 and #41 have votes. ~~#51 Pastaslov's destination~~ went public 2026-10-02 from their own `#mod-releases` posts, so nothing is left to ask them. #61 The Great Pasta Heist is live |
 | **Modder L** | #39, #46 | active | Both recent, both his own, both already named by his own posts |
-| **Modder O** | #40, #45, #52 | active | Plus #56, live. **#45 Wolf Pack was attributed to them on 2026-08-30** (msg `1502850378373271692`), which makes five crowdfunds — level with Modder L |
+| **Modder O** | #40, #45, #52 | active | Plus #56, live, whose vote was run 2026-10-11. **#45 Wolf Pack was attributed to them on 2026-08-30** (msg `1502850378373271692`), which makes five crowdfunds — level with Modder L |
 | **Modder M + Modder R** | #42 | both active | The tag-team crowdfund; either could answer. Modder M's #54 GWOT Classics went to supporters from their own release thread (09-08); its tally is unknown |
 | **Modder N** | #48 | active | Plus #57, live |
 | **Modder H** | #14 | long quiet | Lowest expected reply rate; one crowdfund |

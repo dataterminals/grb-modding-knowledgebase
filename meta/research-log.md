@@ -6502,3 +6502,58 @@ byte-exactly), then stage `block9t`.
 | Navmesh | not ported (format decode needed) |
 | GI | not portable as such |
 | Terrain surface (colour, materials) | not attempted; route A/B in `notes-terrain-tbf.md` |
+
+---
+
+## Entry — 2026-10-13 — Crowdfund registry: a quiet board, Pastaslov goes public, and a prediction that failed
+
+### What I did
+The maintainer asked for the crowdfund registry to be brought up to date while they were away. I
+read the board and `#announcements` through the bridge, ran the panel's `tools/refresh.py`, searched
+the release forums and chat for anything that had closed since 09-22, and updated the panel
+(`dataterminals/t1-crowdfunds`: `data/crowdfunds.json`, `README.md`, a one-character `index.html`
+fix) and this repo (`reference/crowdfund-history.md` §4, §5 and §7, `meta/crowdfund-asks.md`, lane 3
+of `meta/next-session.md`) in the same session, per the rule that a panel-only edit is a fork.
+
+### VERIFIED (new)
+- **The board is unchanged.** A `limit=25` read of `#crowdfund-projects` returned eight posts, the
+  same eight as on 2026-09-22, floor still CYBERSAMI `1493032233727033454`. No crowdfund was announced
+  in the interval. `#announcements` carried only Ubisoft's anniversary-update repack notice
+  (`1554518453208088597`, 09-29) and a staff position on AI-built modding tools
+  (`1558543315136286856`, 10-10).
+- **Board read 2026-10-13T22:57Z, exact reactor lists:** JSOC 284, Spiritus Invictus 276, Dealer's
+  Choice 252, Flash Point 247, CYBERSAMI 245, Heavy Metal 226, WMD 221, The Great Pasta Heist 150
+  (raw 👍 minus T1 Carl, no list truncated). **922 distinct, 1,901 sign-ups, 59.3 % on exactly one
+  post, 23 on all eight** (09-22, same posts: 782, 1,534, 61.5 %, 10).
+- **#51 Pastaslov → public, at strong confidence.** Modder K posted it to `#mod-releases` on
+  2026-10-02 as two Nexus mods, *Pastaslov - Gear* (mod 2167, `1555619602338287676`) and *Pastaslov -
+  Weaponry* (mod 2169, `1555619458066812948`), which between them cover all four advertised items.
+  Members still call some of its gear exclusive (`1557215949210517617`). Destination is now **50 of
+  61**: 34 public / 14 supporters / 2 private; System 2 is 17 / 12. Evidence grade 39 vote / 10 strong
+  / 1 moderate.
+- **#56 Flash Point's release vote was run on 2026-10-11** — a moderator: *"I held the vote for
+  Flash point"* (`1558723499101659177`). The result is in a confirmed channel this account cannot
+  read. The post was still up two days later.
+- **Pastaslov's post came down before its release landed.** It was gone by 09-22; the public release
+  is 10-02. So the release is not what takes a post off the board (ask A7, narrowed).
+- **Panel bug: a NUL byte in `index.html`.** The dashed-pill marker's CSS escape `\0b0` (U+00B0)
+  had lost its backslash, leaving a literal NUL plus `b0`. The live page rendered `"�b0"` (U+FFFD)
+  after every dashed pill; checked with `getComputedStyle` on the live site before fixing. The NUL
+  had also made git treat the file as binary, so its blob carries raw CRLF. The fix was staged with
+  `core.autocrlf=false` to keep the diff to one line.
+
+### INFERRED (revised)
+- **The 09-22 age-mix prediction failed at three weeks.** It said one-and-done would read *higher*
+  once the young posts aged. On the same board it reads lower (61.5 % → 59.3 %). Only the youngest
+  posts' fresh share rose (The Great Pasta Heist 18 → 27 %, JSOC 19 → 21 %). Every older post fell
+  two to four points. Revised reading: on a fixed board, a young post gains fresh backers, but every
+  post's fresh share erodes as its backers join other live posts. Over these three weeks the erosion
+  won. The original inference is kept in §5, marked as tested.
+
+### Questions answered / opened
+- ✅ #51's destination.
+- ✅ A7 narrowed: not the release; the vote closing or a periodic tidy remain.
+- 🆕 Flash Point's tally joins #51, #53 and #54 as an A9-shape ask, four lines.
+- **Running `refresh.py` on SylDesk:** pass `--port 38788` and set `BRIDGE_TOKEN` from the sidecar's
+  `%APPDATA%\vesktop-claude-bridge\token`. The script's Python sees a different `%APPDATA%` (stale
+  port 8788 and a token the sidecar rejects with 401).

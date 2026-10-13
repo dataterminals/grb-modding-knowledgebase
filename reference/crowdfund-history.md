@@ -4,7 +4,7 @@
 >
 > **On names:** modders appear as **Modder A–S**, assigned by first appearance and stable throughout this file. The labels are used rather than handles so the analysis stays checkable — that one modder ran nearly a third of all crowdfunds is visible without naming them. Everyone else is referred to by role. Message IDs are unchanged, so every claim remains verifiable against the source. Creator credits do appear under their real handles on the [live panel](https://dataterminals.github.io/t1-crowdfunds/), which is where attribution belongs.
 >
-> **Status:** First comprehensive pass, 2026-08-23; names swept again 2026-08-24; on **2026-08-30** a Tier 1 moderator supplied vote tallies and supporter counts for 40 crowdfunds, which validated 11/11 against the votes readable here and rewrote most of §5; on **2026-09-22** the catalogue caught up with the panel (#59–#61), and the first removals of posts from the board were observed (§7). Compiled by reading *Tier 1 Imports* (guild `1302392670181916722`) directly through an authenticated Discord bridge as `@blkdnm`. Every claim below cites the message it came from. Provenance: [`../meta/research-log.md`](../meta/research-log.md).
+> **Status:** First comprehensive pass, 2026-08-23; names swept again 2026-08-24; on **2026-08-30** a Tier 1 moderator supplied vote tallies and supporter counts for 40 crowdfunds, which validated 11/11 against the votes readable here and rewrote most of §5; on **2026-09-22** the catalogue caught up with the panel (#59–#61), and the first removals of posts from the board were observed (§7); on **2026-10-13** a re-read found the same eight posts and no new crowdfund in three weeks, Pastaslov released to the public, and Flash Point's release vote run (§5). Compiled by reading *Tier 1 Imports* (guild `1302392670181916722`) directly through an authenticated Discord bridge on the maintainer's account. Every claim below cites the message it came from. Provenance: [`../meta/research-log.md`](../meta/research-log.md).
 
 ## Why this is in a modding knowledgebase
 
@@ -223,12 +223,12 @@ Every entry has a dated `@everyone` in `#announcements`. **Every one is now name
 | 48 | 2026-05-11 | **Smokin Aces** | Modder N |
 | 49 | 2026-05-15 | **Breach & Clear** | Modder B |
 | 50 | 2026-06-01 | **Heavy Metal** 🔴 *still posted* | Modder L |
-| 51 | 2026-06-12 | **Pastaslov** *(off the board by 2026-09-22)* | Modder K |
+| 51 | 2026-06-12 | **Pastaslov** *(off the board by 2026-09-22 → public, 2026-10-02)* | Modder K |
 | 52 | 2026-06-13 | **Time 'n Tide** | Modder O ("Bon") |
 | 53 | 2026-07-03 | **Rangers Lead The Way** *(off the board by 2026-09-10 → supporters)* | Modder B |
 | 54 | 2026-07-11 | **GWOT Classics** *(off the board by 2026-09-22 → supporters)* | Modder M |
 | 55 | 2026-08-19 | **Dealer's Choice** 🔴 *open* | Modder P |
-| 56 | 2026-08-25 | **Flash Point** 🔴 *open* | Modder O |
+| 56 | 2026-08-25 | **Flash Point** 🔴 *open — vote run 2026-10-11* | Modder O |
 | 57 | 2026-08-25 | **WMD** 🔴 *open* | Modder N |
 | 59 | 2026-09-04 | **Spiritus Invictus** 🔴 *open* | Modder S |
 | 60 | 2026-09-10 | **JSOC** 🔴 *open* | Modder B |
@@ -239,6 +239,10 @@ Every entry has a dated `@everyone` in `#announcements`. **Every one is now name
 > **#59–#61 were recorded from the board too.** **Spiritus Invictus** (post `1545322260452220939`, 2026-09-04T06:38Z; announcement `1545323100491743264`, *"Making Their Crowdfund Debut"*): MARSOC kit — a windbreaker, Crye CPC, Sphinx trousers, Salomon XA Forces Mid MKII boots, a Crye JPC 2.0 Maritime Swimmer Cut and an S&S Precision Belt-M — and the first crowdfund by **Modder S**, new to this file. **JSOC** (post `1547722231516504195`, 2026-09-10T21:35Z; announcement `1547723127604117677`, *"JSOC would like a word"*): an S&S Precision Plateframe vest, a Crye G3s set, a Team Wendy RifleTech helmet and a Spiritus Systems Delta backpack — Modder B's **eighteenth**, posted nine days after their Rangers Lead The Way release. **The Great Pasta Heist** (post `1551997476741849128`, 2026-09-22T16:43Z; announcement `1551998584717836320` four minutes later, *"You guys gotta earn that payday in the Great Pasta Heist"*): *"MRGSS S"* (the attachment is named for the Geissele VSASS MRGG-S), an Arc'teryx hoodie, cargo pants, a balaclava, an AR57 and a *"Spiffy Suit"* — Modder K's **fourth**, after DS Arms SA 58 FAL, Cold Ops Carbonara and Pastaslov, and their third pasta name. #59 and #60 reached the [live panel](https://dataterminals.github.io/t1-crowdfunds/) on 2026-09-10 and this file only on 2026-09-22; the two are in step again as of that date.
 
 > **Three posts came down between 2026-08-30 and 2026-09-22 — the first removals actually observed.** Rangers Lead The Way was on the board on 08-30 at 420 and gone by 09-10; its creator's supporter release had gone up on 09-01 (msg `1544464453163024507`). GWOT Classics (357 at the 09-10 read) and Pastaslov (145) were gone by 09-22; GWOT Classics' creator had opened a *"GWOT Classics | Supporters Release"* thread on 09-08 — *"yet another CF making its way to Supporters Armory"* (msg `1546978784757026827`). All three had closed, so **posts do leave the board as projects finish** — §7 says what that retires and what it still leaves open. Because `tools/refresh.py` had run on 08-30 and 09-10, the last sign-up counts before removal survive on the panel: the first time a closed crowdfund's 👍 count has outlived its post.
+
+> **2026-10-13 — three quiet weeks, one release, one vote.** The board was re-read with a `limit=25` request that returned its entire contents: the **same eight posts** as on 09-22, floor still CYBERSAMI. Nothing was added and nothing came down, and `#announcements` carried no crowdfund in the interval, only Ubisoft's anniversary-update repack notice (msg `1554518453208088597`, 09-29) and a staff position on AI-built modding tools (msg `1558543315136286856`, 10-10). Two things did move:
+> - **#51 Pastaslov went public.** Modder K posted it to `#mod-releases` on 2026-10-02 as two Nexus mods, *Pastaslov - Gear* (mod 2167, the uniform and THOR vest; msg `1555619602338287676`) and *Pastaslov - Weaponry* (mod 2169, the rifle and handgun; msg `1555619458066812948`), which between them cover all four advertised items. That is a creator stating the outcome, not a vote, and members still call some of its gear a *"Pastaslov exclusive"* (msg `1557215949210517617`).
+> - **#56 Flash Point's release vote was run.** A moderator, 2026-10-11: *"I held the vote for Flash point"* (msg `1558723499101659177`). The result sits in `#flash-point-confirmed`, which this account cannot read, so the destination stays open. Its post was still on the board two days later, so a vote does not take a post down on the spot. That is one small data point for the open trigger question in §7.
 
 > Names for #43–#45, #48, #49 and #52 were recovered by **reading the announcement title-card graphics** posted in `#announcements` — the artwork spells the name out where the surviving text does not.
 
@@ -268,41 +272,45 @@ None of these five posts exists any more. Every name below is a **third party na
 
 ### Sign-ups on the eight posts still on the board
 
-Read **2026-09-23T03:31Z** with a reactor expansion, so these are **exact reactor lists, not just counts**. T1 Carl seeds the 👍 on every post, so the human figure is the raw count minus one. This is a **snapshot of one moment**, not a history — see §7 — and it is a *different* eight from the 2026-08-30 read: Rangers Lead The Way, GWOT Classics and Pastaslov have left the board, and #59–#61 have joined it.
+Read **2026-10-13T22:57Z** with a reactor expansion, so these are **exact reactor lists, not just counts**. T1 Carl seeds the 👍 on every post, so the human figure is the raw count minus one. This is a **snapshot of one moment**, not a history — see §7. Unlike every earlier pair of reads, it covers the **same eight posts** as the previous one (2026-09-23T03:31Z): nothing joined the board and nothing left it in between. That makes it the first like-for-like comparison this file has, and the overlap section below leans on it.
 
-| Crowdfund | Raw 👍 | Humans | Min. committed @ $10 |
-| --- | ---: | ---: | ---: |
-| CYBERSAMI | 235 | **234** | $2,340 |
-| Spiritus Invictus *(19 days old)* | 217 | **216** | $2,160 |
-| Dealer's Choice | 215 | **214** | $2,140 |
-| Flash Point | 215 | **214** | $2,140 |
-| Heavy Metal | 214 | **213** | $2,130 |
-| JSOC *(12 days old)* | 206 | **205** | $2,050 |
-| WMD | 194 | **193** | $1,930 |
-| The Great Pasta Heist *(11 hours old)* | 46 | **45** | $450 |
+| Crowdfund | Raw 👍 | Humans | Min. committed @ $10 | On 09-23 |
+| --- | ---: | ---: | ---: | ---: |
+| JSOC *(33 days old)* | 285 | **284** | $2,840 | 205 |
+| Spiritus Invictus *(39 days old)* | 277 | **276** | $2,760 | 216 |
+| Dealer's Choice | 253 | **252** | $2,520 | 214 |
+| Flash Point | 248 | **247** | $2,470 | 214 |
+| CYBERSAMI | 246 | **245** | $2,450 | 234 |
+| Heavy Metal | 227 | **226** | $2,260 | 213 |
+| WMD | 222 | **221** | $2,210 | 193 |
+| The Great Pasta Heist *(21 days old)* | 151 | **150** | $1,500 | 45 |
 
-Flash Point and WMD have **doubled** since 08-30 (107 → 214, 106 → 193), and the two September posts passed 200 inside three weeks — Spiritus Invictus 216 in 19 days, JSOC 205 in 12. Rangers Lead The Way's **420** stands as the record; its post came down at that figure.
+JSOC now leads the board, 284 in 33 days, and The Great Pasta Heist went from 45 to 150 in three weeks. Every post grew, and the oldest grew least: CYBERSAMI added 11 at six months, Heavy Metal 13 at four. Rangers Lead The Way's **420** still stands as the record; its post came down at that figure.
 
 ### Backer overlap — the interesting part
 
-Across those eight posts: **782 distinct people, 1,534 sign-ups.**
+Across those eight posts: **922 distinct people, 1,901 sign-ups.** Three weeks earlier, on the same eight, it was 782 and 1,534. The average backer is on **2.06** of the live posts, up from 1.96.
 
-| Signed up for | People | Share |
-| --- | ---: | ---: |
-| 8 of 8 | 10 | 1.3% |
-| 7 of 8 | 20 | 2.6% |
-| 6 of 8 | 19 | 2.4% |
-| 5 of 8 | 30 | 3.8% |
-| 4 of 8 | 35 | 4.5% |
-| 3 of 8 | 55 | 7.0% |
-| 2 of 8 | 132 | 16.9% |
-| **1 of 8** | **481** | **61.5%** |
+| Signed up for | People | Share | On 09-23 |
+| --- | ---: | ---: | ---: |
+| 8 of 8 | 23 | 2.5% | 10 |
+| 7 of 8 | 21 | 2.3% | 20 |
+| 6 of 8 | 23 | 2.5% | 19 |
+| 5 of 8 | 32 | 3.5% | 30 |
+| 4 of 8 | 52 | 5.6% | 35 |
+| 3 of 8 | 69 | 7.5% | 55 |
+| 2 of 8 | 155 | 16.8% | 132 |
+| **1 of 8** | **547** | **59.3%** | 481 |
 
-> **Verified:** The backer base is **wide and shallow, on the fourth read as on the first** — 67.9 % backed exactly one crowdfund across six posts on 2026-08-23, 67.9 % across seven on 08-25, 65.4 % across eight on 08-30, **61.5 %** across a different eight on 09-22. A crowdfund is not funded by a fixed subscriber core; each recruits largely fresh. **Fresh-backer share** — people appearing on none of the other seven: CYBERSAMI 131/234 (56 %), Heavy Metal 92/213 (43 %), Dealer's Choice 67/214 (31 %), WMD 48/193 (25 %), Flash Point 49/214 (23 %), Spiritus Invictus 47/216 (22 %), JSOC 39/205 (19 %), The Great Pasta Heist 8/45 (18 %).
+> **Verified:** The backer base is **wide and shallow, on the fifth read as on the first** — 67.9 % backed exactly one crowdfund across six posts on 2026-08-23, 67.9 % across seven on 08-25, 65.4 % across eight on 08-30, 61.5 % across a different eight on 09-22, **59.3 %** across the same eight on 10-13. A crowdfund is not funded by a fixed subscriber core; each recruits largely fresh. **Fresh-backer share** — people appearing on none of the other seven, on 10-13: CYBERSAMI 128/245 (52 %), Heavy Metal 91/226 (40 %), Dealer's Choice 73/252 (29 %), The Great Pasta Heist 40/150 (27 %), WMD 49/221 (22 %), Flash Point 53/247 (21 %), JSOC 59/284 (21 %), Spiritus Invictus 54/276 (20 %). On 09-22: CYBERSAMI 131/234 (56 %), Heavy Metal 92/213 (43 %), Dealer's Choice 67/214 (31 %), WMD 48/193 (25 %), Flash Point 49/214 (23 %), Spiritus Invictus 47/216 (22 %), JSOC 39/205 (19 %), The Great Pasta Heist 8/45 (18 %).
 
-> **Inferred — read the one-and-done figure against the board's age mix, not on its own.** Arithmetically the "1 of 8" bucket *is* the sum of every post's fresh backers, and within this single read fresh share climbs with a post's age: 18 % at eleven hours, 19–22 % at two to three weeks, 23–31 % at a month, 43 % at nearly four months, 56 % at five. Flash Point says the same from the inside — 9 % fresh on its first day, 19 % at five days, 23 % at four weeks. So a board that has just swapped its three oldest posts for three young ones reads lower on one-and-done than the same board will in a month; the base has not narrowed. One more caution: a post's fresh share is measured against *whichever other posts are live*, so a big post leaving frees its co-backers to count as fresh elsewhere. Compare fresh shares within one read, never across reads.
+> **⚠️ Tested 2026-10-13, and not borne out at three weeks.** The inference below predicted that one-and-done would read *higher* once the three young posts had aged, because the board's mix, not its base, had pulled it down. On the same board three weeks later it reads **lower** (61.5 % → 59.3 %). Only the youngest posts' fresh share rose: The Great Pasta Heist 18 % → 27 %, JSOC 19 % → 21 %. Every older post's fell by two to four points, and the people on all eight more than doubled (10 → 23).
+>
+> **Inferred, revised:** on a fixed board two effects pull against each other. A young post's fresh share climbs as people beyond the regulars arrive. Meanwhile every post's fresh share erodes as its existing backers join the other live posts, which moves them out of the "1 of 8" bucket. Over these three weeks the erosion won. So the age gradient within one read is not a curve each post climbs. Older posts read fresher partly because their backers arrived before most of today's board existed. The original text is kept below so the reasoning it replaced stays checkable. Its closing rule still stands: compare fresh shares within one read, never across reads of different boards.
 
-> **The tail of the distribution is an artefact of when you read it.** On 2026-08-25 only **5 people** were on all seven posts; five days later **17** were on all eight. That read like a surge and was not one. Flash Point was twenty minutes old at the first read, so the people who back everything simply had not reacted yet. **The same distortion, seen from the other end, sinks the fresh-backer figure on a new post**: Flash Point's first 11 backers were 10/11 repeat backers, and The Great Pasta Heist's first 45 are **37/45** — their median backer is on **five** of the eight live posts. The people watching the board when a post lands are the regulars; everyone else arrives over the following weeks. **Anything measured on a crowdfund's first day describes who was watching, not who funds it** — `tools/refresh.py` refuses to compute a new-blood figure for a crowdfund less than a week old for exactly this reason, and this time skipped The Great Pasta Heist and used JSOC (12 days old, 39 of 205 fresh).
+> **Inferred (2026-09-22) — read the one-and-done figure against the board's age mix, not on its own.** Arithmetically the "1 of 8" bucket *is* the sum of every post's fresh backers, and within this single read fresh share climbs with a post's age: 18 % at eleven hours, 19–22 % at two to three weeks, 23–31 % at a month, 43 % at nearly four months, 56 % at five. Flash Point says the same from the inside — 9 % fresh on its first day, 19 % at five days, 23 % at four weeks. So a board that has just swapped its three oldest posts for three young ones reads lower on one-and-done than the same board will in a month; the base has not narrowed. One more caution: a post's fresh share is measured against *whichever other posts are live*, so a big post leaving frees its co-backers to count as fresh elsewhere. Compare fresh shares within one read, never across reads.
+
+> **The tail of the distribution is an artefact of when you read it.** On 2026-08-25 only **5 people** were on all seven posts; five days later **17** were on all eight. That read like a surge and was not one. Flash Point was twenty minutes old at the first read, so the people who back everything simply had not reacted yet. **The same distortion, seen from the other end, sinks the fresh-backer figure on a new post**: Flash Point's first 11 backers were 10/11 repeat backers, and The Great Pasta Heist's first 45 are **37/45** — their median backer is on **five** of the eight live posts. The people watching the board when a post lands are the regulars; everyone else arrives over the following weeks. **Anything measured on a crowdfund's first day describes who was watching, not who funds it** — `tools/refresh.py` refuses to compute a new-blood figure for a crowdfund less than a week old for exactly this reason, and on 09-22 skipped The Great Pasta Heist and used JSOC (12 days old, 39 of 205 fresh). By 10-13, at 21 days, The Great Pasta Heist qualified: **40 of 150 fresh**, five times the first-day count, with its median backer down from five live posts to four.
 
 ### Release-vote turnout — 40 of 61, and the supporters behind each
 
@@ -402,24 +410,24 @@ from **435 supporters**.
 
 > **⚠️ Read the scope before reading the outcome.** The vote does not always cover the whole crowdfund. **Snake Eater's** poll asked *"Where to share the XOF Outfits?"* — one item — and a moderator says so in-channel: *"MOST of the items in this crowdfund are supporter items, the XOF suit is what will be made public from this crowdfund"* (msg `1426355642410467368`). **Bad Boys'** was scoped to *"the Exfil Helmets, Police Vests and Belt"*. The other nine read as whole-project. So a "went to" cell describes **the voted portion**, not necessarily the whole crowdfund.
 
-### Where the mods actually went — 49 of 61, and it reversed the earlier reading
+### Where the mods actually went — 50 of 61, and it reversed the earlier reading
 
 Turnout answers this for the 40 above. For the rest, **where a crowdfund's output landed leaks** —
 into public chat, `#mod-releases`, `#supporter-armory`, and the Nexus links creators post
 themselves. Swept 2026-08-30, then largely superseded the same day by the moderator's vote figures.
-Two closures since — Rangers Lead The Way (09-01) and GWOT Classics (09-08) — were caught from their
-creators' own supporter-release threads.
+Three closures since were caught from their creators' own release threads: Rangers Lead The Way
+(09-01) and GWOT Classics (09-08) to supporters, and Pastaslov (10-02) to the public.
 
-| Destination | Count | Of the 49 |
+| Destination | Count | Of the 50 |
 | --- | ---: | ---: |
-| **Public** | **33** | 67 % |
-| **Supporters** | **14** | 29 % |
+| **Public** | **34** | 68 % |
+| **Supporters** | **14** | 28 % |
 | **Private** | **2** | 4 % |
 | *Still open (on the board)* | 8 | — |
-| *Unknown* — #5, #7, #10, and #51 since its post came down | 4 | — |
+| *Unknown* — #5, #7, #10 | 3 | — |
 
 **Evidence grade, which the panel shows and this table must not blur:** **39** come from a release
-vote (11 read here, 28 from the moderator), **9** from a creator or moderator stating an outcome
+vote (11 read here, 28 from the moderator), **10** from a creator or moderator stating an outcome
 outright, and **1** from members only. A **solid** pill on the
 [live panel](https://dataterminals.github.io/t1-crowdfunds/) is a vote; a **dashed** one is
 reconstructed.
@@ -432,8 +440,8 @@ reconstructed.
 > a narrow window and the era that keeps the most behind the role. **Two thirds reaches the public.**
 
 **The eras differ, and the vote data sharpens it.** System 1: **17 public / 2 supporters / 2
-private**. System 2: **16 public / 12 supporters** — and the two closures since 08-30, Rangers Lead The
-Way and GWOT Classics, both went to supporters. System 1 pushed almost everything to Nexus;
+private**. System 2: **17 public / 12 supporters**. Of the three closures since 08-30, Rangers Lead The
+Way and GWOT Classics went to supporters and Pastaslov to the public. System 1 pushed almost everything to Nexus;
 System 2 keeps well over a third back. That follows from §3 — once supporting *any* crowdfund grants a
 permanent role with a standing armoury attached, "supporters" stops meaning locked away and starts
 meaning the reward that makes the role worth holding, so voting that way costs a backer less.
@@ -464,7 +472,7 @@ meaning the reward that makes the role worth holding, so voting that way costs a
 
 ### The vote is not the end of it
 
-> **Verified:** every one of the 11 measurable crowdfunds kept delivering **after** its vote — **198 separate drops in total**, a median of **64 days** from first to last. **This is the one table the 2026-08-30 data drop did not move.** Votes went from 11 to 40 and destination to 49, but delivery is still **11 of 61** — a drop happens inside the channel, leaves no public trace, and nobody keeps a tally of them the way they keep the vote result. "Every one" means every one of the 11 that can be read.
+> **Verified:** every one of the 11 measurable crowdfunds kept delivering **after** its vote — **198 separate drops in total**, a median of **64 days** from first to last. **This is the one table the 2026-08-30 data drop did not move.** Votes went from 11 to 40 and destination has since reached 50, but delivery is still **11 of 61** — a drop happens inside the channel, leaves no public trace, and nobody keeps a tally of them the way they keep the vote result. "Every one" means every one of the 11 that can be read.
 
 | Crowdfund | Drops | Window | Principal creator |
 | --- | ---: | ---: | --- |
@@ -489,9 +497,9 @@ meaning the reward that makes the role worth holding, so voting that way costs a
 | Period | Months | Crowdfunds | Rate |
 | --- | ---: | ---: | ---: |
 | System 1 | ~9 (2024-11-02 → 2025-07-29) | 22 distinct, a floor | ≥2.5 / mo |
-| System 2 | ~14 (2025-07-29 → 2026-09-22) | 37 | 2.7 / mo |
+| System 2 | ~14.5 (2025-07-29 → 2026-10-13) | 37 | 2.6 / mo |
 
-**The rate did not change when the system did** — which is worth noting, because everything else about the funding model did. The five weeks from 08-19 to 09-22 carried six posts, twice the long-run rate.
+**The rate did not change when the system did** — which is worth noting, because everything else about the funding model did. The five weeks from 08-19 to 09-22 carried six posts, twice the long-run rate. The three weeks after that, to 10-13, carried none.
 
 **Creator concentration:** Modder B has run **18 of the 61 — 30 %**, nearly a third of every crowdfund the server has held; JSOC (#60) went up nine days after their Rangers Lead The Way release. Nine fall in era 1 and nine in era 2, so the share held steady across the changeover rather than being a legacy of the early days. Modder B also owns the largest sign-up on record (Rangers Lead The Way, **420** when its post came down). Next are Modder L and Modder O with 5 each, then Modder J and Modder K with 4 each. **Modder S** (Spiritus Invictus) is the first new creator since Modder P's Dealer's Choice in August.
 
@@ -530,14 +538,16 @@ Several people who went on to become Tier 1 regulars — including the modders M
 > **Correction (2026-08-23):** an earlier draft of this file claimed CYBERSAMI and Heavy Metal were deleted between 2026-08-19 and 2026-08-23, and called that a direct observation. It was not — it was a `limit=4` query mistaken for the channel's full contents. Both posts are still on the board. **No deletion has actually been observed.** Whether posts are removed as projects close, or the channel was purged once in a cleanup, is **not established** — two of the six are months past their stated end date and still posted.
 >
 > **Update (2026-09-22): removals have now been observed, twice over.** Rangers Lead The Way was on the board at the 08-30 read and gone by 09-10; GWOT Classics and Pastaslov were on the board on 09-10 and gone by 09-22. Both absences were checked the way the 08-24 note prescribes — a `limit=10` read that returned the channel's entire contents, eight posts, floor still CYBERSAMI — not inferred from a short window. All three had closed: Rangers released to supporters on 09-01, GWOT Classics on 09-08, and members had been asking since 09-01 whether Pastaslov had ended (msg `1544521390416207913`). So **posts come down as projects finish**, and the "no deletion has actually been observed" above is retired. Still open: the trigger and the timing. CYBERSAMI is ten weeks past its stated 14 July end and still up, so it is not a date; whether a post goes when the release lands, when the vote closes, or in a periodic tidy is unanswered, and the 09-10 → 09-22 gap cannot tell two removals apart from one. That is ask A7 in [`../meta/crowdfund-asks.md`](../meta/crowdfund-asks.md).
+>
+> **Update (2026-10-13): the release is not the trigger.** Pastaslov's post was gone by 09-22, but its public release only went up on **10-02** (msgs `1555619458066812948`, `1555619602338287676`), so a post can come down ten days or more *before* the release lands. Flash Point's post was still up two days after its vote was run (msg `1558723499101659177`). That leaves the vote closing, or a periodic tidy, as the candidates. A7 is still the question, now one option shorter.
 
 Consequences:
 
-1. **👍 counts exist only for crowdfunds still on the board — unless someone read them first.** For **26** System 2 crowdfunds the commitment count went with the post, and System 1 never used this channel at all, so it has none. For three more — Rangers Lead The Way (420), GWOT Classics (357) and Pastaslov (145) — the panel holds the last count read before the post came down, only because `tools/refresh.py` happened to run on 08-30 and 09-10. That is ask A8 in [`../meta/crowdfund-asks.md`](../meta/crowdfund-asks.md) working by accident; on a schedule it would work on purpose. The figures in §5 are an eight-project snapshot taken at one moment, not a history, and they move: four reads between 2026-08-23 and 2026-09-22 are recorded above and none of them agree.
+1. **👍 counts exist only for crowdfunds still on the board — unless someone read them first.** For **26** System 2 crowdfunds the commitment count went with the post, and System 1 never used this channel at all, so it has none. For three more — Rangers Lead The Way (420), GWOT Classics (357) and Pastaslov (145) — the panel holds the last count read before the post came down, only because `tools/refresh.py` happened to run on 08-30 and 09-10. That is ask A8 in [`../meta/crowdfund-asks.md`](../meta/crowdfund-asks.md) working by accident; on a schedule it would work on purpose. The figures in §5 are an eight-project snapshot taken at one moment, not a history, and they move: five reads between 2026-08-23 and 2026-10-13 are recorded above and none of them agree.
 2. ~~**Five System 2 crowdfunds cannot be named**~~ — **closed 2026-08-24**, and **#3 closed 2026-08-30** from the moderator's list (MCX Spear LT). **Exactly one crowdfund in the catalogue is now unnamed: #7** (Modder B, *"a new weapon"*, msg `1316621603978874991`), which appears nowhere in that list either.
 3. **System 1 has no reliable count.** `#crowdfund-projects-legacy` (`1302441788585279570`) and `#crowdfund-votes` (`1303906293219856477`) both return `forbidden`; individual System 1 project channels are either `forbidden` (`1370158615473946667`) or **deleted outright** — `1309056687801503805`, linked as a live crowdfund on 2024-11-21 (msg `1309130622513577984`), now 404s. The 24 rows in §4 are what could be reconstructed, and at least two of them are the same project (#6/#8); **the true figure is higher** all the same. Six were found only because someone mentioned them in passing, and **#58 was not found at all until a moderator listed it on 2026-08-30** — direct evidence that the era-1 count is still a floor.
 4. ~~**Role membership is not readable.**~~ **Answered 2026-08-30 for 41 crowdfunds.** Discord still does not expose role-member counts to a member account, but a moderator can read the confirmed channel's membership and supplied it. "How many people hold the Lioness role" was bounded at ≥275; it is **435**. See §5.
-5. ~~**The coverage caveat.**~~ **Retired for votes, kept for delivery, 2026-08-30.** §4 is the population — 61 crowdfunds. **§5's vote table covers 40** and destination **49**, after a moderator supplied the figures a role would have exposed. **The delivery table is still 11**, because a drop leaves no public trace and nobody tallies them the way they tally a vote. Quote the two with that difference in mind; they no longer have the same reach.
+5. ~~**The coverage caveat.**~~ **Retired for votes, kept for delivery, 2026-08-30.** §4 is the population — 61 crowdfunds. **§5's vote table covers 40** and destination **50**, after a moderator supplied the figures a role would have exposed. **The delivery table is still 11**, because a drop leaves no public trace and nobody tallies them the way they tally a vote. Quote the two with that difference in mind; they no longer have the same reach.
 
 ### How the last five names were recovered
 
@@ -560,7 +570,7 @@ Two indexing behaviours are worth knowing next time, both discovered here:
 1. **How many System 1 crowdfunds were there really?** Answerable by anyone with access to `#crowdfund-projects-legacy` or `#crowdfund-votes`, or by a moderator with the audit log.
 2. **#7 — the last unnamed crowdfund.** System 1, announced without a name, and named nowhere in public chat or in the moderator's list. (#3 was the other one and is now closed — it was the **MCX Spear LT**, which the 2026-08-24 pass had guessed at as one of three candidates in flight that month.) #7 is *"a new weapon done by none other [Modder B]"* (msg `1316621603978874991`) and is **absent from Modder B's own list of open buy-ins six days later** (*"There are still three projects available for buy ins, price ghillie, shadow company heavy and the latest gzw assortment"*, msg `1318754880512327691`), so it may have collapsed early — Modder B describes a crowdfund doing exactly that on 2024-12-19: *"the entire crowdfund for that has fallen short, had over 15 ppl vote yes and only a 4 ppl paid"* (msg `1319125305558040587`, said of the Shadow Company Heavy project). A member who was buying in that December could settle it in a sentence.
 3. **Did the March 2025 leak cause the system change?** §2 flags this as inferred. A moderator could confirm or kill it in one sentence.
-4. ~~**Full public/supporters split across all 57.**~~ **Closed 2026-08-30.** Destination is known for **49 of 61** and turnout for **40**, and the answer is roughly two thirds public. The route was not access — the role was declined on 08-25 — but **asking a moderator for the numbers rather than for the channels**, which is the distinction [`../meta/crowdfund-asks.md`](../meta/crowdfund-asks.md) was written around and is now the method's best evidence. What is still a sample of 11 is the **delivery** table.
+4. ~~**Full public/supporters split across all 57.**~~ **Closed 2026-08-30.** Destination is known for **50 of 61** (as of 2026-10-13) and turnout for **40**, and the answer is roughly two thirds public. The route was not access — the role was declined on 08-25 — but **asking a moderator for the numbers rather than for the channels**, which is the distinction [`../meta/crowdfund-asks.md`](../meta/crowdfund-asks.md) was written around and is now the method's best evidence. What is still a sample of 11 is the **delivery** table.
 5. **Is the role list readable another way?** The role name *is* the crowdfund name, so a single read of the guild's role list would have answered this whole session's question in one call — and would answer the System 1 question too, if those roles still exist. The Discord client caches **every** guild role, including ones the account does not hold; the bridge already reads that store to resolve role mentions but exposes no endpoint for the snapshot. One caution before anyone builds it: at least one crowdfund role has been deleted. #39's (`1466647776396836874`) renders unresolved in a message that mentions it, which is consistent with a moderator's *"when the CF ends we just delete the Unconfirmed role"* (msg `1459296798244868298`) going further than the unconfirmed half.
 
 ---
