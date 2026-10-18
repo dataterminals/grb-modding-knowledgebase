@@ -362,7 +362,7 @@ the same day.
 
 ---
 
-## Four lanes. Know which one you're in.
+## Five lanes. Know which one you're in.
 
 | Lane | State | What it is |
 | --- | --- | --- |
@@ -371,6 +371,7 @@ the same day.
 | **2B — Skeleton bone-physics (Reflex3)** | **⭐ LIVE — as of 2026-08-14**; read side complete 2026-09-16 | Same goal, different mechanism. Has a format, a corpus, vanilla exemplars, the exact record that assigns a rig, and mod precedents |
 | **3 — Community record (crowdfunds)** | active 2026-08-23 → 2026-08-30; **caught up 2026-09-22** with #59–#61 | The funding system behind a large slice of the mod corpus, plus a live panel in a second repo |
 | **4 — Gameplay / AI database** | **active 2026-09-16**; first write test **staged 2026-09-23** | How enemies see, hear, call for backup and cheat — `DBContainerEntry` records, binary-patched. The maintainer's own second track, not a detour from lane 2 |
+| **5 — Runtime / photo mode** | **opened 2026-10-13**; offline prep done, in-game recon next | The first work inside the running game: "unchain" vanilla photo mode as a Cheat Engine table, then a DLL with free camera, time control and character posing. No forge is touched. [`docs/15`](../docs/15-runtime-and-photo-mode.md) |
 
 Lane 1 is not a detour — it turns the only real primary documentation GRB modding has into
 something durable, and it produced independent corroboration of the 64-bit ID model from a
@@ -991,6 +992,27 @@ changed. It is a second track in its own right, not a detour from lane 2.
    the names match the `[VE] AI_…` voice events seen on 2026-08-14, so dialogue plumbing is more
    likely than behaviour.
 5. Which installed mod is the Spartan port — no folder under `Extracted\GRBMods\` is named for it.
+
+---
+
+## Lane 5 — runtime: the photo mode
+
+Opened 2026-10-13 at the maintainer's request. The plan, the facts so far and the recon recipe are in
+[`docs/15-runtime-and-photo-mode.md`](../docs/15-runtime-and-photo-mode.md). The provenance is in the
+2026-10-13 (second) research-log entry. Scope: **built for a public release.** That means AOB
+signatures only, a gate on the build string (`ChangeList:7793716`), patches in memory only, and
+every patch can be switched back to vanilla.
+
+**Next, in game (it needs the maintainer at the keyboard, solo, DX11 exe):**
+1. Before launching, check that no other session is testing GRB or repacking forges.
+2. Measure vanilla photo mode: its radius, whether it collides with walls, whether it pauses solo
+   play, and its toggles.
+3. Cheat Engine 7.6 (already installed): find the camera and player positions, then "find out what
+   writes to" the camera position. That should lead to the range limit and the collision check.
+4. Turn each code site into an AOB pattern and write it into `docs/15`, with how it was found.
+
+**Then:** the CE table (Phase 1), in a separate repo whose name hasn't been chosen. Engine findings
+stay in this KB.
 
 ---
 

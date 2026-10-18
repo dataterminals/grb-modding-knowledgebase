@@ -6557,3 +6557,59 @@ of `meta/next-session.md`) in the same session, per the rule that a panel-only e
 - **Running `refresh.py` on SylDesk:** pass `--port 38788` and set `BRIDGE_TOKEN` from the sidecar's
   `%APPDATA%\vesktop-claude-bridge\token`. The script's Python sees a different `%APPDATA%` (stale
   port 8788 and a token the sidecar rejects with 401).
+
+---
+
+## Entry — 2026-10-13 (second) — A runtime lane opens: photo mode, the build string, and what the files say
+
+### What I did
+The maintainer asked whether GRB could get a full photo mode: noclip camera, a movable and animatable
+character, frame-by-frame control. We brainstormed it and settled on a first target: **"unchain"
+vanilla photo mode** (remove its range limit and collision), first as a Cheat Engine table, built
+to public-release standards from the start. This is the KB's first **runtime** work. Everything
+before it was on the data side. New page:
+[`docs/15-runtime-and-photo-mode.md`](../docs/15-runtime-and-photo-mode.md). This session was
+offline prep only. GRB was not launched. I checked that no GRB or ATK process was running before
+and after every forge read.
+
+### VERIFIED (new)
+- **Build string, both exes.** A memory-mapped search found
+  `ChangeList:7793716;Version:E450_1.24;User:silex-buildfarm;Branch://tgt-streams/Y2E4.5.0` in
+  `GRB.exe` at file offset `0x50a8f90` and in `GRB_vulkan.exe` at `0x50c6ba0`.
+  - The ChangeList is the same as on 2026-10-04, although Steam rewrote both exes on 2026-10-08
+    (timestamp 05:35). That rewrite did not change the code build.
+  - A second, template copy (`ChangeList:…Branch:…Project Name:…Version:`) sits next to the
+    `Screenshot` and `Bookmark.abk` strings.
+- **The exe has almost no readable photo-mode names.** A case-insensitive search for `photo`,
+  `freecam`, `debugcam` and `spectat` found only these:
+  - `StateFlowPhotoMode`
+  - `%s/photobooth_%s.{bmp,jpg,png}`
+  - `ACTIVITY_SPECTATE`
+
+  Class names are hashed, so the camera code has to be traced at runtime.
+- **The photo-mode UI is data in `DataPC_extra`** (forge index read, payloads not decoded).
+  - Records of type `#3683486083`, each named with a GUID suffix: `PhotoModeGameContext`,
+    `PhotoModeMainContainer`, `PhotoModeMenu`, `PhotoModeGrid`, `PhotoModeSubCategoryItemList`,
+    `PhotoModeListButtonContainer*`, `PhotoModeNonEditableButtonsLoader`, `PhotomodeTabNav*`.
+  - Icons `UI_ICO_PhotoMode_{Camera,Effects,Shutter,WorldSettings}`.
+  - `PhotoModeDescription` (`0x1b350c11c72`) is overridden in `DataPC_extra_patch_01`. Whether by
+    Ubisoft or by an installed mod was not checked.
+- **One camera-side lead in `DataPC`:** `Entity_ObserverCamera` (`0x132c56d5d30`, `Entity`). No
+  forge entry is named for photo-mode camera limits.
+- **Toolchain on SylDesk:** Cheat Engine 7.6 and VS Build Tools 2022 (17.14) are installed. x64dbg
+  and Ghidra are not.
+
+### INFERRED
+- Vanilla photo mode keeps the camera within a radius of the player and has camera collision. This
+  is the premise of Phase 1 and hasn't been measured. We also don't know whether it pauses solo play.
+- Branch `Y2E4.5.0` matches the 4.5.0 title update reported as the last major one (2022). Code
+  addresses are therefore probably stable. Still use AOB signatures and gate on the build string.
+- `Entity_ObserverCamera` may be the camera that photo mode or spectating drives.
+- If the radius and collision are data-driven, they sit inside a record named for something else.
+
+### Questions opened
+- What is vanilla photo mode's actual radius, does it collide with walls, and does it pause solo
+  play? (Phase 0, in game.)
+- What is the name of type `#3683486083`?
+- Which mod (if any) overrides `PhotoModeDescription` in `DataPC_extra_patch_01`?
+- What is the `Animation` binary format? This is needed only for the data-side pose route.
